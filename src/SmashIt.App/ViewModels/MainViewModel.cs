@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SmashIt.App.Services;
 using SmashIt.Core;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
@@ -18,10 +19,18 @@ public sealed record EffortChoice(string Label, CompressionEffort Effort)
     public override string ToString() => Label;
 }
 
+public sealed record VideoCodecChoice(string Label, VideoCodec Codec)
+{
+    public override string ToString() => Label;
+}
+
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly CompressionPipeline _pipeline = SmashItEngine.CreateDefaultPipeline();
     private readonly SemaphoreSlim _slots = new(Math.Max(1, Environment.ProcessorCount - 1));
+
+    // GPU encoders accept few simultaneous sessions, and one video already keeps the machine busy.
+    private readonly SemaphoreSlim _videoSlots = new(1);
     private CancellationTokenSource _cts = new();
 
     public ObservableCollection<FileItem> Files { get; } = [];
@@ -46,11 +55,21 @@ public sealed partial class MainViewModel : ObservableObject
         new("Maximum", CompressionEffort.Maximum),
     ];
 
-    [ObservableProperty]
-    public partial bool IsLossy { get; set; }
+    public IReadOnlyList<VideoCodecChoice> VideoCodecs { get; } =
+    [
+        new("H.264 (compatible partout)", VideoCodec.H264),
+        new("HEVC / H.265 (plus léger)", VideoCodec.Hevc),
+    ];
 
     [ObservableProperty]
-    public partial double Quality { get; set; } = 85;
+    public partial bool IsSettingsOpen { get; set; }
+
+    // Images
+    [ObservableProperty]
+    public partial bool ImageLossy { get; set; }
+
+    [ObservableProperty]
+    public partial double ImageQuality { get; set; } = 85;
 
     [ObservableProperty]
     public partial OutputFormatChoice SelectedOutputFormat { get; set; }
@@ -59,17 +78,32 @@ public sealed partial class MainViewModel : ObservableObject
     public partial EffortChoice SelectedEffort { get; set; }
 
     [ObservableProperty]
-    public partial bool KeepOriginal { get; set; }
+    public partial bool StripMetadata { get; set; } = true;
+
+    // PDF
+    [ObservableProperty]
+    public partial bool PdfLossy { get; set; }
 
     [ObservableProperty]
-    public partial bool StripMetadata { get; set; } = true;
+    public partial double PdfQuality { get; set; } = 75;
+
+    // Video (always lossy)
+    [ObservableProperty]
+    public partial double VideoQuality { get; set; } = 70;
+
+    [ObservableProperty]
+    public partial VideoCodecChoice SelectedVideoCodec { get; set; }
+
+    // All files
+    [ObservableProperty]
+    public partial bool KeepOriginal { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial int FileCount { get; set; }
 
     [ObservableProperty]
-    public partial string Summary { get; set; } = "Déposez des images ou des PDF ici pour les compresser.";
+    public partial string Summary { get; set; } = "Déposez des images, des PDF ou des vidéos ici pour les compresser.";
 
     public bool IsEmpty => FileCount == 0;
 
@@ -77,40 +111,61 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SelectedOutputFormat = OutputFormats[0];
         SelectedEffort = Efforts[1];
+        SelectedVideoCodec = VideoCodecs[0];
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
     }
 
-    private CompressionOptions CurrentOptions() => new()
+    /// <summary>The settings of the section matching the kind of file (images, PDF, video).</summary>
+    private CompressionOptions OptionsFor(MediaKind kind)
     {
-        Mode = IsLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
-        Quality = (int)Math.Round(Quality),
-        Effort = SelectedEffort.Effort,
-        TargetFormat = SelectedOutputFormat.Format,
-        StripMetadata = StripMetadata,
-        OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
-    };
+        var common = new CompressionOptions
+        {
+            OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
+        };
+        return kind switch
+        {
+            MediaKind.Document => common with
+            {
+                Mode = PdfLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
+                Quality = (int)Math.Round(PdfQuality),
+            },
+            MediaKind.Video => common with
+            {
+                Mode = CompressionMode.Lossy,
+                Quality = (int)Math.Round(VideoQuality),
+                VideoCodec = SelectedVideoCodec.Codec,
+            },
+            _ => common with
+            {
+                Mode = ImageLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
+                Quality = (int)Math.Round(ImageQuality),
+                Effort = SelectedEffort.Effort,
+                TargetFormat = SelectedOutputFormat.Format,
+                StripMetadata = StripMetadata,
+            },
+        };
+    }
 
     /// <summary>Adds files and folders and starts processing them with the current settings.</summary>
     public void AddPaths(IEnumerable<string> paths)
     {
-        var options = CurrentOptions();
         foreach (var path in InputCollector.Expand(paths))
         {
             var item = new FileItem(path);
             Files.Add(item);
-            _ = ProcessAsync(item, options, _cts.Token);
+            item.ThumbnailLoading = Thumbnails.LoadAsync(item);
+            _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
 
     [RelayCommand]
     private void Reprocess()
     {
-        var options = CurrentOptions();
         foreach (var item in Files.Where(f => f.State is not FileItemState.Working and not FileItemState.Pending).ToList())
         {
             // A converted file stays where it is; re-run on the original.
             item.Result = null;
-            _ = ProcessAsync(item, options, _cts.Token);
+            _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
 
@@ -119,6 +174,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _cts.Cancel();
         _cts = new CancellationTokenSource();
+        foreach (var item in Files) PreviewCache.Forget(item.PreviewOriginalPath);
         Files.Clear();
         UpdateSummary();
     }
@@ -127,9 +183,11 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task ProcessAsync(FileItem item, CompressionOptions options, CancellationToken ct)
     {
         item.State = FileItemState.Pending;
+        item.Progress = 0;
+        var slots = item.Kind == MediaKind.Video ? _videoSlots : _slots;
         try
         {
-            await _slots.WaitAsync(ct);
+            await slots.WaitAsync(ct);
         }
         catch (OperationCanceledException)
         {
@@ -139,7 +197,17 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             item.State = FileItemState.Working;
-            var result = await Task.Run(() => _pipeline.ProcessAsync(item.Path, options, ct), ct);
+
+            // The thumbnail must be read before the original may go to the Recycle Bin.
+            if (item.ThumbnailLoading is { } thumbnail) await thumbnail;
+
+            // Keep the first "before" (later runs would start from the already compressed file).
+            if (item.Kind == MediaKind.Image && item.PreviewOriginalPath is null)
+                item.PreviewOriginalPath = await Task.Run(() => PreviewCache.Keep(item.Path), ct);
+
+            // Created on the UI thread: reports come back on it.
+            var progress = new Progress<double>(value => item.Progress = value);
+            var result = await Task.Run(() => _pipeline.ProcessAsync(item.Path, options, ct, progress), ct);
             item.Result = result;
             item.State = result.Status switch
             {
@@ -159,7 +227,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         finally
         {
-            _slots.Release();
+            slots.Release();
             UpdateSummary();
         }
     }
@@ -169,7 +237,7 @@ public sealed partial class MainViewModel : ObservableObject
         var results = Files.Select(f => f.Result).OfType<CompressionResult>().ToList();
         if (Files.Count == 0)
         {
-            Summary = "Déposez des images ou des PDF ici pour les compresser.";
+            Summary = "Déposez des images, des PDF ou des vidéos ici pour les compresser.";
             return;
         }
 

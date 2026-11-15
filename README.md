@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/mascot-360.png" alt="Smash It's mascot: an angry black and red bear holding an image, a PDF and a video" width="240">
+</p>
+
 # Smash It
 
 A native Windows app to make images, videos and PDFs smaller — in the spirit of ImageOptim on macOS.
@@ -12,12 +16,13 @@ result, and only touches your file when it actually got smaller. Originals go to
 | | Today | Planned |
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; WebP (cwebp) and AVIF (avifenc) encoding | gifsicle, svgo, pngquant |
-| **Videos** | — | H.264/HEVC through Media Foundation (hardware encoders), ffmpeg for fine tuning |
+| **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4 | ffmpeg for fine tuning (CRF, AV1, VP9) |
 | **PDF** | Images recompressed in place (qpdf + jpegtran), object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | Image downsampling (DPI cap) |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
 | **Originals** | Recycle Bin by default, or kept with the result saved as `name-compressed.ext` | |
+| **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
 | **Integration** | Drag & drop, `smashit` command line | Explorer right-click menu, custom script engines |
 
 ### PDF
@@ -27,6 +32,20 @@ writes the new image data back under the same object numbers. In lossy mode, qpd
 at the chosen quality, keeping each one only when it gets smaller. The result must pass `qpdf --check` and keep the
 same number of pages, or the original is left alone. Signed PDFs (any change would invalidate the signature) and
 encrypted PDFs are skipped.
+
+### Videos
+
+Videos are re-encoded with the encoder built into Windows, so no extra tool is needed and the GPU does the work when
+it can. Pick H.264 (plays everywhere) or HEVC (about 40 % smaller, needs a HEVC-capable player). The bitrate follows
+the quality setting, the resolution and the frame rate, and never exceeds the source bitrate. Portrait phone videos
+come out upright. Windows can only write MP4, so MOV/MKV/AVI files become `.mp4`, and only when that makes them
+smaller. Videos need the lossy mode.
+
+### Before/after preview
+
+Every compressed image gets a compare button (or double-click its row). Both versions are stacked in one view; drag
+the handle, click anywhere, or use ← → (Shift for finer steps) to move the split. The app keeps a temporary copy of
+each original so the preview still works after the original went to the Recycle Bin.
 
 ### Metadata and originals
 
@@ -82,6 +101,7 @@ smashit [options] <files or folders…>
   -q, --quality <n>    Quality 1–100 (implies --lossy)
   -t, --to <format>    Convert to jpg, png, webp, avif, heic, tif, jxr, bmp
   -e, --effort <n>     fast, balanced (default) or max
+  --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
   --keep               Keep the original, write "name-compressed.ext" next to it
   --no-recycle         Delete the original instead of using the Recycle Bin
   --keep-metadata      Keep EXIF, XMP, IPTC and comments

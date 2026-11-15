@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using SmashIt.Core.Compression;
+using SmashIt.Core.Formats;
 
 namespace SmashIt.App.ViewModels;
 
@@ -21,12 +22,51 @@ public sealed partial class FileItem(string path) : ObservableObject
 
     public string Folder { get; } = System.IO.Path.GetDirectoryName(path) ?? string.Empty;
 
+    public MediaKind Kind { get; } = MediaFormatInfo.KindOf(MediaFormatInfo.FromExtension(path));
+
+    /// <summary>Shell thumbnail (images, videos, and PDFs when a PDF handler provides previews).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasThumbnail), nameof(ShowKindGlyph))]
+    public partial Microsoft.UI.Xaml.Media.ImageSource? Thumbnail { get; set; }
+
+    public bool HasThumbnail => Thumbnail is not null;
+
+    public bool ShowKindGlyph => Thumbnail is null;
+
+    /// <summary>Loads the thumbnail; awaited before compression so it is read from the original file.</summary>
+    public Task? ThumbnailLoading { get; set; }
+
+    /// <summary>Segoe Fluent Icons glyph for the kind of file, shown when there is no thumbnail.</summary>
+    public string KindGlyph => Kind switch
+    {
+        MediaKind.Image => "",    // Photo
+        MediaKind.Document => "", // PDF
+        MediaKind.Video => "",    // Video
+        _ => "",                  // Page
+    };
+
+    /// <summary>Temporary copy of the image before compression, for the before/after preview.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanPreview))]
+    public partial string? PreviewOriginalPath { get; set; }
+
+    /// <summary>The compressed image exists and its "before" copy too.</summary>
+    public bool CanPreview =>
+        Kind == MediaKind.Image
+        && PreviewOriginalPath is not null
+        && Result is { Status: CompressionStatus.Optimized or CompressionStatus.Converted, OutputPath: not null };
+
+    /// <summary>0–100 while a long job (video) runs.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GainText))]
+    public partial double Progress { get; set; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWorking), nameof(StatusGlyph), nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText))]
     public partial FileItemState State { get; set; } = FileItemState.Pending;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText), nameof(StatusGlyph), nameof(Message))]
+    [NotifyPropertyChangedFor(nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText), nameof(StatusGlyph), nameof(Message), nameof(CanPreview))]
     public partial CompressionResult? Result { get; set; }
 
     public bool IsWorking => State == FileItemState.Working;
@@ -53,7 +93,7 @@ public sealed partial class FileItem(string path) : ObservableObject
     public string GainText => State switch
     {
         FileItemState.Pending => "En attente",
-        FileItemState.Working => "Compression…",
+        FileItemState.Working => Progress > 0 ? $"Compression… {Progress:0} %" : "Compression…",
         _ => Result?.Status switch
         {
             CompressionStatus.Optimized => $"−{Result.SavedRatio * 100:0.#} %",

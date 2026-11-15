@@ -70,6 +70,17 @@ public static class MediaFormatInfo
         _ => string.Empty,
     };
 
+    /// <summary>
+    /// Output format when the user keeps the format: the input format, except for video containers
+    /// Windows cannot write (MOV, MKV, AVI, WebM), which become MP4.
+    /// </summary>
+    public static MediaFormat DefaultOutputFor(MediaFormat input) =>
+        KindOf(input) == MediaKind.Video ? MediaFormat.Mp4 : input;
+
+    /// <summary>Output format for a job: the target if it is of the same kind as the input, else the default.</summary>
+    public static MediaFormat ResolveOutput(MediaFormat input, MediaFormat? target) =>
+        target is { } t && KindOf(t) == KindOf(input) ? t : DefaultOutputFor(input);
+
     /// <summary>Formats whose encoding is always lossy: re-encoding them in lossless mode is not allowed.</summary>
     public static bool IsLossyOnly(MediaFormat format) =>
         format is MediaFormat.Jpeg or MediaFormat.Heif;

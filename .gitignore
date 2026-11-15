@@ -31,3 +31,6 @@ tools/bin/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+## Crash dumps
+*.stackdump
