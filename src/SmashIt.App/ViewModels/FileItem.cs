@@ -24,6 +24,27 @@ public sealed partial class FileItem(string path) : ObservableObject
 
     public MediaKind Kind { get; } = MediaFormatInfo.KindOf(MediaFormatInfo.FromExtension(path));
 
+    /// <summary>Shell thumbnail (images, videos, and PDFs when a PDF handler provides previews).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasThumbnail), nameof(ShowKindGlyph))]
+    public partial Microsoft.UI.Xaml.Media.ImageSource? Thumbnail { get; set; }
+
+    public bool HasThumbnail => Thumbnail is not null;
+
+    public bool ShowKindGlyph => Thumbnail is null;
+
+    /// <summary>Loads the thumbnail; awaited before compression so it is read from the original file.</summary>
+    public Task? ThumbnailLoading { get; set; }
+
+    /// <summary>Segoe Fluent Icons glyph for the kind of file, shown when there is no thumbnail.</summary>
+    public string KindGlyph => Kind switch
+    {
+        MediaKind.Image => "",    // Photo
+        MediaKind.Document => "", // PDF
+        MediaKind.Video => "",    // Video
+        _ => "",                  // Page
+    };
+
     /// <summary>Temporary copy of the image before compression, for the before/after preview.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanPreview))]

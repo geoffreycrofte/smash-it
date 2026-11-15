@@ -10,6 +10,10 @@
   </Window.SystemBackdrop>
 
   <Grid>
+    <!-- Esc closes the preview, wherever the focus is. -->
+    <Grid.KeyboardAccelerators>
+      <KeyboardAccelerator Key="Escape" Invoked="OnEscapeInvoked" />
+    </Grid.KeyboardAccelerators>
     <Grid.RowDefinitions>
       <RowDefinition Height="48" />
       <RowDefinition Height="Auto" />
@@ -35,7 +39,7 @@
         <TextBlock x:Name="SizesText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
       </StackPanel>
       <TextBlock Grid.Column="1" VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                 Text="Glissez la poignée ou utilisez ← →. Double-clic : retour au centre." />
+                 Text="Glissez la poignée ou utilisez ← →. Double-clic : retour au centre. Échap : fermer." />
     </Grid>
 
     <!-- Comparison stage -->

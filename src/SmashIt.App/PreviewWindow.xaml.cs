@@ -183,6 +183,12 @@ public sealed partial class PreviewWindow : Window
 
     private void OnStageDoubleTapped(object sender, DoubleTappedRoutedEventArgs e) => SetRatio(0.5);
 
+    private void OnEscapeInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        args.Handled = true;
+        Close();
+    }
+
     private void OnHandleKeyDown(object sender, KeyRoutedEventArgs e)
     {
         var shift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift)

@@ -153,6 +153,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var item = new FileItem(path);
             Files.Add(item);
+            item.ThumbnailLoading = Thumbnails.LoadAsync(item);
             _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
@@ -196,6 +197,9 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             item.State = FileItemState.Working;
+
+            // The thumbnail must be read before the original may go to the Recycle Bin.
+            if (item.ThumbnailLoading is { } thumbnail) await thumbnail;
 
             // Keep the first "before" (later runs would start from the already compressed file).
             if (item.Kind == MediaKind.Image && item.PreviewOriginalPath is null)
