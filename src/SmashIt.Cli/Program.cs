@@ -34,6 +34,23 @@ for (var i = 0; i < args.Length; i++)
         case "--keep":
             options = options with { OriginalHandling = OriginalHandling.KeepAlongside };
             break;
+        case "--keep-metadata":
+            options = options with { StripMetadata = false };
+            break;
+        case "--strip-metadata":
+            options = options with { StripMetadata = true };
+            break;
+        case "-e" or "--effort" when i + 1 < args.Length:
+            CompressionEffort? effort = args[++i].ToLowerInvariant() switch
+            {
+                "fast" or "rapide" => CompressionEffort.Fast,
+                "balanced" or "equilibre" or "équilibré" => CompressionEffort.Balanced,
+                "max" or "maximum" => CompressionEffort.Maximum,
+                _ => null,
+            };
+            if (effort is null) return Fail($"Effort inconnu : {args[i]} (fast, balanced, max)");
+            options = options with { Effort = effort.Value };
+            break;
         case "--no-recycle":
             options = options with { OriginalHandling = OriginalHandling.Overwrite };
             break;
@@ -81,14 +98,17 @@ static void PrintResult(CompressionResult r)
     var name = Path.GetFileName(r.SourcePath);
     var line = r.Status switch
     {
-        CompressionStatus.Optimized => $"✔ {name}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  (-{Format.Percent(r.SavedRatio)})",
-        CompressionStatus.Converted => $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}",
+        CompressionStatus.Optimized when r.OutputPath != r.SourcePath =>
+            $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  (-{Format.Percent(r.SavedRatio)})  [{r.CompressorId}]",
+        CompressionStatus.Optimized => $"✔ {name}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  (-{Format.Percent(r.SavedRatio)})  [{r.CompressorId}]",
+        CompressionStatus.Converted => $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  [{r.CompressorId}]",
         CompressionStatus.AlreadyOptimal => $"• {name}  déjà optimal",
         CompressionStatus.Unsupported => $"– {name}  {r.Message}",
         CompressionStatus.Cancelled => $"– {name}  annulé",
         _ => $"✖ {name}  {r.Message}",
     };
     Console.WriteLine(line);
+    if (r.IsSuccess && r.Message is { } note) Console.WriteLine($"    {note}");
 }
 
 static int Fail(string message)
@@ -105,9 +125,12 @@ static void PrintHelp() => Console.WriteLine("""
       --lossless           Sans perte (par défaut)
       --lossy              Avec pertes
       -q, --quality <n>    Qualité 1–100 (active le mode avec pertes)
-      -t, --to <format>    Convertit vers jpg, png, tif, bmp, jxr, heic…
-      --keep               Garde l'original, écrit « nom.smashed.ext » à côté
-      --no-recycle         Écrase l'original au lieu de l'envoyer à la Corbeille
+      -t, --to <format>    Convertit vers jpg, png, webp, avif, heic, tif, jxr, bmp
+      -e, --effort <n>     fast, balanced (par défaut) ou max
+      --keep               Garde l'original, écrit « nom-compressed.ext » à côté
+      --no-recycle         Supprime l'original au lieu de l'envoyer à la Corbeille
+      --keep-metadata      Conserve EXIF, XMP, IPTC et commentaires
+      --strip-metadata     Les supprime (par défaut ; profil couleur et orientation conservés)
       -h, --help           Affiche cette aide
     """);
 

@@ -27,7 +27,7 @@
     </Grid>
 
     <!-- Settings -->
-    <Grid Grid.Row="1" Margin="16,0,16,12" Padding="16,12" ColumnSpacing="24"
+    <Grid Grid.Row="1" Margin="16,0,16,12" Padding="16,12" ColumnSpacing="24" RowSpacing="8"
           Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
           CornerRadius="{StaticResource OverlayCornerRadius}">
@@ -37,6 +37,10 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
 
       <ToggleSwitch Header="Compression" OffContent="Sans perte" OnContent="Avec pertes"
                     IsOn="{x:Bind ViewModel.IsLossy, Mode=TwoWay}" />
@@ -51,9 +55,20 @@
                 SelectedItem="{x:Bind ViewModel.SelectedOutputFormat, Mode=TwoWay}"
                 DisplayMemberPath="Label" />
 
-      <CheckBox Grid.Column="3" Content="Garder l'original" VerticalAlignment="Bottom"
-                IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}"
-                ToolTipService.ToolTip="Sinon, l'original part dans la Corbeille." />
+      <ComboBox Grid.Column="3" Header="Effort" MinWidth="140" VerticalAlignment="Center"
+                ItemsSource="{x:Bind ViewModel.Efforts}"
+                SelectedItem="{x:Bind ViewModel.SelectedEffort, Mode=TwoWay}"
+                DisplayMemberPath="Label"
+                ToolTipService.ToolTip="Plus d'effort : fichiers plus petits, compression plus lente." />
+
+      <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="24">
+        <CheckBox Content="Supprimer les métadonnées"
+                  IsChecked="{x:Bind ViewModel.StripMetadata, Mode=TwoWay}"
+                  ToolTipService.ToolTip="Retire EXIF (appareil, date, GPS…), XMP, IPTC et commentaires. Le profil couleur et l'orientation sont toujours conservés." />
+        <CheckBox Content="Garder les originaux"
+                  IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}"
+                  ToolTipService.ToolTip="Les fichiers compressés sont enregistrés à côté sous le nom « nom-compressed.ext ». Sinon, les originaux partent dans la Corbeille." />
+      </StackPanel>
     </Grid>
 
     <!-- File list -->
@@ -118,7 +133,7 @@
                   Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
         <FontIcon Glyph="&#xE898;" FontSize="48" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
         <TextBlock Text="Déposez vos images ici" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
-        <TextBlock Text="Fichiers ou dossiers. JPEG, PNG, TIFF, HEIC, JPEG XR, BMP, GIF, WebP, AVIF."
+        <TextBlock Text="Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP, GIF."
                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
       </StackPanel>
     </Grid>

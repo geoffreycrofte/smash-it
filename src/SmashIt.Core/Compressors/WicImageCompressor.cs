@@ -1,5 +1,7 @@
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
+using SmashIt.Core.Imaging;
+using SmashIt.Core.Metadata;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 
@@ -10,9 +12,10 @@ namespace SmashIt.Core.Compressors;
 /// HEIF and WebP/AVIF decoding rely on the free "HEIF / HEVC / WebP / AV1 Image Extensions" from the Store.
 /// </summary>
 /// <remarks>
-/// Pixels are decoded with the EXIF orientation applied and colors converted to sRGB, so the result looks
-/// identical even though metadata is not carried over yet. 16-bit images are refused in lossless mode
-/// because they would be reduced to 8 bits per channel.
+/// For JPEG/PNG sources and outputs, pixels are kept as they are (no color conversion) and the pipeline writes
+/// the metadata afterwards. For the other formats, orientation is applied and colors converted to sRGB, so the
+/// result looks identical even though metadata cannot be carried over.
+/// 16-bit images are refused in lossless mode because they would be reduced to 8 bits per channel.
 /// </remarks>
 public sealed class WicImageCompressor : ICompressor
 {
@@ -36,68 +39,52 @@ public sealed class WicImageCompressor : ICompressor
 
     public string DisplayName => "Windows Imaging Component";
 
+    public static bool CanRead(MediaFormat format) => Readable.Contains(format);
+
     public bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options)
     {
         if (!Readable.Contains(input) || !Encoders.ContainsKey(output)) return false;
 
-        // Re-encoding a JPEG/HEIC is never lossless: that needs jpegtran-style tools.
+        // Re-encoding a JPEG/HEIC is never lossless: that is jpegtran's job.
         var sameFormat = input == output;
         if (sameFormat && options.Mode == CompressionMode.Lossless && MediaFormatInfo.IsLossyOnly(output))
             return false;
 
-        // Re-encoding a lossless file to the same format in lossy mode would gain nothing with WIC.
-        if (sameFormat && options.Mode == CompressionMode.Lossy && output is MediaFormat.Bmp)
+        // Re-encoding a BMP as BMP gains nothing.
+        if (sameFormat && output is MediaFormat.Bmp)
             return false;
 
         return true;
     }
 
-    public async Task CompressAsync(
-        string inputPath,
-        string outputPath,
-        MediaFormat outputFormat,
-        CompressionOptions options,
-        CancellationToken cancellationToken)
+    public async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
     {
-        await using var input = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        using var inputStream = input.AsRandomAccessStream();
-        var decoder = await BitmapDecoder.CreateAsync(inputStream).AsTask(cancellationToken);
+        var options = job.Options;
+        var keepPixels = MetadataTransfer.PipelineHandles(job.InputFormat, job.OutputFormat);
+        var alphaMode = SupportsAlpha(job.OutputFormat) ? BitmapAlphaMode.Straight : BitmapAlphaMode.Ignore;
 
-        if (decoder.FrameCount > 1)
+        var image = await WicCodec.DecodeAsync(
+            job.InputPath,
+            applyOrientation: !keepPixels || MetadataTransfer.BakesOrientation(job.InputFormat, job.OutputFormat),
+            convertToSrgb: !keepPixels,
+            alphaMode,
+            cancellationToken);
+
+        if (image.FrameCount > 1)
             throw new NotSupportedException("Les images à plusieurs images (GIF animé, TIFF multipage) ne sont pas encore prises en charge.");
 
-        if (options.Mode == CompressionMode.Lossless && decoder.BitmapPixelFormat is BitmapPixelFormat.Rgba16 or BitmapPixelFormat.Gray16)
+        if (options.Mode == CompressionMode.Lossless && image.SourcePixelFormat is BitmapPixelFormat.Rgba16 or BitmapPixelFormat.Gray16)
             throw new NotSupportedException("Image 16 bits : la réencoder en 8 bits ne serait pas sans perte.");
-
-        var alphaMode = SupportsAlpha(outputFormat) ? BitmapAlphaMode.Straight : BitmapAlphaMode.Ignore;
-        var pixelData = await decoder.GetPixelDataAsync(
-                BitmapPixelFormat.Bgra8,
-                alphaMode,
-                new BitmapTransform(),
-                ExifOrientationMode.RespectExifOrientation,
-                ColorManagementMode.ColorManageToSRgb)
-            .AsTask(cancellationToken);
-        var pixels = pixelData.DetachPixelData();
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        await using var output = new FileStream(outputPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
-        using var outputStream = output.AsRandomAccessStream();
-        var encoderOptions = BuildEncoderOptions(outputFormat, options);
-        var encoder = encoderOptions.Count > 0
-            ? await BitmapEncoder.CreateAsync(Encoders[outputFormat], outputStream, encoderOptions).AsTask(cancellationToken)
-            : await BitmapEncoder.CreateAsync(Encoders[outputFormat], outputStream).AsTask(cancellationToken);
-
-        encoder.SetPixelData(
-            BitmapPixelFormat.Bgra8,
+        await WicCodec.EncodeAsync(
+            job.OutputPath,
+            Encoders[job.OutputFormat],
+            BuildEncoderOptions(job.OutputFormat, options),
+            image,
             alphaMode,
-            decoder.OrientedPixelWidth,
-            decoder.OrientedPixelHeight,
-            decoder.DpiX,
-            decoder.DpiY,
-            pixels);
-
-        await encoder.FlushAsync().AsTask(cancellationToken);
+            cancellationToken);
     }
 
     private static bool SupportsAlpha(MediaFormat format) =>

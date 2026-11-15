@@ -9,6 +9,8 @@ public class CompressionPipelineTests
 
     private static readonly CompressionOptions Overwrite = new() { OriginalHandling = OriginalHandling.Overwrite };
 
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task Replaces_the_original_when_the_result_is_smaller()
     {
@@ -16,7 +18,7 @@ public class CompressionPipelineTests
         var file = WritePng(dir.File("a.png"), 1000);
         var pipeline = new CompressionPipeline([new FakeCompressor("small", 400)]);
 
-        var result = await pipeline.ProcessAsync(file, Overwrite, TestContext.Current.CancellationToken);
+        var result = await pipeline.ProcessAsync(file, Overwrite, Ct);
 
         Assert.Equal(CompressionStatus.Optimized, result.Status);
         Assert.Equal(1000, result.OriginalSize);
@@ -34,10 +36,38 @@ public class CompressionPipelineTests
         var pipeline = new CompressionPipeline(
             [new FakeCompressor("medium", 700), new FakeCompressor("best", 300), new FakeCompressor("bad", 900)]);
 
-        var result = await pipeline.ProcessAsync(file, Overwrite, TestContext.Current.CancellationToken);
+        var result = await pipeline.ProcessAsync(file, Overwrite, Ct);
 
         Assert.Equal("best", result.CompressorId);
         Assert.Equal(300, new FileInfo(file).Length);
+    }
+
+    [Fact]
+    public async Task Runs_optimizers_on_the_output_of_other_engines()
+    {
+        using var dir = new TempDirectory();
+        var file = WritePng(dir.File("a.png"), 1000);
+        var optimizer = new FakeCompressor("opt", 200, isOptimizer: true) { OnlyLosslessSameFormat = true };
+        var pipeline = new CompressionPipeline([new FakeCompressor("encoder", 600, MediaFormat.Jpeg), optimizer]);
+
+        var result = await pipeline.ProcessAsync(file, Overwrite with { TargetFormat = MediaFormat.Jpeg }, Ct);
+
+        Assert.Equal("encoder+opt", result.CompressorId);
+        Assert.Equal(200, result.FinalSize);
+        Assert.Equal(MediaFormat.Jpeg, optimizer.LastInputFormat);
+    }
+
+    [Fact]
+    public async Task Skips_unavailable_compressors()
+    {
+        using var dir = new TempDirectory();
+        var file = WritePng(dir.File("a.png"), 1000);
+        var pipeline = new CompressionPipeline(
+            [new FakeCompressor("missing", 10) { Available = false }, new FakeCompressor("ok", 500)]);
+
+        var result = await pipeline.ProcessAsync(file, Overwrite, Ct);
+
+        Assert.Equal("ok", result.CompressorId);
     }
 
     [Fact]
@@ -45,45 +75,73 @@ public class CompressionPipelineTests
     {
         using var dir = new TempDirectory();
         var file = WritePng(dir.File("a.png"), 1000);
-        var before = await File.ReadAllBytesAsync(file, TestContext.Current.CancellationToken);
+        var before = await File.ReadAllBytesAsync(file, Ct);
         var pipeline = new CompressionPipeline([new FakeCompressor("bigger", 1200)]);
 
-        var result = await pipeline.ProcessAsync(file, Overwrite, TestContext.Current.CancellationToken);
+        var result = await pipeline.ProcessAsync(file, Overwrite, Ct);
 
         Assert.Equal(CompressionStatus.AlreadyOptimal, result.Status);
-        Assert.Equal(before, await File.ReadAllBytesAsync(file, TestContext.Current.CancellationToken));
+        Assert.Equal(before, await File.ReadAllBytesAsync(file, Ct));
     }
 
     [Fact]
-    public async Task Saves_next_to_the_original_when_asked_to_keep_it()
+    public async Task Keeping_the_original_saves_the_result_as_name_compressed()
     {
         using var dir = new TempDirectory();
-        var file = WritePng(dir.File("a.png"), 1000);
+        var file = WritePng(dir.File("photo.png"), 1000);
         var pipeline = new CompressionPipeline([new FakeCompressor("small", 400)]);
 
         var result = await pipeline.ProcessAsync(
-            file, Overwrite with { OriginalHandling = OriginalHandling.KeepAlongside },
-            TestContext.Current.CancellationToken);
+            file, Overwrite with { OriginalHandling = OriginalHandling.KeepAlongside }, Ct);
 
         Assert.Equal(CompressionStatus.Optimized, result.Status);
-        Assert.Equal(dir.File("a.smashed.png"), result.OutputPath);
+        Assert.Equal(dir.File("photo-compressed.png"), result.OutputPath);
         Assert.Equal(1000, new FileInfo(file).Length);
         Assert.Equal(400, new FileInfo(result.OutputPath!).Length);
     }
 
     [Fact]
-    public async Task Conversion_writes_a_new_file_and_keeps_the_original()
+    public async Task Keeping_the_original_never_overwrites_an_existing_compressed_file()
     {
         using var dir = new TempDirectory();
-        var file = WritePng(dir.File("a.png"), 1000);
+        var file = WritePng(dir.File("photo.png"), 1000);
+        File.WriteAllText(dir.File("photo-compressed.png"), "already here");
+        var pipeline = new CompressionPipeline([new FakeCompressor("small", 400)]);
+
+        var result = await pipeline.ProcessAsync(
+            file, Overwrite with { OriginalHandling = OriginalHandling.KeepAlongside }, Ct);
+
+        Assert.Equal(dir.File("photo-compressed (2).png"), result.OutputPath);
+        Assert.Equal("already here", File.ReadAllText(dir.File("photo-compressed.png")));
+    }
+
+    [Fact]
+    public async Task Conversion_keeping_the_original_writes_name_compressed_with_the_new_extension()
+    {
+        using var dir = new TempDirectory();
+        var file = WritePng(dir.File("photo.png"), 1000);
         var pipeline = new CompressionPipeline([new FakeCompressor("conv", 1500, MediaFormat.Jpeg)]);
 
         var result = await pipeline.ProcessAsync(
-            file, Overwrite with { TargetFormat = MediaFormat.Jpeg }, TestContext.Current.CancellationToken);
+            file, new CompressionOptions { TargetFormat = MediaFormat.Jpeg, OriginalHandling = OriginalHandling.KeepAlongside }, Ct);
 
         Assert.Equal(CompressionStatus.Converted, result.Status);
-        Assert.Equal(dir.File("a.jpg"), result.OutputPath);
+        Assert.Equal(dir.File("photo-compressed.jpg"), result.OutputPath);
         Assert.True(File.Exists(file));
+    }
+
+    [Fact]
+    public async Task Conversion_without_keeping_the_original_removes_it()
+    {
+        using var dir = new TempDirectory();
+        var file = WritePng(dir.File("photo.png"), 1000);
+        var pipeline = new CompressionPipeline([new FakeCompressor("conv", 1500, MediaFormat.Jpeg)]);
+
+        var result = await pipeline.ProcessAsync(file, Overwrite with { TargetFormat = MediaFormat.Jpeg }, Ct);
+
+        Assert.Equal(CompressionStatus.Converted, result.Status);
+        Assert.Equal(dir.File("photo.jpg"), result.OutputPath);
+        Assert.False(File.Exists(file));
         Assert.Equal(1500, new FileInfo(result.OutputPath!).Length);
     }
 
@@ -94,7 +152,7 @@ public class CompressionPipelineTests
         var file = WritePng(dir.File("a.png"), 100);
         var pipeline = new CompressionPipeline([new FakeCompressor("jpeg-only", 10, MediaFormat.Jpeg)]);
 
-        var result = await pipeline.ProcessAsync(file, Overwrite, TestContext.Current.CancellationToken);
+        var result = await pipeline.ProcessAsync(file, Overwrite, Ct);
 
         Assert.Equal(CompressionStatus.Unsupported, result.Status);
     }
@@ -106,7 +164,7 @@ public class CompressionPipelineTests
         var file = WritePng(dir.File("a.png"), 100);
         var pipeline = new CompressionPipeline([new FakeCompressor("boom", -1)]);
 
-        var result = await pipeline.ProcessAsync(file, Overwrite, TestContext.Current.CancellationToken);
+        var result = await pipeline.ProcessAsync(file, Overwrite, Ct);
 
         Assert.Equal(CompressionStatus.Failed, result.Status);
         Assert.Contains("boom failed", result.Message);
@@ -122,19 +180,27 @@ public class CompressionPipelineTests
     }
 
     /// <summary>Writes a file of a fixed size; a negative size makes it throw.</summary>
-    private sealed class FakeCompressor(string id, int outputSize, MediaFormat output = MediaFormat.Png) : ICompressor
+    private sealed class FakeCompressor(string id, int outputSize, MediaFormat output = MediaFormat.Png, bool isOptimizer = false)
+        : ICompressor
     {
         public string Id => id;
         public string DisplayName => id;
+        public bool IsAvailable => Available;
+        public bool IsOptimizer => isOptimizer;
+        public bool Available { get; init; } = true;
+        public bool OnlyLosslessSameFormat { get; init; }
+        public MediaFormat? LastInputFormat { get; private set; }
 
         public bool CanHandle(MediaFormat inputFormat, MediaFormat outputFormat, CompressionOptions options) =>
-            outputFormat == output;
+            OnlyLosslessSameFormat
+                ? inputFormat == outputFormat && options.Mode == CompressionMode.Lossless
+                : outputFormat == output;
 
-        public Task CompressAsync(string inputPath, string outputPath, MediaFormat outputFormat,
-            CompressionOptions options, CancellationToken cancellationToken)
+        public Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
         {
             if (outputSize < 0) throw new InvalidOperationException($"{id} failed");
-            File.WriteAllBytes(outputPath, new byte[outputSize]);
+            LastInputFormat = job.InputFormat;
+            File.WriteAllBytes(job.OutputPath, new byte[outputSize]);
             return Task.CompletedTask;
         }
     }

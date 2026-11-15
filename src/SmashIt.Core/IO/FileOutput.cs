@@ -1,4 +1,5 @@
 using Microsoft.VisualBasic.FileIO;
+using SmashIt.Core.Compression;
 
 namespace SmashIt.Core.IO;
 
@@ -8,23 +9,33 @@ internal static class FileOutput
     /// Puts <paramref name="newFile"/> in place of <paramref name="original"/>.
     /// The new file is first moved next to the original (same volume) so the final swap cannot fail half-way.
     /// </summary>
-    public static void Replace(string original, string newFile, bool sendOriginalToRecycleBin)
+    public static void Replace(string original, string newFile, OriginalHandling handling)
     {
         var staging = original + ".smashit-tmp";
         File.Move(newFile, staging, overwrite: true);
         try
         {
-            if (sendOriginalToRecycleBin)
-                FileSystem.DeleteFile(original, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-            else
-                File.Delete(original);
-
+            DisposeOriginal(original, handling);
             File.Move(staging, original);
         }
         catch
         {
             if (File.Exists(staging) && File.Exists(original)) File.Delete(staging);
             throw;
+        }
+    }
+
+    /// <summary>Sends the original to the Recycle Bin or deletes it, depending on <paramref name="handling"/>.</summary>
+    public static void DisposeOriginal(string original, OriginalHandling handling)
+    {
+        switch (handling)
+        {
+            case OriginalHandling.RecycleBin:
+                FileSystem.DeleteFile(original, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                break;
+            case OriginalHandling.Overwrite:
+                File.Delete(original);
+                break;
         }
     }
 

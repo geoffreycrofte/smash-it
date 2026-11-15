@@ -3,10 +3,21 @@
   <PropertyGroup>
     <TargetFramework>$(SmashItTargetFramework)</TargetFramework>
     <RootNamespace>SmashIt.Core</RootNamespace>
+    <SmashItToolsDir>$(MSBuildThisFileDirectory)..\..\tools\bin\</SmashItToolsDir>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="SmashIt.Core.Tests" />
   </ItemGroup>
+
+  <!-- Bundled third-party tools (fetched by tools/fetch-tools.ps1) land in <output>\tools\. -->
+  <ItemGroup>
+    <Content Include="$(SmashItToolsDir)**\*" Link="tools\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+  <Target Name="WarnMissingTools" BeforeTargets="Build" Condition="!Exists('$(SmashItToolsDir)oxipng.exe')">
+    <Warning Text="Outils tiers absents (oxipng, jpegtran, cwebp, avifenc) : lancez tools\fetch-tools.ps1. Seul le moteur Windows (WIC) sera disponible." />
+  </Target>
 
 </Project>

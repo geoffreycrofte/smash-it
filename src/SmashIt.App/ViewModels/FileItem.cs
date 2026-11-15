@@ -26,7 +26,7 @@ public sealed partial class FileItem(string path) : ObservableObject
     public partial FileItemState State { get; set; } = FileItemState.Pending;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText), nameof(StatusGlyph))]
+    [NotifyPropertyChangedFor(nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText), nameof(StatusGlyph), nameof(Message))]
     public partial CompressionResult? Result { get; set; }
 
     public bool IsWorking => State == FileItemState.Working;
@@ -67,7 +67,12 @@ public sealed partial class FileItem(string path) : ObservableObject
         },
     };
 
-    public string? Message => Result?.Message;
+    public string? Message => Result switch
+    {
+        null => null,
+        { OutputPath: { } output } when output != Path => $"→ {System.IO.Path.GetFileName(output)}" + (Result.Message is { } m ? Environment.NewLine + m : ""),
+        _ => Result.Message,
+    };
 
     private static long SafeLength(string path)
     {

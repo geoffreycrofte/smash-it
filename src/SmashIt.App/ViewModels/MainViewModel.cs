@@ -13,6 +13,11 @@ public sealed record OutputFormatChoice(string Label, MediaFormat? Format)
     public override string ToString() => Label;
 }
 
+public sealed record EffortChoice(string Label, CompressionEffort Effort)
+{
+    public override string ToString() => Label;
+}
+
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly CompressionPipeline _pipeline = SmashItEngine.CreateDefaultPipeline();
@@ -26,10 +31,19 @@ public sealed partial class MainViewModel : ObservableObject
         new("Conserver le format", null),
         new("JPEG", MediaFormat.Jpeg),
         new("PNG", MediaFormat.Png),
+        new("WebP", MediaFormat.WebP),
+        new("AVIF", MediaFormat.Avif),
         new("HEIC", MediaFormat.Heif),
         new("TIFF", MediaFormat.Tiff),
         new("JPEG XR", MediaFormat.JpegXr),
         new("BMP", MediaFormat.Bmp),
+    ];
+
+    public IReadOnlyList<EffortChoice> Efforts { get; } =
+    [
+        new("Rapide", CompressionEffort.Fast),
+        new("Équilibré", CompressionEffort.Balanced),
+        new("Maximum", CompressionEffort.Maximum),
     ];
 
     [ObservableProperty]
@@ -42,7 +56,13 @@ public sealed partial class MainViewModel : ObservableObject
     public partial OutputFormatChoice SelectedOutputFormat { get; set; }
 
     [ObservableProperty]
+    public partial EffortChoice SelectedEffort { get; set; }
+
+    [ObservableProperty]
     public partial bool KeepOriginal { get; set; }
+
+    [ObservableProperty]
+    public partial bool StripMetadata { get; set; } = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
@@ -56,6 +76,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         SelectedOutputFormat = OutputFormats[0];
+        SelectedEffort = Efforts[1];
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
     }
 
@@ -63,7 +84,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Mode = IsLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
         Quality = (int)Math.Round(Quality),
+        Effort = SelectedEffort.Effort,
         TargetFormat = SelectedOutputFormat.Format,
+        StripMetadata = StripMetadata,
         OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
     };
 
