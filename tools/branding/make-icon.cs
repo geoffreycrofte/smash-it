@@ -5,14 +5,18 @@
 // Small sizes (16–40 px) use a vector bear head drawn here: the detailed artwork turns to mush below 48 px.
 // Large sizes (48–256 px) use the detailed artwork (assets/branding/smash-it-icon.png).
 //
+// It also writes the title bar icon (from the mascot head) and the splash screen (the full mascot),
+// both run through oxipng when tools/bin/oxipng.exe is there (run tools/fetch-tools.ps1 first).
+//
 // usage (from the repo root):
-//   dotnet run tools/branding/make-icon.cs -- assets/branding/smash-it-icon.png assets/branding/mascot.png src/SmashIt.App/Assets assets/branding
+//   dotnet run tools/branding/make-icon.cs -- assets/branding/smash-it-icon.png assets/branding/mascot.png assets/branding/mascot-head.png src/SmashIt.App/Assets assets/branding
 #pragma warning disable CA1416 // Windows only
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
-var (artworkPath, mascotPath, outDir, brandingDir) = (args[0], args[1], args[2], args[3]);
+var (artworkPath, mascotPath, headPath, outDir, brandingDir) = (args[0], args[1], args[2], args[3], args[4]);
 Directory.CreateDirectory(outDir);
 Directory.CreateDirectory(brandingDir);
 
@@ -25,13 +29,25 @@ foreach (var size in smallSizes)
 {
     using var head = DrawHead(size);
     entries.Add((size, Png(head)));
-    if (size == 32) head.Save(Path.Combine(outDir, "SmashIt-head-32.png"), ImageFormat.Png);
 }
 foreach (var size in largeSizes)
 {
     using var scaled = Downscale(artwork, size);
     entries.Add((size, Png(scaled)));
 }
+// Title bar icon: the mascot head, shown at 18 px; 72 px keeps it sharp up to 400 % scale.
+var titleBarPath = Path.Combine(outDir, "SmashIt-titlebar.png");
+using (var headArt = new Bitmap(headPath))
+using (var titleBar = Downscale(headArt, 72))
+    titleBar.Save(titleBarPath, ImageFormat.Png);
+
+// Splash screen: the full mascot, 300 px tall on screen, so 600 px for 200 % scale.
+var splashPath = Path.Combine(outDir, "SmashIt-splash.png");
+using (var mascot = new Bitmap(mascotPath))
+using (var splash = Downscale(mascot, (int)Math.Round(600.0 * mascot.Width / mascot.Height), (double)mascot.Height / mascot.Width))
+    splash.Save(splashPath, ImageFormat.Png);
+
+Optimize(titleBarPath, splashPath);
 using (var headLarge = DrawHead(256)) headLarge.Save(Path.Combine(brandingDir, "smash-it-head.png"), ImageFormat.Png);
 WriteIco(Path.Combine(outDir, "SmashIt.ico"), entries);
 
@@ -44,6 +60,21 @@ SavePreview(Path.Combine(brandingDir, "icon-preview.png"), entries);
 Console.WriteLine($"Wrote {Path.Combine(outDir, "SmashIt.ico")} ({entries.Count} sizes)");
 
 // ---------------------------------------------------------------------------------------------
+
+/// <summary>Losslessly shrinks the PNGs shipped with the app, when oxipng is available.</summary>
+static void Optimize(params string[] paths)
+{
+    var oxipng = Path.Combine("tools", "bin", "oxipng.exe");
+    if (!File.Exists(oxipng))
+    {
+        Console.WriteLine("oxipng not found: PNGs left unoptimized (run tools/fetch-tools.ps1).");
+        return;
+    }
+    var psi = new ProcessStartInfo(oxipng) { UseShellExecute = false };
+    foreach (var arg in (string[])["-o", "max", "--strip", "safe", "--alpha", .. paths]) psi.ArgumentList.Add(arg);
+    using var process = Process.Start(psi)!;
+    process.WaitForExit();
+}
 
 /// <summary>The bear head, designed on a 256 grid and drawn natively at <paramref name="size"/> pixels.</summary>
 static Bitmap DrawHead(int size)

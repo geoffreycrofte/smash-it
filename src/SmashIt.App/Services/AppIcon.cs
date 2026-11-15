@@ -14,7 +14,7 @@ internal static class AppIcon
         var ico = AssetPath("SmashIt.ico");
         if (File.Exists(ico)) window.SetIcon(ico);
 
-        var head = AssetPath("SmashIt-head-32.png");
+        var head = AssetPath("SmashIt-titlebar.png");
         if (File.Exists(head)) titleBarIcon.Source = new BitmapImage(new Uri(head));
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -21,20 +22,19 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1040, 720));
+        CenterOnScreen();
         AppIcon.Apply(AppWindow, TitleBarIcon);
-
-        // Keep the settings button clear of the minimize/maximize/close buttons, whatever the DPI.
-        Root.Loaded += (_, _) => FitCaptionButtons();
-        AppWindow.Changed += (_, _) => FitCaptionButtons();
 
         PreviewCache.Clean(includeCurrent: false);
         Closed += (_, _) => PreviewCache.Clean(includeCurrent: true);
     }
 
-    private void FitCaptionButtons()
+    /// <summary>Opens where the splash screen was: the middle of the screen.</summary>
+    private void CenterOnScreen()
     {
-        if (Root.XamlRoot is not { RasterizationScale: > 0 } root) return;
-        CaptionButtonsColumn.Width = new GridLength(AppWindow.TitleBar.RightInset / root.RasterizationScale + 4);
+        var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
+        var size = AppWindow.Size;
+        AppWindow.Move(new PointInt32(area.X + (area.Width - size.Width) / 2, area.Y + (area.Height - size.Height) / 2));
     }
 
     private void OnPreviewClick(object sender, RoutedEventArgs e)
