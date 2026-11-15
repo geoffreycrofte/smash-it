@@ -11,6 +11,23 @@ result, and only touches your file when it actually got smaller. Originals go to
 
 > Status: early development (v0.1). Image compression works today; see the roadmap below for what's coming.
 
+## Screenshots
+
+![Eight photos compressed with lossy mode at quality 85: 12.4 MB saved out of 31.9 MB](docs/screenshots/files.png)
+
+| Settings, one section per kind of file | Before / after, with a draggable split |
+|---|---|
+| ![The settings panel open next to the file list](docs/screenshots/settings.png) | ![Before/after comparison of a fjord photo, 1.98 MB down to 1.07 MB](docs/screenshots/before-after.png) |
+
+<details>
+<summary>Splash screen</summary>
+
+![The Smash It bear floating over the Windows 11 desktop at launch](docs/screenshots/splash.png)
+
+</details>
+
+<sub>Demo photos from [Lorem Picsum](https://picsum.photos) (Unsplash License). Splash screen shown over the default Windows 11 wallpaper.</sub>
+
 ## Features
 
 | | Today | Planned |
@@ -24,6 +41,7 @@ result, and only touches your file when it actually got smaller. Originals go to
 | **Originals** | Recycle Bin by default, or kept with the result saved as `name-compressed.ext` | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
 | **Integration** | Drag & drop, `smashit` command line | Explorer right-click menu, custom script engines |
+| **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
 
 ### PDF
 
