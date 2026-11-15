@@ -32,6 +32,15 @@ public enum OriginalHandling
     KeepAlongside,
 }
 
+public enum VideoCodec
+{
+    /// <summary>Plays everywhere.</summary>
+    H264,
+
+    /// <summary>About 40 % smaller at the same quality; needs a HEVC-capable player.</summary>
+    Hevc,
+}
+
 public sealed record CompressionOptions
 {
     public CompressionMode Mode { get; init; } = CompressionMode.Lossless;
@@ -41,8 +50,13 @@ public sealed record CompressionOptions
 
     public CompressionEffort Effort { get; init; } = CompressionEffort.Balanced;
 
-    /// <summary>Output format; <c>null</c> keeps the input format.</summary>
+    /// <summary>
+    /// Output format; <c>null</c> keeps the input format. Ignored for files of another kind
+    /// (an image target does not apply to PDFs or videos).
+    /// </summary>
     public MediaFormat? TargetFormat { get; init; }
+
+    public VideoCodec VideoCodec { get; init; } = VideoCodec.H264;
 
     /// <summary>
     /// Removes EXIF, XMP, IPTC and comments. The color profile and the orientation are always kept,

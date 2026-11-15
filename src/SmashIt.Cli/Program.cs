@@ -34,6 +34,16 @@ for (var i = 0; i < args.Length; i++)
         case "--keep":
             options = options with { OriginalHandling = OriginalHandling.KeepAlongside };
             break;
+        case "--codec" when i + 1 < args.Length:
+            VideoCodec? codec = args[++i].ToLowerInvariant() switch
+            {
+                "h264" or "h.264" or "avc" => VideoCodec.H264,
+                "hevc" or "h265" or "h.265" => VideoCodec.Hevc,
+                _ => null,
+            };
+            if (codec is null) return Fail($"Codec inconnu : {args[i]} (h264, hevc)");
+            options = options with { VideoCodec = codec.Value };
+            break;
         case "--keep-metadata":
             options = options with { StripMetadata = false };
             break;
@@ -118,7 +128,7 @@ static int Fail(string message)
 }
 
 static void PrintHelp() => Console.WriteLine("""
-    Smash It — compression d'images, de vidéos et de PDF
+    Smash It — compression d'images, de PDF et de vidéos
 
     Usage : smashit [options] <fichiers ou dossiers…>
 
@@ -127,6 +137,7 @@ static void PrintHelp() => Console.WriteLine("""
       -q, --quality <n>    Qualité 1–100 (active le mode avec pertes)
       -t, --to <format>    Convertit vers jpg, png, webp, avif, heic, tif, jxr, bmp
       -e, --effort <n>     fast, balanced (par défaut) ou max
+      --codec <codec>      Vidéo : h264 (par défaut) ou hevc ; nécessite --lossy ou -q
       --keep               Garde l'original, écrit « nom-compressed.ext » à côté
       --no-recycle         Supprime l'original au lieu de l'envoyer à la Corbeille
       --keep-metadata      Conserve EXIF, XMP, IPTC et commentaires

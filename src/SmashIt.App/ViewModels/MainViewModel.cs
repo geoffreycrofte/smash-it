@@ -18,10 +18,18 @@ public sealed record EffortChoice(string Label, CompressionEffort Effort)
     public override string ToString() => Label;
 }
 
+public sealed record VideoCodecChoice(string Label, VideoCodec Codec)
+{
+    public override string ToString() => Label;
+}
+
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly CompressionPipeline _pipeline = SmashItEngine.CreateDefaultPipeline();
     private readonly SemaphoreSlim _slots = new(Math.Max(1, Environment.ProcessorCount - 1));
+
+    // GPU encoders accept few simultaneous sessions, and one video already keeps the machine busy.
+    private readonly SemaphoreSlim _videoSlots = new(1);
     private CancellationTokenSource _cts = new();
 
     public ObservableCollection<FileItem> Files { get; } = [];
@@ -45,6 +53,15 @@ public sealed partial class MainViewModel : ObservableObject
         new("Équilibré", CompressionEffort.Balanced),
         new("Maximum", CompressionEffort.Maximum),
     ];
+
+    public IReadOnlyList<VideoCodecChoice> VideoCodecs { get; } =
+    [
+        new("H.264 (compatible partout)", VideoCodec.H264),
+        new("HEVC / H.265 (plus léger)", VideoCodec.Hevc),
+    ];
+
+    [ObservableProperty]
+    public partial VideoCodecChoice SelectedVideoCodec { get; set; }
 
     [ObservableProperty]
     public partial bool IsLossy { get; set; }
@@ -77,6 +94,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         SelectedOutputFormat = OutputFormats[0];
         SelectedEffort = Efforts[1];
+        SelectedVideoCodec = VideoCodecs[0];
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
     }
 
@@ -85,6 +103,7 @@ public sealed partial class MainViewModel : ObservableObject
         Mode = IsLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
         Quality = (int)Math.Round(Quality),
         Effort = SelectedEffort.Effort,
+        VideoCodec = SelectedVideoCodec.Codec,
         TargetFormat = SelectedOutputFormat.Format,
         StripMetadata = StripMetadata,
         OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
@@ -127,9 +146,11 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task ProcessAsync(FileItem item, CompressionOptions options, CancellationToken ct)
     {
         item.State = FileItemState.Pending;
+        item.Progress = 0;
+        var slots = item.Kind == MediaKind.Video ? _videoSlots : _slots;
         try
         {
-            await _slots.WaitAsync(ct);
+            await slots.WaitAsync(ct);
         }
         catch (OperationCanceledException)
         {
@@ -139,7 +160,9 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             item.State = FileItemState.Working;
-            var result = await Task.Run(() => _pipeline.ProcessAsync(item.Path, options, ct), ct);
+            // Created on the UI thread: reports come back on it.
+            var progress = new Progress<double>(value => item.Progress = value);
+            var result = await Task.Run(() => _pipeline.ProcessAsync(item.Path, options, ct, progress), ct);
             item.Result = result;
             item.State = result.Status switch
             {
@@ -159,7 +182,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         finally
         {
-            _slots.Release();
+            slots.Release();
             UpdateSummary();
         }
     }

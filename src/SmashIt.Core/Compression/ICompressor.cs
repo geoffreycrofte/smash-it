@@ -8,7 +8,11 @@ public sealed record CompressionJob(
     MediaFormat InputFormat,
     string OutputPath,
     MediaFormat OutputFormat,
-    CompressionOptions Options);
+    CompressionOptions Options)
+{
+    /// <summary>Progress from 0 to 100, reported by long-running engines (video).</summary>
+    public IProgress<double>? Progress { get; init; }
+}
 
 /// <summary>
 /// A compression engine (WIC, oxipng, jpegtran, a custom script…).

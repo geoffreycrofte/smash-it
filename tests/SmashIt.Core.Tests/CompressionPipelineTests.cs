@@ -146,6 +146,21 @@ public class CompressionPipelineTests
     }
 
     [Fact]
+    public async Task A_conversion_not_asked_for_is_dropped_when_larger()
+    {
+        using var dir = new TempDirectory();
+        var mkv = dir.File("clip.mkv");
+        File.WriteAllBytes(mkv, [0x1A, 0x45, 0xDF, 0xA3, .. new byte[996]]);
+        var pipeline = new CompressionPipeline([new FakeCompressor("video", 1500, MediaFormat.Mp4)]);
+
+        var result = await pipeline.ProcessAsync(mkv, Overwrite, Ct);
+
+        Assert.Equal(CompressionStatus.AlreadyOptimal, result.Status);
+        Assert.True(File.Exists(mkv));
+        Assert.False(File.Exists(dir.File("clip.mp4")));
+    }
+
+    [Fact]
     public async Task Reports_unsupported_when_no_compressor_matches()
     {
         using var dir = new TempDirectory();

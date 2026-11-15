@@ -76,6 +76,7 @@ internal static class PngMetadataIO
         using var output = new MemoryStream(file.Length + added.Sum(c => c.Data.Length + 12));
         output.Write(Signature);
         Span<byte> header = stackalloc byte[8];
+        Span<byte> crcBytes = stackalloc byte[4];
         foreach (var (type, data) in chunks)
         {
             BinaryPrimitives.WriteUInt32BigEndian(header, (uint)data.Length);
@@ -83,7 +84,6 @@ internal static class PngMetadataIO
             output.Write(header);
             output.Write(data);
             var crc = Crc32.Compute(header[4..], data);
-            Span<byte> crcBytes = stackalloc byte[4];
             BinaryPrimitives.WriteUInt32BigEndian(crcBytes, crc);
             output.Write(crcBytes);
         }

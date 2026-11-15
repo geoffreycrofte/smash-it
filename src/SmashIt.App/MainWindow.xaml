@@ -62,10 +62,15 @@
                 ToolTipService.ToolTip="Plus d'effort : fichiers plus petits, compression plus lente." />
 
       <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal" Spacing="24">
-        <CheckBox Content="Supprimer les métadonnées"
+        <ComboBox Header="Codec vidéo" MinWidth="220"
+                  ItemsSource="{x:Bind ViewModel.VideoCodecs}"
+                  SelectedItem="{x:Bind ViewModel.SelectedVideoCodec, Mode=TwoWay}"
+                  DisplayMemberPath="Label"
+                  ToolTipService.ToolTip="Les vidéos sont réencodées en MP4 avec l'encodeur de Windows (mode « Avec pertes » uniquement)." />
+        <CheckBox Content="Supprimer les métadonnées" VerticalAlignment="Bottom"
                   IsChecked="{x:Bind ViewModel.StripMetadata, Mode=TwoWay}"
                   ToolTipService.ToolTip="Retire EXIF (appareil, date, GPS…), XMP, IPTC et commentaires. Le profil couleur et l'orientation sont toujours conservés." />
-        <CheckBox Content="Garder les originaux"
+        <CheckBox Content="Garder les originaux" VerticalAlignment="Bottom"
                   IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}"
                   ToolTipService.ToolTip="Les fichiers compressés sont enregistrés à côté sous le nom « nom-compressed.ext ». Sinon, les originaux partent dans la Corbeille." />
       </StackPanel>
@@ -132,8 +137,8 @@
       <StackPanel Grid.Row="1" Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center"
                   Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
         <FontIcon Glyph="&#xE898;" FontSize="48" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-        <TextBlock Text="Déposez vos images et PDF ici" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
-        <TextBlock Text="Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP, GIF, PDF."
+        <TextBlock Text="Déposez vos images, PDF et vidéos ici" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+        <TextBlock Text="Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, PDF, MP4, MOV, MKV, AVI."
                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
       </StackPanel>
     </Grid>

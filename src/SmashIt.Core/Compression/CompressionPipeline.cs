@@ -22,19 +22,26 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
     public async Task<CompressionResult> ProcessAsync(
         string path,
         CompressionOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<double>? progress = null)
     {
         var originalSize = new FileInfo(path).Length;
         var inputFormat = FormatDetector.DetectFile(path);
         if (inputFormat == MediaFormat.Unknown)
             return new(path, CompressionStatus.Unsupported, originalSize, originalSize, Message: "Format non reconnu.");
 
-        var outputFormat = options.TargetFormat ?? inputFormat;
+        var outputFormat = MediaFormatInfo.ResolveOutput(inputFormat, options.TargetFormat);
         var isConversion = outputFormat != inputFormat;
+        // A conversion the user asked for is kept even if larger; one forced on us (MKV → MP4) is not.
+        var isRequestedConversion = isConversion && options.TargetFormat == outputFormat;
         var available = _compressors.Where(c => c.IsAvailable).ToList();
         var candidates = available.Where(c => c.CanHandle(inputFormat, outputFormat, options)).ToList();
         if (candidates.Count == 0)
         {
+            if (MediaFormatInfo.KindOf(inputFormat) == MediaKind.Video && options.Mode == CompressionMode.Lossless)
+                return new(path, CompressionStatus.Unsupported, originalSize, originalSize,
+                    Message: "Une vidéo ne se compresse qu'avec pertes : activez « Avec pertes ».");
+
             var mode = options.Mode == CompressionMode.Lossless ? "sans perte" : "avec pertes";
             var what = isConversion ? $"{inputFormat} → {outputFormat}" : $"{inputFormat} ({mode})";
             return new(path, CompressionStatus.Unsupported, originalSize, originalSize,
@@ -52,7 +59,10 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
             (string Path, long Size, ICompressor Compressor)? best = null;
             foreach (var compressor in candidates)
             {
-                var job = new CompressionJob(path, inputFormat, Path.Combine(workDir, compressor.Id + extension), outputFormat, options);
+                var job = new CompressionJob(path, inputFormat, Path.Combine(workDir, compressor.Id + extension), outputFormat, options)
+                {
+                    Progress = candidates.Count == 1 ? progress : null,
+                };
                 var size = await TryRunAsync(compressor, job, errors, cancellationToken).ConfigureAwait(false);
                 if (size > 0 && (best is null || size < best.Value.Size))
                     best = (job.OutputPath, size, compressor);
@@ -107,7 +117,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
 
             // 4. Output.
             var compressorId = string.Join("+", usedIds);
-            if (!isConversion && bestSize >= originalSize)
+            if (!isRequestedConversion && bestSize >= originalSize)
                 return new(path, CompressionStatus.AlreadyOptimal, originalSize, originalSize,
                     CompressorId: compressorId, Message: Note(notes));
 

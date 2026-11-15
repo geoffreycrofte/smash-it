@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using SmashIt.Core.Compression;
+using SmashIt.Core.Formats;
 
 namespace SmashIt.App.ViewModels;
 
@@ -20,6 +21,13 @@ public sealed partial class FileItem(string path) : ObservableObject
     public string Name { get; } = System.IO.Path.GetFileName(path);
 
     public string Folder { get; } = System.IO.Path.GetDirectoryName(path) ?? string.Empty;
+
+    public MediaKind Kind { get; } = MediaFormatInfo.KindOf(MediaFormatInfo.FromExtension(path));
+
+    /// <summary>0–100 while a long job (video) runs.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GainText))]
+    public partial double Progress { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWorking), nameof(StatusGlyph), nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText))]
@@ -53,7 +61,7 @@ public sealed partial class FileItem(string path) : ObservableObject
     public string GainText => State switch
     {
         FileItemState.Pending => "En attente",
-        FileItemState.Working => "Compression…",
+        FileItemState.Working => Progress > 0 ? $"Compression… {Progress:0} %" : "Compression…",
         _ => Result?.Status switch
         {
             CompressionStatus.Optimized => $"−{Result.SavedRatio * 100:0.#} %",
