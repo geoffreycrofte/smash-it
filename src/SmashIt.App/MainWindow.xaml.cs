@@ -21,6 +21,7 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1040, 720));
+        AppIcon.Apply(AppWindow, TitleBarIcon);
 
         // Keep the settings button clear of the minimize/maximize/close buttons, whatever the DPI.
         Root.Loaded += (_, _) => FitCaptionButtons();

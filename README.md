@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/mascot-360.png" alt="Smash It's mascot: an angry black and red bear holding an image, a PDF and a video" width="240">
+</p>
+
 # Smash It
 
 A native Windows app to make images, videos and PDFs smaller — in the spirit of ImageOptim on macOS.

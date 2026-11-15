@@ -39,8 +39,8 @@
         <ColumnDefinition x:Name="CaptionButtonsColumn" Width="140" />
       </Grid.ColumnDefinitions>
       <Grid x:Name="AppTitleBar" Padding="16,0,0,0" Background="Transparent">
-        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-          <FontIcon Glyph="&#xE945;" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <Image x:Name="TitleBarIcon" Width="18" Height="18" />
           <TextBlock Text="Smash It" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
         </StackPanel>
       </Grid>

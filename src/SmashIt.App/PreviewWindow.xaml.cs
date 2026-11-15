@@ -36,6 +36,7 @@ public sealed partial class PreviewWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1100, 780));
+        Services.AppIcon.Apply(AppWindow, TitleBarIcon);
 
         var title = $"Avant / après — {item.Name}";
         Title = title;
