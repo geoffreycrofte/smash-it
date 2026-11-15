@@ -17,6 +17,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+# Windows PowerShell 5.1 writes in the legacy console code page; force UTF-8 so accents and symbols survive.
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 
 $root = $PSScriptRoot
 $bin = Join-Path $root 'bin'
