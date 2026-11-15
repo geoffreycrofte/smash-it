@@ -28,7 +28,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         var originalSize = new FileInfo(path).Length;
         var inputFormat = FormatDetector.DetectFile(path);
         if (inputFormat == MediaFormat.Unknown)
-            return new(path, CompressionStatus.Unsupported, originalSize, originalSize, Message: "Format non reconnu.");
+            return new(path, CompressionStatus.Unsupported, originalSize, originalSize, Message: L10n.T("Unrecognized format.", "Format non reconnu."));
 
         var outputFormat = MediaFormatInfo.ResolveOutput(inputFormat, options.TargetFormat);
         var isConversion = outputFormat != inputFormat;
@@ -40,12 +40,14 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         {
             if (MediaFormatInfo.KindOf(inputFormat) == MediaKind.Video && options.Mode == CompressionMode.Lossless)
                 return new(path, CompressionStatus.Unsupported, originalSize, originalSize,
-                    Message: "Une vidéo ne se compresse qu'avec pertes : activez « Avec pertes ».");
+                    Message: L10n.T(
+                        "Videos can only be compressed lossily: turn on “Lossy”.",
+                        "Une vidéo ne se compresse qu'avec pertes : activez « Avec pertes »."));
 
-            var mode = options.Mode == CompressionMode.Lossless ? "sans perte" : "avec pertes";
+            var mode = options.Mode == CompressionMode.Lossless ? L10n.T("lossless", "sans perte") : L10n.T("lossy", "avec pertes");
             var what = isConversion ? $"{inputFormat} → {outputFormat}" : $"{inputFormat} ({mode})";
             return new(path, CompressionStatus.Unsupported, originalSize, originalSize,
-                Message: $"Aucun moteur disponible pour {what}.");
+                Message: L10n.T($"No engine available for {what}.", $"Aucun moteur disponible pour {what}."));
         }
 
         var workDir = Path.Combine(Path.GetTempPath(), "SmashIt", Guid.NewGuid().ToString("N"));
@@ -70,7 +72,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
 
             if (best is null)
                 return new(path, CompressionStatus.Failed, originalSize, originalSize,
-                    Message: errors.Count > 0 ? string.Join(Environment.NewLine, errors) : "Aucun résultat produit.");
+                    Message: errors.Count > 0 ? string.Join(Environment.NewLine, errors) : L10n.T("No result produced.", "Aucun résultat produit."));
 
             var (bestPath, bestSize, bestCompressor) = best.Value;
             var usedIds = new List<string> { bestCompressor.Id };
@@ -106,13 +108,15 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
                     }
                     catch (InvalidDataException)
                     {
-                        notes.Add("Les métadonnées n'ont pas pu être écrites.");
+                        notes.Add(L10n.T("The metadata could not be written.", "Les métadonnées n'ont pas pu être écrites."));
                     }
                 }
             }
             else if (!options.StripMetadata && !MetadataTransfer.CanPreserve(inputFormat, outputFormat))
             {
-                notes.Add("Les métadonnées ne peuvent pas encore être conservées pour ce format.");
+                notes.Add(L10n.T(
+                    "Metadata can't be kept for this format yet.",
+                    "Les métadonnées ne peuvent pas encore être conservées pour ce format."));
             }
 
             // 4. Output.
@@ -140,7 +144,9 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException)
                 {
-                    notes.Add($"L'original n'a pas pu être supprimé : {ex.Message}");
+                    notes.Add(L10n.T(
+                        $"The original could not be removed: {ex.Message}",
+                        $"L'original n'a pas pu être supprimé : {ex.Message}"));
                 }
             }
             else
@@ -183,7 +189,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         }
         catch (Exception ex)
         {
-            errors.Add($"{compressor.DisplayName} : {ex.Message}");
+            errors.Add(L10n.T($"{compressor.DisplayName}: {ex.Message}", $"{compressor.DisplayName} : {ex.Message}"));
             return 0;
         }
 

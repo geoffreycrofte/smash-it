@@ -25,7 +25,9 @@ internal static class IntermediatePng
             cancellationToken);
 
         if (image.FrameCount > 1)
-            throw new NotSupportedException("Les images animées ou multipages ne sont pas encore prises en charge.");
+            throw new NotSupportedException(L10n.T(
+                "Animated and multi-page images aren't supported yet.",
+                "Les images animées ou multipages ne sont pas encore prises en charge."));
 
         var options = new BitmapPropertySet
         {

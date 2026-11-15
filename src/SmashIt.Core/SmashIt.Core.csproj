@@ -20,4 +20,8 @@
     <Warning Text="Outils tiers absents (oxipng, jpegtran, cwebp, avifenc) : lancez tools\fetch-tools.ps1. Seul le moteur Windows (WIC) sera disponible." />
   </Target>
 
+  <ItemGroup>
+    <Using Include="SmashIt.Core.Localization" />
+  </ItemGroup>
+
 </Project>

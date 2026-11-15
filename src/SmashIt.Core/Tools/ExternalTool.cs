@@ -35,7 +35,9 @@ public static class ExternalTool
         var errors = result.StandardError.Trim();
         var tail = errors.Length > 300 ? "…" + errors[^300..] : errors;
         return new ExternalToolException(
-            $"{Path.GetFileName(executable)} a échoué (code {result.ExitCode}){(tail.Length > 0 ? " : " + tail : ".")}");
+            L10n.T(
+                $"{Path.GetFileName(executable)} failed (code {result.ExitCode}){(tail.Length > 0 ? ": " + tail : ".")}",
+                $"{Path.GetFileName(executable)} a échoué (code {result.ExitCode}){(tail.Length > 0 ? " : " + tail : ".")}"));
     }
 
     /// <summary>Runs a tool and returns its exit code and output, whatever the exit code.</summary>
@@ -51,7 +53,9 @@ public static class ExternalTool
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
 
         using var process = Process.Start(startInfo)
-            ?? throw new ExternalToolException($"Impossible de lancer {Path.GetFileName(executable)}.");
+            ?? throw new ExternalToolException(L10n.T(
+                $"Could not start {Path.GetFileName(executable)}.",
+                $"Impossible de lancer {Path.GetFileName(executable)}."));
         try { process.PriorityClass = ProcessPriorityClass.BelowNormal; }
         catch (InvalidOperationException) { } // already exited
 

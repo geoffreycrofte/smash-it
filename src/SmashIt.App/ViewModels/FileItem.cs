@@ -81,29 +81,31 @@ public sealed partial class FileItem(string path) : ObservableObject
     };
 
     public string OriginalSizeText => Result is null
-        ? SizeFormatter.Format(SafeLength(Path))
-        : SizeFormatter.Format(Result.OriginalSize);
+        ? L10n.Size(SafeLength(Path))
+        : L10n.Size(Result.OriginalSize);
 
     public string FinalSizeText => Result?.Status switch
     {
-        CompressionStatus.Optimized or CompressionStatus.Converted => SizeFormatter.Format(Result.FinalSize),
+        CompressionStatus.Optimized or CompressionStatus.Converted => L10n.Size(Result.FinalSize),
         _ => "—",
     };
 
     public string GainText => State switch
     {
-        FileItemState.Pending => "En attente",
-        FileItemState.Working => Progress > 0 ? $"Compression… {Progress:0} %" : "Compression…",
+        FileItemState.Pending => L10n.T("Waiting", "En attente"),
+        FileItemState.Working => Progress > 0
+            ? $"{L10n.T("Compressing…", "Compression…")} {L10n.Percent(Progress / 100)}"
+            : L10n.T("Compressing…", "Compression…"),
         _ => Result?.Status switch
         {
-            CompressionStatus.Optimized => $"−{Result.SavedRatio * 100:0.#} %",
+            CompressionStatus.Optimized => $"−{L10n.Percent(Result.SavedRatio)}",
             CompressionStatus.Converted => Result.SavedRatio >= 0
-                ? $"Converti, −{Result.SavedRatio * 100:0.#} %"
-                : $"Converti, +{-Result.SavedRatio * 100:0.#} %",
-            CompressionStatus.AlreadyOptimal => "Déjà optimal",
-            CompressionStatus.Unsupported => "Non pris en charge",
-            CompressionStatus.Cancelled => "Annulé",
-            _ => "Erreur",
+                ? L10n.T($"Converted, −{L10n.Percent(Result.SavedRatio)}", $"Converti, −{L10n.Percent(Result.SavedRatio)}")
+                : L10n.T($"Converted, +{L10n.Percent(-Result.SavedRatio)}", $"Converti, +{L10n.Percent(-Result.SavedRatio)}"),
+            CompressionStatus.AlreadyOptimal => L10n.T("Already optimal", "Déjà optimal"),
+            CompressionStatus.Unsupported => L10n.T("Not supported", "Non pris en charge"),
+            CompressionStatus.Cancelled => L10n.T("Cancelled", "Annulé"),
+            _ => L10n.T("Error", "Erreur"),
         },
     };
 

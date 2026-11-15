@@ -87,7 +87,7 @@ public static class MetadataTransfer
         {
             MediaFormat.Jpeg => JpegMetadataIO.Write(bytes, metadata),
             MediaFormat.Png => PngMetadataIO.Write(bytes, metadata),
-            _ => throw new NotSupportedException($"Écriture des métadonnées impossible en {format}."),
+            _ => throw new NotSupportedException(L10n.T($"Can't write metadata to {format}.", $"Écriture des métadonnées impossible en {format}.")),
         };
         File.WriteAllBytes(path, result);
     }

@@ -35,13 +35,13 @@ public sealed class PdfCompressor : ICompressor
 
     public async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
     {
-        var qpdf = _qpdf ?? throw new ExternalToolException("qpdf est introuvable.");
+        var qpdf = _qpdf ?? throw new ExternalToolException(L10n.T("qpdf not found.", "qpdf est introuvable."));
         var work = job.OutputPath + ".work";
         Directory.CreateDirectory(work);
         try
         {
             if (await qpdf.IsEncryptedAsync(job.InputPath, cancellationToken))
-                throw new NotSupportedException("PDF chiffré : non pris en charge.");
+                throw new NotSupportedException(L10n.T("Encrypted PDF: not supported.", "PDF chiffré : non pris en charge."));
 
             var pages = await qpdf.CountPagesAsync(job.InputPath, cancellationToken);
             var source = job.InputPath;
@@ -67,7 +67,9 @@ public sealed class PdfCompressor : ICompressor
             ], cancellationToken);
             var document = QpdfJson.Load(json);
             if (document.IsSigned())
-                throw new NotSupportedException("PDF signé : toute modification invaliderait la signature.");
+                throw new NotSupportedException(L10n.T(
+                    "Signed PDF: any change would invalidate the signature.",
+                    "PDF signé : toute modification invaliderait la signature."));
 
             // 3. Lossless JPEG optimization of every image.
             var replacements = new List<(PdfImageStream, string)>();
@@ -98,7 +100,9 @@ public sealed class PdfCompressor : ICompressor
             // 5. Safety checks.
             await qpdf.CheckAsync(job.OutputPath, cancellationToken);
             if (await qpdf.CountPagesAsync(job.OutputPath, cancellationToken) != pages)
-                throw new InvalidDataException("Le PDF produit n'a pas le même nombre de pages : résultat ignoré.");
+                throw new InvalidDataException(L10n.T(
+                    "The new PDF doesn't have the same number of pages: result discarded.",
+                    "Le PDF produit n'a pas le même nombre de pages : résultat ignoré."));
         }
         finally
         {

@@ -34,9 +34,9 @@ internal sealed class QpdfJson
     {
         using var stream = File.OpenRead(path);
         var root = JsonNode.Parse(stream, documentOptions: new JsonDocumentOptions { MaxDepth = 1024 })
-            ?? throw new InvalidDataException("Export JSON de qpdf vide.");
+            ?? throw new InvalidDataException(L10n.T("Empty qpdf JSON export.", "Export JSON de qpdf vide."));
         var objects = root["qpdf"]?.AsArray() is { Count: >= 2 } array ? array[1]?.AsObject() : null;
-        return new QpdfJson(objects ?? throw new InvalidDataException("Export JSON de qpdf inattendu."));
+        return new QpdfJson(objects ?? throw new InvalidDataException(L10n.T("Unexpected qpdf JSON export.", "Export JSON de qpdf inattendu.")));
     }
 
     public IEnumerable<PdfImageStream> Images()

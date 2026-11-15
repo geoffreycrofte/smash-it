@@ -28,7 +28,7 @@ for (var i = 0; i < args.Length; i++)
             break;
         case "-t" or "--to" when i + 1 < args.Length:
             if (!MediaFormatInfo.TryParse(args[++i], out var target))
-                return Fail($"Format inconnu : {args[i]}");
+                return Fail(L10n.T($"Unknown format: {args[i]}", $"Format inconnu : {args[i]}"));
             options = options with { TargetFormat = target };
             break;
         case "--keep":
@@ -41,7 +41,7 @@ for (var i = 0; i < args.Length; i++)
                 "hevc" or "h265" or "h.265" => VideoCodec.Hevc,
                 _ => null,
             };
-            if (codec is null) return Fail($"Codec inconnu : {args[i]} (h264, hevc)");
+            if (codec is null) return Fail(L10n.T($"Unknown codec: {args[i]} (h264, hevc)", $"Codec inconnu : {args[i]} (h264, hevc)"));
             options = options with { VideoCodec = codec.Value };
             break;
         case "--keep-metadata":
@@ -58,14 +58,14 @@ for (var i = 0; i < args.Length; i++)
                 "max" or "maximum" => CompressionEffort.Maximum,
                 _ => null,
             };
-            if (effort is null) return Fail($"Effort inconnu : {args[i]} (fast, balanced, max)");
+            if (effort is null) return Fail(L10n.T($"Unknown effort: {args[i]} (fast, balanced, max)", $"Effort inconnu : {args[i]} (fast, balanced, max)"));
             options = options with { Effort = effort.Value };
             break;
         case "--no-recycle":
             options = options with { OriginalHandling = OriginalHandling.Overwrite };
             break;
         default:
-            if (arg.StartsWith('-')) return Fail($"Option inconnue : {arg}");
+            if (arg.StartsWith('-')) return Fail(L10n.T($"Unknown option: {arg}", $"Option inconnue : {arg}"));
             inputs.Add(arg);
             break;
     }
@@ -99,8 +99,12 @@ var saved = results.Sum(r => r?.SavedBytes ?? 0);
 var total = results.Sum(r => r?.OriginalSize ?? 0);
 Console.WriteLine();
 Console.WriteLine(saved >= 0
-    ? $"Total : {Format.Size(saved)} économisés sur {Format.Size(total)} ({Format.Percent(total > 0 ? (double)saved / total : 0)})."
-    : $"Total : {Format.Size(-saved)} de plus qu'au départ ({Format.Size(total)}).");
+    ? L10n.T(
+        $"Total: {L10n.Size(saved)} saved out of {L10n.Size(total)} ({L10n.Percent(total > 0 ? (double)saved / total : 0)}).",
+        $"Total : {L10n.Size(saved)} économisés sur {L10n.Size(total)} ({L10n.Percent(total > 0 ? (double)saved / total : 0)}).")
+    : L10n.T(
+        $"Total: {L10n.Size(-saved)} more than before ({L10n.Size(total)}).",
+        $"Total : {L10n.Size(-saved)} de plus qu'au départ ({L10n.Size(total)})."));
 return results.Any(r => r?.Status == CompressionStatus.Failed) ? 2 : 0;
 
 static void PrintResult(CompressionResult r)
@@ -109,12 +113,12 @@ static void PrintResult(CompressionResult r)
     var line = r.Status switch
     {
         CompressionStatus.Optimized when r.OutputPath != r.SourcePath =>
-            $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  (-{Format.Percent(r.SavedRatio)})  [{r.CompressorId}]",
-        CompressionStatus.Optimized => $"✔ {name}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  (-{Format.Percent(r.SavedRatio)})  [{r.CompressorId}]",
-        CompressionStatus.Converted => $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {Format.Size(r.OriginalSize)} → {Format.Size(r.FinalSize)}  [{r.CompressorId}]",
-        CompressionStatus.AlreadyOptimal => $"• {name}  déjà optimal",
+            $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {L10n.Size(r.OriginalSize)} → {L10n.Size(r.FinalSize)}  (-{L10n.Percent(r.SavedRatio)})  [{r.CompressorId}]",
+        CompressionStatus.Optimized => $"✔ {name}  {L10n.Size(r.OriginalSize)} → {L10n.Size(r.FinalSize)}  (-{L10n.Percent(r.SavedRatio)})  [{r.CompressorId}]",
+        CompressionStatus.Converted => $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {L10n.Size(r.OriginalSize)} → {L10n.Size(r.FinalSize)}  [{r.CompressorId}]",
+        CompressionStatus.AlreadyOptimal => $"• {name}  {L10n.T("already optimal", "déjà optimal")}",
         CompressionStatus.Unsupported => $"– {name}  {r.Message}",
-        CompressionStatus.Cancelled => $"– {name}  annulé",
+        CompressionStatus.Cancelled => $"– {name}  {L10n.T("cancelled", "annulé")}",
         _ => $"✖ {name}  {r.Message}",
     };
     Console.WriteLine(line);
@@ -127,7 +131,23 @@ static int Fail(string message)
     return 1;
 }
 
-static void PrintHelp() => Console.WriteLine("""
+static void PrintHelp() => Console.WriteLine(L10n.T("""
+    Smash It — image, PDF and video compression
+
+    Usage: smashit [options] <files or folders…>
+
+      --lossless           Lossless (default)
+      --lossy              Lossy
+      -q, --quality <n>    Quality 1–100 (turns on lossy mode)
+      -t, --to <format>    Converts to jpg, png, webp, avif, heic, tif, jxr, bmp
+      -e, --effort <n>     fast, balanced (default) or max
+      --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
+      --keep               Keeps the original, writes "name-compressed.ext" next to it
+      --no-recycle         Deletes the original instead of sending it to the Recycle Bin
+      --keep-metadata      Keeps EXIF, XMP, IPTC and comments
+      --strip-metadata     Removes them (default; color profile and orientation are kept)
+      -h, --help           Shows this help
+    """, """
     Smash It — compression d'images, de PDF et de vidéos
 
     Usage : smashit [options] <fichiers ou dossiers…>
@@ -143,18 +163,4 @@ static void PrintHelp() => Console.WriteLine("""
       --keep-metadata      Conserve EXIF, XMP, IPTC et commentaires
       --strip-metadata     Les supprime (par défaut ; profil couleur et orientation conservés)
       -h, --help           Affiche cette aide
-    """);
-
-internal static class Format
-{
-    public static string Size(long bytes) => bytes switch
-    {
-        < 0 => "-" + Size(-bytes),
-        < 1024 => $"{bytes} o",
-        < 1024 * 1024 => $"{bytes / 1024d:0.#} Ko",
-        < 1024L * 1024 * 1024 => $"{bytes / (1024d * 1024):0.##} Mo",
-        _ => $"{bytes / (1024d * 1024 * 1024):0.##} Go",
-    };
-
-    public static string Percent(double ratio) => $"{ratio * 100:0.#} %";
-}
+    """));

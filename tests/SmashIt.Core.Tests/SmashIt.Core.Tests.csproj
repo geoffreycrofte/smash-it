@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="SmashIt.Core.Localization" />
+  </ItemGroup>
+
 </Project>

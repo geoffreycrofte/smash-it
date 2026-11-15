@@ -11,4 +11,8 @@
     <ProjectReference Include="..\SmashIt.Core\SmashIt.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="SmashIt.Core.Localization" />
+  </ItemGroup>
+
 </Project>

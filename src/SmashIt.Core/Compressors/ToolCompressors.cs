@@ -24,7 +24,7 @@ public abstract class ToolCompressor(string executable) : ICompressor
 
     protected Task RunAsync(IEnumerable<string> arguments, CancellationToken cancellationToken) =>
         ExternalTool.RunAsync(
-            ToolPath ?? throw new ExternalToolException($"{DisplayName} est introuvable."),
+            ToolPath ?? throw new ExternalToolException(L10n.T($"{DisplayName} not found.", $"{DisplayName} est introuvable.")),
             arguments,
             cancellationToken);
 }

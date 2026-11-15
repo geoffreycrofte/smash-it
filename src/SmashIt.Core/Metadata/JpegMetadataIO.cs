@@ -128,10 +128,10 @@ internal static class JpegMetadataIO
             }
             if (pos + 4 > data.Length) break;
             var length = (data[pos + 2] << 8) | data[pos + 3];
-            if (length < 2 || pos + 2 + length > data.Length) throw new InvalidDataException("Segment JPEG tronqué.");
+            if (length < 2 || pos + 2 + length > data.Length) throw new InvalidDataException(L10n.T("Truncated JPEG segment.", "Segment JPEG tronqué."));
             segments.Add(new(marker, data.AsSpan(pos + 4, length - 2).ToArray()));
             pos += 2 + length;
         }
-        throw new InvalidDataException("Fichier JPEG tronqué.");
+        throw new InvalidDataException(L10n.T("Truncated JPEG file.", "Fichier JPEG tronqué."));
     }
 }
