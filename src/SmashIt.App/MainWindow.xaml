@@ -29,28 +29,15 @@
       <RowDefinition Height="48" />
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <!-- Title bar: the drag area is AppTitleBar only, so the settings button stays clickable. -->
-    <Grid>
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition x:Name="CaptionButtonsColumn" Width="140" />
-      </Grid.ColumnDefinitions>
-      <Grid x:Name="AppTitleBar" Padding="16,0,0,0" Background="Transparent">
-        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <Image x:Name="TitleBarIcon" Width="18" Height="18" />
-          <TextBlock Text="Smash It" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
-        </StackPanel>
-      </Grid>
-      <ToggleButton Grid.Column="1" Width="40" Height="32" Padding="0" VerticalAlignment="Center"
-                    Background="Transparent" BorderThickness="0"
-                    IsChecked="{x:Bind ViewModel.IsSettingsOpen, Mode=TwoWay}"
-                    ToolTipService.ToolTip="Réglages"
-                    AutomationProperties.Name="Réglages">
-        <FontIcon Glyph="&#xE713;" FontSize="16" />
-      </ToggleButton>
+    <!-- Title bar -->
+    <Grid x:Name="AppTitleBar" Padding="16,0,0,0" Background="Transparent">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <Image x:Name="TitleBarIcon" Width="18" Height="18" />
+        <TextBlock Text="Smash It" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+      </StackPanel>
     </Grid>
 
     <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" OpenPaneLength="360"
@@ -225,30 +212,45 @@
       </Grid>
     </SplitView>
 
-    <!-- Footer -->
-    <Grid Grid.Row="2" Padding="16,12" ColumnSpacing="8">
+    <!-- Footer: summary, then settings and the actions -->
+    <Grid Grid.Row="2" Padding="16,12,16,4" ColumnSpacing="8">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <TextBlock Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-      <Button Grid.Column="1" Click="OnAddFilesClick">
+      <ToggleButton Grid.Column="1" Margin="0,0,8,0"
+                    IsChecked="{x:Bind ViewModel.IsSettingsOpen, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Réglages"
+                    AutomationProperties.Name="Réglages">
+        <FontIcon Glyph="&#xE713;" FontSize="14" />
+      </ToggleButton>
+      <Button Grid.Column="2" Click="OnAddFilesClick">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <FontIcon Glyph="&#xE710;" FontSize="14" />
           <TextBlock Text="Ajouter" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="2" Command="{x:Bind ViewModel.ReprocessCommand}" ToolTipService.ToolTip="Recompresser avec les réglages actuels">
+      <Button Grid.Column="3" Command="{x:Bind ViewModel.ReprocessCommand}" ToolTipService.ToolTip="Recompresser avec les réglages actuels">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <FontIcon Glyph="&#xE72C;" FontSize="14" />
           <TextBlock Text="Recompresser" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="3" Command="{x:Bind ViewModel.ClearCommand}" ToolTipService.ToolTip="Vider la liste">
+      <Button Grid.Column="4" Command="{x:Bind ViewModel.ClearCommand}" ToolTipService.ToolTip="Vider la liste">
         <FontIcon Glyph="&#xE74D;" FontSize="14" />
       </Button>
     </Grid>
+
+    <!-- Credit -->
+    <TextBlock Grid.Row="3" Margin="16,0,16,8"
+               Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}">
+      <Run Text="Application gratuite proposée par" />
+      <Hyperlink NavigateUri="https://geoffreycrofte.com/project/smash-it" UnderlineStyle="None"
+                 ToolTipService.ToolTip="geoffreycrofte.com/project/smash-it">Crofte Studio</Hyperlink>
+    </TextBlock>
   </Grid>
 </Window>
