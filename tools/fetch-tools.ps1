@@ -51,6 +51,7 @@ $tools = @(
         Sha256  = '1f05bc3ed1585e6b12a8b0c24c8c5f07b1f6d90d01b4b709b331bedc9d6e5838'
         Files   = @('jpegtran.exe')
         License = @{ 'LICENSE.md' = 'libjpeg-turbo.md' }
+        Dlls    = @('jpeg62.dll')
         Needs7z = $true
     }
 )
@@ -107,8 +108,12 @@ foreach ($tool in $tools) {
         $found = Get-ChildItem $extracted -Recurse -Filter $file | Select-Object -First 1
         if (-not $found) { throw "$file introuvable dans $($tool.Name)." }
         Copy-Item $found.FullName $bin -Force
-        # DLLs the tool depends on sit next to it (libjpeg-turbo's jpeg62.dll…).
-        Get-ChildItem $found.DirectoryName -Filter *.dll | Copy-Item -Destination $bin -Force
+        # DLLs the tool depends on sit next to it (jpegtran needs jpeg62.dll).
+        foreach ($dll in @($tool.Dlls | Where-Object { $_ })) {
+            $dllPath = Join-Path $found.DirectoryName $dll
+            if (-not (Test-Path $dllPath)) { throw "$dll introuvable dans $($tool.Name)." }
+            Copy-Item $dllPath $bin -Force
+        }
     }
     foreach ($entry in $tool.License.GetEnumerator()) {
         $found = Get-ChildItem $extracted -Recurse -Filter $entry.Key | Select-Object -First 1
