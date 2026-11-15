@@ -1,0 +1,12 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmashIt.App/SmashIt.App.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="src/SmashIt.Cli/SmashIt.Cli.csproj" />
+    <Project Path="src/SmashIt.Core/SmashIt.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmashIt.Core.Tests/SmashIt.Core.Tests.csproj" />
+  </Folder>
+</Solution>

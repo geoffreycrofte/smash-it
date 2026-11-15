@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(SmashItTargetFramework)</TargetFramework>
+    <RootNamespace>SmashIt.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SmashIt.Core.Tests" />
+  </ItemGroup>
+
+</Project>
