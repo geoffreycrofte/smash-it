@@ -100,7 +100,7 @@ internal static class PngMetadataIO
         {
             var length = BinaryPrimitives.ReadUInt32BigEndian(file.AsSpan(pos));
             if (length > int.MaxValue || pos + 12 + (long)length > file.Length)
-                throw new InvalidDataException("Bloc PNG tronqué.");
+                throw new InvalidDataException(L10n.T("Truncated PNG chunk.", "Bloc PNG tronqué."));
             var type = Encoding.ASCII.GetString(file, pos + 4, 4);
             chunks.Add(new(type, file.AsSpan(pos + 8, (int)length).ToArray()));
             pos += 12 + (int)length;

@@ -57,7 +57,7 @@ public class VideoCompressorTests
             .ProcessAsync(video, new CompressionOptions(), Ct);
 
         Assert.Equal(CompressionStatus.Unsupported, result.Status);
-        Assert.Contains("Avec pertes", result.Message);
+        Assert.Contains("Lossy", result.Message);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class VideoCompressorTests
         }
         catch (NotSupportedException ex)
         {
-            Assert.Skip($"Pas d'encodeur HEVC sur cette machine : {ex.Message}");
+            Assert.Skip($"No HEVC encoder on this machine: {ex.Message}");
         }
 
         Assert.True(new FileInfo(hevc).Length < new FileInfo(h264).Length);

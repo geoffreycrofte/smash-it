@@ -14,6 +14,7 @@ public static class Program
     private static void Main()
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
+        L10n.Use(AppSettings.Current.Language);
         App.Splash = SplashScreen.TryShow();
 
         Application.Start(_ =>

@@ -9,18 +9,45 @@ using SmashIt.Core.IO;
 
 namespace SmashIt.App.ViewModels;
 
-public sealed record OutputFormatChoice(string Label, MediaFormat? Format)
+// Labels are read when a window binds them, so they follow the current language.
+
+public sealed record OutputFormatChoice(string? Name, MediaFormat? Format)
 {
+    public string Label => Name ?? L10n.T("Keep the format", "Conserver le format");
+
     public override string ToString() => Label;
 }
 
-public sealed record EffortChoice(string Label, CompressionEffort Effort)
+public sealed record EffortChoice(CompressionEffort Effort)
 {
+    public string Label => Effort switch
+    {
+        CompressionEffort.Fast => L10n.T("Fast", "Rapide"),
+        CompressionEffort.Maximum => L10n.T("Maximum", "Maximum"),
+        _ => L10n.T("Balanced", "Équilibré"),
+    };
+
     public override string ToString() => Label;
 }
 
-public sealed record VideoCodecChoice(string Label, VideoCodec Codec)
+public sealed record VideoCodecChoice(VideoCodec Codec)
 {
+    public string Label => Codec == VideoCodec.Hevc
+        ? L10n.T("HEVC / H.265 (smaller)", "HEVC / H.265 (plus léger)")
+        : L10n.T("H.264 (plays everywhere)", "H.264 (compatible partout)");
+
+    public override string ToString() => Label;
+}
+
+public sealed record LanguageChoice(AppLanguage Language)
+{
+    public string Label => Language switch
+    {
+        AppLanguage.English => "English",
+        AppLanguage.French => "Français",
+        _ => L10n.T("Automatic (Windows language)", "Automatique (langue de Windows)"),
+    };
+
     public override string ToString() => Label;
 }
 
@@ -37,7 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public IReadOnlyList<OutputFormatChoice> OutputFormats { get; } =
     [
-        new("Conserver le format", null),
+        new(null, null),
         new("JPEG", MediaFormat.Jpeg),
         new("PNG", MediaFormat.Png),
         new("WebP", MediaFormat.WebP),
@@ -50,16 +77,29 @@ public sealed partial class MainViewModel : ObservableObject
 
     public IReadOnlyList<EffortChoice> Efforts { get; } =
     [
-        new("Rapide", CompressionEffort.Fast),
-        new("Équilibré", CompressionEffort.Balanced),
-        new("Maximum", CompressionEffort.Maximum),
+        new(CompressionEffort.Fast),
+        new(CompressionEffort.Balanced),
+        new(CompressionEffort.Maximum),
     ];
 
     public IReadOnlyList<VideoCodecChoice> VideoCodecs { get; } =
     [
-        new("H.264 (compatible partout)", VideoCodec.H264),
-        new("HEVC / H.265 (plus léger)", VideoCodec.Hevc),
+        new(VideoCodec.H264),
+        new(VideoCodec.Hevc),
     ];
+
+    public IReadOnlyList<LanguageChoice> Languages { get; } =
+    [
+        new(AppLanguage.Automatic),
+        new(AppLanguage.English),
+        new(AppLanguage.French),
+    ];
+
+    /// <summary>Raised after the language changed: the windows must be rebuilt to show the new texts.</summary>
+    public event Action? LanguageChanged;
+
+    [ObservableProperty]
+    public partial LanguageChoice SelectedLanguage { get; set; }
 
     [ObservableProperty]
     public partial bool IsSettingsOpen { get; set; }
@@ -103,7 +143,7 @@ public sealed partial class MainViewModel : ObservableObject
     public partial int FileCount { get; set; }
 
     [ObservableProperty]
-    public partial string Summary { get; set; } = "Déposez des images, des PDF ou des vidéos ici pour les compresser.";
+    public partial string Summary { get; set; } = string.Empty;
 
     public bool IsEmpty => FileCount == 0;
 
@@ -112,7 +152,19 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedOutputFormat = OutputFormats[0];
         SelectedEffort = Efforts[1];
         SelectedVideoCodec = VideoCodecs[0];
+        SelectedLanguage = Languages.First(l => l.Language == AppSettings.Current.Language);
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
+        UpdateSummary();
+    }
+
+    partial void OnSelectedLanguageChanged(LanguageChoice value)
+    {
+        if (value is null || value.Language == AppSettings.Current.Language) return;
+        AppSettings.Current.Language = value.Language;
+        AppSettings.Current.Save();
+        L10n.Use(value.Language);
+        UpdateSummary();
+        LanguageChanged?.Invoke();
     }
 
     /// <summary>The settings of the section matching the kind of file (images, PDF, video).</summary>
@@ -237,7 +289,9 @@ public sealed partial class MainViewModel : ObservableObject
         var results = Files.Select(f => f.Result).OfType<CompressionResult>().ToList();
         if (Files.Count == 0)
         {
-            Summary = "Déposez des images, des PDF ou des vidéos ici pour les compresser.";
+            Summary = L10n.T(
+                "Drop images, PDFs or videos here to compress them.",
+                "Déposez des images, des PDF ou des vidéos ici pour les compresser.");
             return;
         }
 
@@ -246,7 +300,11 @@ public sealed partial class MainViewModel : ObservableObject
         var ratio = total > 0 ? (double)saved / total : 0;
         var remaining = Files.Count(f => f.State is FileItemState.Pending or FileItemState.Working);
         Summary = remaining > 0
-            ? $"{remaining} fichier(s) en cours… {SizeFormatter.Format(saved)} économisés pour l'instant."
-            : $"{SizeFormatter.Format(saved)} économisés sur {SizeFormatter.Format(total)} ({ratio * 100:0.#} %).";
+            ? L10n.T(
+                $"{remaining} file(s) in progress… {L10n.Size(saved)} saved so far.",
+                $"{remaining} fichier(s) en cours… {L10n.Size(saved)} économisés pour l'instant.")
+            : L10n.T(
+                $"{L10n.Size(saved)} saved out of {L10n.Size(total)} ({L10n.Percent(ratio)}).",
+                $"{L10n.Size(saved)} économisés sur {L10n.Size(total)} ({L10n.Percent(ratio)}).");
     }
 }

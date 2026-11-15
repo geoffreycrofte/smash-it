@@ -38,13 +38,13 @@ public sealed partial class PreviewWindow : Window
         AppWindow.Resize(new SizeInt32(1100, 780));
         Services.AppIcon.Apply(AppWindow, TitleBarIcon);
 
-        var title = $"Avant / après — {item.Name}";
+        var title = $"{Strings.PreviewTitle} — {item.Name}";
         Title = title;
         TitleText.Text = title;
         FileNameText.Text = Path.GetFileName(afterPath);
         SizesText.Text = $"{item.OriginalSizeText} → {item.FinalSizeText}   ({item.GainText})";
-        BeforeBadgeText.Text = $"Avant · {item.OriginalSizeText}";
-        AfterBadgeText.Text = $"Après · {item.FinalSizeText}";
+        BeforeBadgeText.Text = $"{Strings.Before} · {item.OriginalSizeText}";
+        AfterBadgeText.Text = $"{Strings.After} · {item.FinalSizeText}";
         SetOverlayVisible(false);
 
         Stage.PointerPressed += OnStagePointerPressed;
@@ -82,7 +82,7 @@ public sealed partial class PreviewWindow : Window
         catch (Exception ex)
         {
             LoadingPanel.Children.OfType<ProgressRing>().First().IsActive = false;
-            StatusText.Text = $"Aperçu impossible : {ex.Message}";
+            StatusText.Text = Strings.PreviewFailed(ex.Message);
         }
     }
 

@@ -95,7 +95,7 @@ public class PdfCompressorTests
         var result = await Pipeline().ProcessAsync(pdf, new CompressionOptions { OriginalHandling = OriginalHandling.Overwrite }, Ct);
 
         Assert.Equal(CompressionStatus.Failed, result.Status);
-        Assert.Contains("signé", result.Message);
+        Assert.Contains("Signed PDF", result.Message);
         Assert.Equal(before, await File.ReadAllBytesAsync(pdf, Ct));
     }
 
@@ -113,7 +113,7 @@ public class PdfCompressorTests
         var result = await Pipeline().ProcessAsync(encrypted, new CompressionOptions { OriginalHandling = OriginalHandling.Overwrite }, Ct);
 
         Assert.Equal(CompressionStatus.Failed, result.Status);
-        Assert.Contains("chiffré", result.Message);
+        Assert.Contains("Encrypted PDF", result.Message);
     }
 
     private static async Task<QpdfJson> ExportAsync(Qpdf qpdf, string pdf, string directory)

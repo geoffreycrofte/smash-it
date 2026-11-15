@@ -43,4 +43,8 @@
     <Content Include="Assets\SmashIt-splash.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="SmashIt.Core.Localization" />
+  </ItemGroup>
+
 </Project>

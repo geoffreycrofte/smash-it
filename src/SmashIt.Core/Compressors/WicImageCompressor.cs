@@ -71,10 +71,14 @@ public sealed class WicImageCompressor : ICompressor
             cancellationToken);
 
         if (image.FrameCount > 1)
-            throw new NotSupportedException("Les images à plusieurs images (GIF animé, TIFF multipage) ne sont pas encore prises en charge.");
+            throw new NotSupportedException(L10n.T(
+                "Images with several frames (animated GIF, multi-page TIFF) aren't supported yet.",
+                "Les images à plusieurs images (GIF animé, TIFF multipage) ne sont pas encore prises en charge."));
 
         if (options.Mode == CompressionMode.Lossless && image.SourcePixelFormat is BitmapPixelFormat.Rgba16 or BitmapPixelFormat.Gray16)
-            throw new NotSupportedException("Image 16 bits : la réencoder en 8 bits ne serait pas sans perte.");
+            throw new NotSupportedException(L10n.T(
+                "16-bit image: re-encoding it in 8 bits would not be lossless.",
+                "Image 16 bits : la réencoder en 8 bits ne serait pas sans perte."));
 
         cancellationToken.ThrowIfCancellationRequested();
 

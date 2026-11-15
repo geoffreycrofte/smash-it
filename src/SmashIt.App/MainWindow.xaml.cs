@@ -13,10 +13,13 @@ namespace SmashIt.App;
 
 public sealed partial class MainWindow : Window
 {
-    public MainViewModel ViewModel { get; } = new();
+    private bool _replaced;
 
-    public MainWindow()
+    public MainViewModel ViewModel { get; }
+
+    public MainWindow(MainViewModel viewModel)
     {
+        ViewModel = viewModel;
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
@@ -26,7 +29,18 @@ public sealed partial class MainWindow : Window
         AppIcon.Apply(AppWindow, TitleBarIcon);
 
         PreviewCache.Clean(includeCurrent: false);
-        Closed += (_, _) => PreviewCache.Clean(includeCurrent: true);
+        // The preview copies belong to the files in the list: keep them when the window is only rebuilt.
+        Closed += (_, _) =>
+        {
+            if (!_replaced) PreviewCache.Clean(includeCurrent: true);
+        };
+    }
+
+    /// <summary>Closes this window after a new one took its place (language change).</summary>
+    public void CloseForReplacement()
+    {
+        _replaced = true;
+        Close();
     }
 
     /// <summary>Opens where the splash screen was: the middle of the screen.</summary>
@@ -57,7 +71,7 @@ public sealed partial class MainWindow : Window
     {
         if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
         e.AcceptedOperation = DataPackageOperation.Copy;
-        e.DragUIOverride.Caption = "Compresser";
+        e.DragUIOverride.Caption = Strings.DropCaption;
     }
 
     private async void OnDrop(object sender, DragEventArgs e)

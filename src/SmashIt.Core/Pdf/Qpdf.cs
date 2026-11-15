@@ -33,7 +33,7 @@ internal sealed class Qpdf(string executable)
         var output = await RunAsync(["--show-npages", pdf], cancellationToken).ConfigureAwait(false);
         return int.TryParse(output.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var pages)
             ? pages
-            : throw new InvalidDataException("qpdf n'a pas pu compter les pages.");
+            : throw new InvalidDataException(L10n.T("qpdf could not count the pages.", "qpdf n'a pas pu compter les pages."));
     }
 
     /// <summary>Structural check of the whole file, including every stream's encoding.</summary>

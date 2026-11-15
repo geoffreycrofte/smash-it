@@ -44,7 +44,7 @@ public sealed class VideoCompressor : ICompressor
     {
         var source = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(job.InputPath)).AsTask(cancellationToken);
         var sourceProfile = await MediaEncodingProfile.CreateFromFileAsync(source).AsTask(cancellationToken);
-        var sourceVideo = sourceProfile.Video ?? throw new NotSupportedException("Aucune piste vidéo dans ce fichier.");
+        var sourceVideo = sourceProfile.Video ?? throw new NotSupportedException(L10n.T("No video track in this file.", "Aucune piste vidéo dans ce fichier."));
         var properties = await source.Properties.GetVideoPropertiesAsync().AsTask(cancellationToken);
 
         // Media Foundation applies the source rotation itself (portrait phone videos come out upright, with no
@@ -93,10 +93,12 @@ public sealed class VideoCompressor : ICompressor
             throw new NotSupportedException(prepared.FailureReason switch
             {
                 TranscodeFailureReason.CodecNotFound => codec == VideoCodec.Hevc
-                    ? "Encodeur ou décodeur introuvable (HEVC : installez « Extensions vidéo HEVC » depuis le Microsoft Store)."
-                    : "Codec de la vidéo non pris en charge par Windows.",
-                TranscodeFailureReason.InvalidProfile => "Réglages d'encodage refusés par Windows.",
-                _ => "Windows ne peut pas transcoder cette vidéo.",
+                    ? L10n.T(
+                        "Encoder or decoder not found (HEVC: install “HEVC Video Extensions” from the Microsoft Store).",
+                        "Encodeur ou décodeur introuvable (HEVC : installez « Extensions vidéo HEVC » depuis le Microsoft Store).")
+                    : L10n.T("Windows doesn't support this video's codec.", "Codec de la vidéo non pris en charge par Windows."),
+                TranscodeFailureReason.InvalidProfile => L10n.T("Windows refused the encoding settings.", "Réglages d'encodage refusés par Windows."),
+                _ => L10n.T("Windows can't transcode this video.", "Windows ne peut pas transcoder cette vidéo."),
             });
         }
 
