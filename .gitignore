@@ -1,0 +1,33 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Pp]ublish/
+artifacts/
+AppPackages/
+BundleArtifacts/
+*.msix
+*.appx
+
+## IDE / tooling
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+*.suo
+*.userprefs
+.idea/
+*.DotSettings.user
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
+coverage*/
+
+## Bundled third-party binaries are fetched by a script, not committed
+tools/bin/
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
