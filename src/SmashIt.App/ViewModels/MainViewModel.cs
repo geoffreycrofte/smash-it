@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SmashIt.App.Services;
 using SmashIt.Core;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
@@ -138,6 +139,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _cts.Cancel();
         _cts = new CancellationTokenSource();
+        foreach (var item in Files) PreviewCache.Forget(item.PreviewOriginalPath);
         Files.Clear();
         UpdateSummary();
     }
@@ -160,6 +162,11 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             item.State = FileItemState.Working;
+
+            // Keep the first "before" (later runs would start from the already compressed file).
+            if (item.Kind == MediaKind.Image && item.PreviewOriginalPath is null)
+                item.PreviewOriginalPath = await Task.Run(() => PreviewCache.Keep(item.Path), ct);
+
             // Created on the UI thread: reports come back on it.
             var progress = new Progress<double>(value => item.Progress = value);
             var result = await Task.Run(() => _pipeline.ProcessAsync(item.Path, options, ct, progress), ct);

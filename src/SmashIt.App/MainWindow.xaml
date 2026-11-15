@@ -94,6 +94,7 @@
           <ColumnDefinition Width="100" />
           <ColumnDefinition Width="100" />
           <ColumnDefinition Width="150" />
+          <ColumnDefinition Width="40" />
         </Grid.ColumnDefinitions>
         <TextBlock Grid.Column="1" Text="Fichier" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         <TextBlock Grid.Column="2" Text="Taille" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -101,7 +102,8 @@
         <TextBlock Grid.Column="4" Text="Gain" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
       </Grid>
 
-      <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.Files}" SelectionMode="Extended" Padding="0,4">
+      <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.Files}" SelectionMode="Extended" Padding="0,4"
+                DoubleTapped="OnFileDoubleTapped">
         <ListView.ItemContainerStyle>
           <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -116,6 +118,7 @@
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="100" />
                 <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="40" />
               </Grid.ColumnDefinitions>
               <ProgressRing IsActive="{x:Bind IsWorking, Mode=OneWay}" Width="16" Height="16" />
               <FontIcon Glyph="{x:Bind StatusGlyph, Mode=OneWay}" FontSize="14" />
@@ -128,6 +131,13 @@
               <TextBlock Grid.Column="3" Text="{x:Bind FinalSizeText, Mode=OneWay}" HorizontalAlignment="Right" VerticalAlignment="Center" />
               <TextBlock Grid.Column="4" Text="{x:Bind GainText, Mode=OneWay}" HorizontalAlignment="Right" VerticalAlignment="Center"
                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+              <Button Grid.Column="5" Width="32" Height="32" Padding="0" HorizontalAlignment="Right"
+                      Background="Transparent" BorderThickness="0"
+                      Visibility="{x:Bind CanPreview, Mode=OneWay}" Click="OnPreviewClick"
+                      ToolTipService.ToolTip="Comparer avant / après"
+                      AutomationProperties.Name="Comparer avant / après">
+                <FontIcon Glyph="&#xE7B3;" FontSize="14" />
+              </Button>
             </Grid>
           </DataTemplate>
         </ListView.ItemTemplate>

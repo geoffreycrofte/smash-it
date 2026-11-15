@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using SmashIt.App.Services;
 using SmashIt.App.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
@@ -18,7 +20,26 @@ public sealed partial class MainWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        AppWindow.Resize(new SizeInt32(1000, 680));
+        AppWindow.Resize(new SizeInt32(1040, 720));
+
+        PreviewCache.Clean(includeCurrent: false);
+        Closed += (_, _) => PreviewCache.Clean(includeCurrent: true);
+    }
+
+    private void OnPreviewClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is FileItem item) OpenPreview(item);
+    }
+
+    private void OnFileDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        if ((e.OriginalSource as FrameworkElement)?.DataContext is FileItem item) OpenPreview(item);
+    }
+
+    private static void OpenPreview(FileItem item)
+    {
+        if (!item.CanPreview) return;
+        new PreviewWindow(item, item.PreviewOriginalPath!, item.Result!.OutputPath!).Activate();
     }
 
     private void OnDragOver(object sender, DragEventArgs e)

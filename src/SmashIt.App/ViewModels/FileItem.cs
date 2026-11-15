@@ -24,6 +24,17 @@ public sealed partial class FileItem(string path) : ObservableObject
 
     public MediaKind Kind { get; } = MediaFormatInfo.KindOf(MediaFormatInfo.FromExtension(path));
 
+    /// <summary>Temporary copy of the image before compression, for the before/after preview.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanPreview))]
+    public partial string? PreviewOriginalPath { get; set; }
+
+    /// <summary>The compressed image exists and its "before" copy too.</summary>
+    public bool CanPreview =>
+        Kind == MediaKind.Image
+        && PreviewOriginalPath is not null
+        && Result is { Status: CompressionStatus.Optimized or CompressionStatus.Converted, OutputPath: not null };
+
     /// <summary>0–100 while a long job (video) runs.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(GainText))]
@@ -34,7 +45,7 @@ public sealed partial class FileItem(string path) : ObservableObject
     public partial FileItemState State { get; set; } = FileItemState.Pending;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText), nameof(StatusGlyph), nameof(Message))]
+    [NotifyPropertyChangedFor(nameof(OriginalSizeText), nameof(FinalSizeText), nameof(GainText), nameof(StatusGlyph), nameof(Message), nameof(CanPreview))]
     public partial CompressionResult? Result { get; set; }
 
     public bool IsWorking => State == FileItemState.Working;
