@@ -62,13 +62,14 @@ public sealed partial class MainViewModel : ObservableObject
     ];
 
     [ObservableProperty]
-    public partial VideoCodecChoice SelectedVideoCodec { get; set; }
+    public partial bool IsSettingsOpen { get; set; }
+
+    // Images
+    [ObservableProperty]
+    public partial bool ImageLossy { get; set; }
 
     [ObservableProperty]
-    public partial bool IsLossy { get; set; }
-
-    [ObservableProperty]
-    public partial double Quality { get; set; } = 85;
+    public partial double ImageQuality { get; set; } = 85;
 
     [ObservableProperty]
     public partial OutputFormatChoice SelectedOutputFormat { get; set; }
@@ -77,17 +78,32 @@ public sealed partial class MainViewModel : ObservableObject
     public partial EffortChoice SelectedEffort { get; set; }
 
     [ObservableProperty]
-    public partial bool KeepOriginal { get; set; }
+    public partial bool StripMetadata { get; set; } = true;
+
+    // PDF
+    [ObservableProperty]
+    public partial bool PdfLossy { get; set; }
 
     [ObservableProperty]
-    public partial bool StripMetadata { get; set; } = true;
+    public partial double PdfQuality { get; set; } = 75;
+
+    // Video (always lossy)
+    [ObservableProperty]
+    public partial double VideoQuality { get; set; } = 70;
+
+    [ObservableProperty]
+    public partial VideoCodecChoice SelectedVideoCodec { get; set; }
+
+    // All files
+    [ObservableProperty]
+    public partial bool KeepOriginal { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial int FileCount { get; set; }
 
     [ObservableProperty]
-    public partial string Summary { get; set; } = "Déposez des images ou des PDF ici pour les compresser.";
+    public partial string Summary { get; set; } = "Déposez des images, des PDF ou des vidéos ici pour les compresser.";
 
     public bool IsEmpty => FileCount == 0;
 
@@ -99,38 +115,56 @@ public sealed partial class MainViewModel : ObservableObject
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
     }
 
-    private CompressionOptions CurrentOptions() => new()
+    /// <summary>The settings of the section matching the kind of file (images, PDF, video).</summary>
+    private CompressionOptions OptionsFor(MediaKind kind)
     {
-        Mode = IsLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
-        Quality = (int)Math.Round(Quality),
-        Effort = SelectedEffort.Effort,
-        VideoCodec = SelectedVideoCodec.Codec,
-        TargetFormat = SelectedOutputFormat.Format,
-        StripMetadata = StripMetadata,
-        OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
-    };
+        var common = new CompressionOptions
+        {
+            OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
+        };
+        return kind switch
+        {
+            MediaKind.Document => common with
+            {
+                Mode = PdfLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
+                Quality = (int)Math.Round(PdfQuality),
+            },
+            MediaKind.Video => common with
+            {
+                Mode = CompressionMode.Lossy,
+                Quality = (int)Math.Round(VideoQuality),
+                VideoCodec = SelectedVideoCodec.Codec,
+            },
+            _ => common with
+            {
+                Mode = ImageLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
+                Quality = (int)Math.Round(ImageQuality),
+                Effort = SelectedEffort.Effort,
+                TargetFormat = SelectedOutputFormat.Format,
+                StripMetadata = StripMetadata,
+            },
+        };
+    }
 
     /// <summary>Adds files and folders and starts processing them with the current settings.</summary>
     public void AddPaths(IEnumerable<string> paths)
     {
-        var options = CurrentOptions();
         foreach (var path in InputCollector.Expand(paths))
         {
             var item = new FileItem(path);
             Files.Add(item);
-            _ = ProcessAsync(item, options, _cts.Token);
+            _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
 
     [RelayCommand]
     private void Reprocess()
     {
-        var options = CurrentOptions();
         foreach (var item in Files.Where(f => f.State is not FileItemState.Working and not FileItemState.Pending).ToList())
         {
             // A converted file stays where it is; re-run on the original.
             item.Result = null;
-            _ = ProcessAsync(item, options, _cts.Token);
+            _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
 
@@ -199,7 +233,7 @@ public sealed partial class MainViewModel : ObservableObject
         var results = Files.Select(f => f.Result).OfType<CompressionResult>().ToList();
         if (Files.Count == 0)
         {
-            Summary = "Déposez des images ou des PDF ici pour les compresser.";
+            Summary = "Déposez des images, des PDF ou des vidéos ici pour les compresser.";
             return;
         }
 

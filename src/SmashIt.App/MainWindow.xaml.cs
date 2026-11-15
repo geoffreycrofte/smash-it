@@ -22,8 +22,18 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1040, 720));
 
+        // Keep the settings button clear of the minimize/maximize/close buttons, whatever the DPI.
+        Root.Loaded += (_, _) => FitCaptionButtons();
+        AppWindow.Changed += (_, _) => FitCaptionButtons();
+
         PreviewCache.Clean(includeCurrent: false);
         Closed += (_, _) => PreviewCache.Clean(includeCurrent: true);
+    }
+
+    private void FitCaptionButtons()
+    {
+        if (Root.XamlRoot is not { RasterizationScale: > 0 } root) return;
+        CaptionButtonsColumn.Width = new GridLength(AppWindow.TitleBar.RightInset / root.RasterizationScale + 4);
     }
 
     private void OnPreviewClick(object sender, RoutedEventArgs e)
