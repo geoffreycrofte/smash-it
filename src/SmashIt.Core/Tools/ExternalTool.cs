@@ -26,6 +26,21 @@ public static class ExternalTool
     /// <summary>Runs a tool without a console window, at below-normal priority, and throws if it fails.</summary>
     public static async Task RunAsync(string executable, IEnumerable<string> arguments, CancellationToken cancellationToken)
     {
+        var result = await RunRawAsync(executable, arguments, cancellationToken).ConfigureAwait(false);
+        if (result.ExitCode != 0) throw Failure(executable, result);
+    }
+
+    public static ExternalToolException Failure(string executable, ToolResult result)
+    {
+        var errors = result.StandardError.Trim();
+        var tail = errors.Length > 300 ? "…" + errors[^300..] : errors;
+        return new ExternalToolException(
+            $"{Path.GetFileName(executable)} a échoué (code {result.ExitCode}){(tail.Length > 0 ? " : " + tail : ".")}");
+    }
+
+    /// <summary>Runs a tool and returns its exit code and output, whatever the exit code.</summary>
+    public static async Task<ToolResult> RunRawAsync(string executable, IEnumerable<string> arguments, CancellationToken cancellationToken)
+    {
         var startInfo = new ProcessStartInfo(executable)
         {
             UseShellExecute = false,
@@ -52,13 +67,8 @@ public static class ExternalTool
             throw;
         }
 
-        await stdout.ConfigureAwait(false);
-        var errors = (await stderr.ConfigureAwait(false)).Trim();
-        if (process.ExitCode != 0)
-        {
-            var tail = errors.Length > 300 ? "…" + errors[^300..] : errors;
-            throw new ExternalToolException(
-                $"{Path.GetFileName(executable)} a échoué (code {process.ExitCode}){(tail.Length > 0 ? " : " + tail : ".")}");
-        }
+        return new ToolResult(process.ExitCode, await stdout.ConfigureAwait(false), await stderr.ConfigureAwait(false));
     }
 }
+
+public sealed record ToolResult(int ExitCode, string StandardOutput, string StandardError);

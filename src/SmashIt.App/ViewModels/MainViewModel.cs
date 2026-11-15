@@ -69,7 +69,7 @@ public sealed partial class MainViewModel : ObservableObject
     public partial int FileCount { get; set; }
 
     [ObservableProperty]
-    public partial string Summary { get; set; } = "Déposez des images ici pour les compresser.";
+    public partial string Summary { get; set; } = "Déposez des images ou des PDF ici pour les compresser.";
 
     public bool IsEmpty => FileCount == 0;
 
@@ -169,7 +169,7 @@ public sealed partial class MainViewModel : ObservableObject
         var results = Files.Select(f => f.Result).OfType<CompressionResult>().ToList();
         if (Files.Count == 0)
         {
-            Summary = "Déposez des images ici pour les compresser.";
+            Summary = "Déposez des images ou des PDF ici pour les compresser.";
             return;
         }
 

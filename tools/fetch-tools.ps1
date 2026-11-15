@@ -55,6 +55,15 @@ $tools = @(
         License = @{ 'LICENSE.md' = 'libjpeg-turbo.md' }
         Dlls    = @('jpeg62.dll')
         Needs7z = $true
+    },
+    @{
+        Name    = 'qpdf 12.4.2'
+        Url     = 'https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-msvc64.zip'
+        Sha256  = 'db87077e683630c1217e0e8f9a20a9749d952ab676e881c3689187763a5de25d'
+        Files   = @('qpdf.exe')
+        # qpdf's library and the Visual C++ runtime it ships with (app-local redistributable).
+        Dlls    = @('qpdf*.dll', 'msvcp140*.dll', 'vcruntime140*.dll', 'concrt140.dll')
+        License = @{ 'license.rst.txt' = 'qpdf.txt' }
     }
 )
 
@@ -110,11 +119,11 @@ foreach ($tool in $tools) {
         $found = Get-ChildItem $extracted -Recurse -Filter $file | Select-Object -First 1
         if (-not $found) { throw "$file introuvable dans $($tool.Name)." }
         Copy-Item $found.FullName $bin -Force
-        # DLLs the tool depends on sit next to it (jpegtran needs jpeg62.dll).
-        foreach ($dll in @($tool.Dlls | Where-Object { $_ })) {
-            $dllPath = Join-Path $found.DirectoryName $dll
-            if (-not (Test-Path $dllPath)) { throw "$dll introuvable dans $($tool.Name)." }
-            Copy-Item $dllPath $bin -Force
+        # DLLs the tool depends on sit next to it (jpegtran needs jpeg62.dll, qpdf its own DLL + VC++ runtime).
+        foreach ($pattern in @($tool.Dlls | Where-Object { $_ })) {
+            $dlls = Get-ChildItem $found.DirectoryName -Filter $pattern
+            if (-not $dlls) { throw "$pattern introuvable dans $($tool.Name)." }
+            $dlls | Copy-Item -Destination $bin -Force
         }
     }
     foreach ($entry in $tool.License.GetEnumerator()) {

@@ -23,9 +23,13 @@ public static class MetadataTransfer
     /// <summary>True when the pipeline rewrites the output's metadata itself (JPEG/PNG → JPEG/PNG).</summary>
     public static bool PipelineHandles(MediaFormat input, MediaFormat output) => CanRead(input) && CanWrite(output);
 
-    /// <summary>True when Smash It can carry EXIF/XMP over for this conversion.</summary>
+    /// <summary>
+    /// True when Smash It can carry EXIF/XMP over for this conversion.
+    /// PDFs keep their document metadata; only the images inside are rewritten.
+    /// </summary>
     public static bool CanPreserve(MediaFormat input, MediaFormat output) =>
-        CanRead(input) && (CanWrite(output) || output is MediaFormat.WebP or MediaFormat.Avif);
+        (input == MediaFormat.Pdf && output == MediaFormat.Pdf) ||
+        (CanRead(input) && (CanWrite(output) || output is MediaFormat.WebP or MediaFormat.Avif));
 
     /// <summary>
     /// When converting, pixels are physically rotated and the orientation tag reset to 1, because not every

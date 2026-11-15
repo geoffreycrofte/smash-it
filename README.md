@@ -13,12 +13,20 @@ result, and only touches your file when it actually got smaller. Originals go to
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; WebP (cwebp) and AVIF (avifenc) encoding | gifsicle, svgo, pngquant |
 | **Videos** | — | H.264/HEVC through Media Foundation (hardware encoders), ffmpeg for fine tuning |
-| **PDF** | — | Recompress embedded images in place without touching text, fonts, links or forms |
+| **PDF** | Images recompressed in place (qpdf + jpegtran), object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | Image downsampling (DPI cap) |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
 | **Originals** | Recycle Bin by default, or kept with the result saved as `name-compressed.ext` | |
 | **Integration** | Drag & drop, `smashit` command line | Explorer right-click menu, custom script engines |
+
+### PDF
+
+Smash It never rebuilds a PDF. qpdf exports its streams, jpegtran optimizes every JPEG image losslessly, and qpdf
+writes the new image data back under the same object numbers. In lossy mode, qpdf first re-encodes images as JPEG
+at the chosen quality, keeping each one only when it gets smaller. The result must pass `qpdf --check` and keep the
+same number of pages, or the original is left alone. Signed PDFs (any change would invalidate the signature) and
+encrypted PDFs are skipped.
 
 ### Metadata and originals
 

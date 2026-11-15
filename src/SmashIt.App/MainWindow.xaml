@@ -132,8 +132,8 @@
       <StackPanel Grid.Row="1" Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center"
                   Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
         <FontIcon Glyph="&#xE898;" FontSize="48" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-        <TextBlock Text="Déposez vos images ici" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
-        <TextBlock Text="Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP, GIF."
+        <TextBlock Text="Déposez vos images et PDF ici" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" />
+        <TextBlock Text="Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP, GIF, PDF."
                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
       </StackPanel>
     </Grid>
