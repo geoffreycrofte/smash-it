@@ -26,6 +26,8 @@ public sealed partial class PreviewWindow : Window
     private double _ratio = 0.5;
     private bool _dragging;
     private bool _loaded;
+    private int _pixelWidth;
+    private int _pixelHeight;
 
     public PreviewWindow(FileItem item, string beforePath, string afterPath)
     {
@@ -65,8 +67,9 @@ public sealed partial class PreviewWindow : Window
 
             // Both images are drawn in the box of the compressed one (they have the same size unless
             // the engine resized, in which case "before" is stretched onto it).
-            ImageHost.Width = after.PixelWidth;
-            ImageHost.Height = after.PixelHeight;
+            (_pixelWidth, _pixelHeight) = (after.PixelWidth, after.PixelHeight);
+            ImageHost.Width = _pixelWidth;
+            ImageHost.Height = _pixelHeight;
             BeforeImage.Source = beforeSource;
             AfterImage.Source = afterSource;
             before.Dispose();
@@ -74,6 +77,9 @@ public sealed partial class PreviewWindow : Window
 
             LoadingPanel.Visibility = Visibility.Collapsed;
             _loaded = true;
+            ActualSizeButton.IsEnabled = true;
+            // Moved to a screen with another scaling: 100 % must stay one image pixel per screen pixel.
+            Content.XamlRoot.Changed += (_, _) => { if (ActualSizeButton.IsChecked == true) ApplyZoom(); };
             SetOverlayVisible(true);
             // Layout of the Viewbox happens on the next pass.
             ImageBox.LayoutUpdated += OnFirstLayout;
@@ -115,8 +121,8 @@ public sealed partial class PreviewWindow : Window
     private void UpdateSplit()
     {
         if (!_loaded) return;
-        var bounds = ImageBounds();
-        if (bounds.IsEmpty || bounds.Width <= 0) return;
+        var image = ImageBounds();
+        if (image.IsEmpty || image.Width <= 0) return;
 
         // Clip in the image's own coordinates (the Viewbox scales them).
         BeforeImage.Clip = new RectangleGeometry
@@ -124,22 +130,86 @@ public sealed partial class PreviewWindow : Window
             Rect = new Rect(0, 0, _ratio * ImageHost.ActualWidth, ImageHost.ActualHeight),
         };
 
-        var x = bounds.X + _ratio * bounds.Width;
+        // At 100 % the image is larger than the stage: line, handle and badges stay on the part in view.
+        var top = Math.Max(image.Y, 0);
+        var bottom = Math.Min(image.Bottom, Stage.ActualHeight);
+        var left = Math.Max(image.X, 0);
+        var right = Math.Min(image.Right, Stage.ActualWidth);
+        if (bottom <= top || right <= left) return;
+
+        var x = image.X + _ratio * image.Width;
+        var inView = x >= left - 1 && x <= right + 1;
+        SplitLine.Opacity = Handle.Opacity = inView ? 1 : 0;
         Canvas.SetLeft(SplitLine, x - SplitLine.Width / 2);
-        Canvas.SetTop(SplitLine, bounds.Y);
-        SplitLine.Height = bounds.Height;
+        Canvas.SetTop(SplitLine, top);
+        SplitLine.Height = bottom - top;
 
-        Canvas.SetLeft(Handle, x - Handle.Width / 2);
-        Canvas.SetTop(Handle, bounds.Y + bounds.Height / 2 - Handle.Height / 2);
+        Canvas.SetLeft(Handle, Math.Clamp(x, left, right) - Handle.Width / 2);
+        Canvas.SetTop(Handle, top + (bottom - top) / 2 - Handle.Height / 2);
 
-        Canvas.SetLeft(BeforeBadge, bounds.X + 12);
-        Canvas.SetTop(BeforeBadge, bounds.Y + 12);
-        BeforeBadge.Opacity = x - bounds.X > BadgeMinRoom ? 1 : 0;
+        Canvas.SetLeft(BeforeBadge, left + 12);
+        Canvas.SetTop(BeforeBadge, top + 12);
+        BeforeBadge.Opacity = x - left > BadgeMinRoom ? 1 : 0;
 
         AfterBadge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        Canvas.SetLeft(AfterBadge, bounds.Right - AfterBadge.DesiredSize.Width - 12);
-        Canvas.SetTop(AfterBadge, bounds.Y + 12);
-        AfterBadge.Opacity = bounds.Right - x > BadgeMinRoom ? 1 : 0;
+        Canvas.SetLeft(AfterBadge, right - AfterBadge.DesiredSize.Width - 12);
+        Canvas.SetTop(AfterBadge, top + 12);
+        AfterBadge.Opacity = right - x > BadgeMinRoom ? 1 : 0;
+    }
+
+    /// <summary>
+    /// Fitted (the image shrinks to the window, nothing scrolls) or 100 % (one image pixel per screen pixel,
+    /// whatever the Windows display scaling, scrollable and centered on the divider).
+    /// </summary>
+    private void ApplyZoom()
+    {
+        if (!_loaded) return;
+        var actual = ActualSizeButton.IsChecked == true;
+        var scale = actual ? Content.XamlRoot.RasterizationScale : 1;
+        ImageHost.Width = _pixelWidth / scale;
+        ImageHost.Height = _pixelHeight / scale;
+        ImageBox.Stretch = actual ? Stretch.None : Stretch.Uniform;
+        var mode = actual ? ScrollMode.Enabled : ScrollMode.Disabled;
+        var bars = actual ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+        Scroller.HorizontalScrollMode = Scroller.VerticalScrollMode = mode;
+        Scroller.HorizontalScrollBarVisibility = Scroller.VerticalScrollBarVisibility = bars;
+
+        Scroller.UpdateLayout();
+        if (actual)
+        {
+            // Look where the divider is, half way down: that's where the difference is being compared.
+            var margin = ImageBox.Margin.Left;
+            Scroller.ChangeView(
+                Math.Max(0, margin + _ratio * ImageHost.Width - Scroller.ViewportWidth / 2),
+                Math.Max(0, margin + ImageHost.Height / 2 - Scroller.ViewportHeight / 2),
+                null, disableAnimation: true);
+        }
+        else
+        {
+            Scroller.ChangeView(0, 0, null, disableAnimation: true);
+        }
+        UpdateSplit();
+    }
+
+    private void OnActualSizeToggled(object sender, RoutedEventArgs e) => ApplyZoom();
+
+    private void OnZoomKeyInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (!ActualSizeButton.IsEnabled) return;
+        args.Handled = true;
+        ActualSizeButton.IsChecked = ActualSizeButton.IsChecked != true;
+    }
+
+    private void OnScrollerViewChanged(object? sender, ScrollViewerViewChangedEventArgs e) => UpdateSplit();
+
+    /// <summary>A press on a scrollbar scrolls; it doesn't move the divider.</summary>
+    private static bool IsOnScrollBar(object? source)
+    {
+        for (var element = source as DependencyObject; element is not null; element = VisualTreeHelper.GetParent(element))
+        {
+            if (element is Microsoft.UI.Xaml.Controls.Primitives.ScrollBar) return true;
+        }
+        return false;
     }
 
     private void SetRatio(double ratio)
@@ -161,7 +231,7 @@ public sealed partial class PreviewWindow : Window
 
     private void OnStagePointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (!_loaded) return;
+        if (!_loaded || IsOnScrollBar(e.OriginalSource)) return;
         _dragging = true;
         Stage.CapturePointer(e.Pointer);
         SetRatioFromPointer(e);

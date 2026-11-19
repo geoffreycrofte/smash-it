@@ -121,8 +121,13 @@ public static class Strings
     public static string Before => T("Before", "Avant");
     public static string After => T("After", "Après");
     public static string PreviewHint => T(
-        "Drag the handle or use ← →. Double-click: back to the middle. Esc: close.",
-        "Glissez la poignée ou utilisez ← →. Double-clic : retour au centre. Échap : fermer.");
+        "Drag the handle or use ← →. Double-click: back to the middle. Z: 100 %. Esc: close.",
+        "Glissez la poignée ou utilisez ← →. Double-clic : retour au centre. Z : 100 %. Échap : fermer.");
+    public static string ActualSize => "100 %";
+    public static string ActualSizeName => T("100 % zoom", "Zoom à 100 %");
+    public static string ActualSizeTip => T(
+        "Show at 100 %, one image pixel per screen pixel (Z). Scroll with the wheel, Shift+wheel sideways.",
+        "Afficher à 100 %, un pixel de l'image par pixel d'écran (Z). Défilement à la molette, Maj+molette sur le côté.");
     public static string Divider => T("Before / after divider", "Séparateur avant / après");
     public static string DividerTip => T("Before on the left, after on the right", "Avant à gauche, après à droite");
     public static string Loading => T("Loading…", "Chargement…");
