@@ -141,7 +141,13 @@ Every animation is finite. Nothing loops, so there is nothing to pause
 7. **Command line.** A terminal block with a copy button.
 8. **Questions.** Native `<details>` disclosures.
 9. **Coming next.** The roadmap.
-10. **Get it.** Final call to action with the mascot's head.
+10. **Download** (`#download`). The mascot's head, then two download cards:
+    the installer (recommended, red border and a "Recommended" tag) and the
+    portable zip. Each card links straight to the file of the latest GitHub
+    release (`/releases/latest/download/...`), so the page never needs editing
+    for a new version. Below: the SmartScreen note, then links to all
+    releases, the source code and the issues. The hero's main button jumps
+    here rather than to GitHub.
 
 Max width 72rem. Sections breathe: `clamp(4rem, 10vw, 7rem)` vertical padding.
 
