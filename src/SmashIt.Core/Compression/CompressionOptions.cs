@@ -84,5 +84,11 @@ public sealed record CompressionOptions
     /// </summary>
     public bool CopyAlreadyOptimal { get; init; }
 
+    /// <summary>
+    /// Lossy PDFs: images shown at more than this resolution (pixels per inch at their size on the page) are
+    /// scaled down to it. 0 keeps every image's resolution.
+    /// </summary>
+    public int PdfMaxImageDpi { get; init; }
+
     public static CompressionOptions Default { get; } = new();
 }

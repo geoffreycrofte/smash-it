@@ -7,11 +7,14 @@ namespace SmashIt.Core.Tests;
 /// <summary>Writes small but real PDFs: one page, a JPEG image, a Flate image, some text, a link.</summary>
 internal static class TestPdf
 {
-    public static async Task<string> WriteAsync(string path, bool signed = false)
+    /// <param name="jpegWidth">Pixel size of the JPEG image, drawn at 300×225 points (4.17×3.13 in).</param>
+    /// <param name="imageInForm">Draws the JPEG through a Form XObject scaled by half, instead of from the page.</param>
+    public static async Task<string> WriteAsync(
+        string path, bool signed = false, uint jpegWidth = 400, uint jpegHeight = 300, bool imageInForm = false)
     {
         // A high-quality baseline JPEG: room for jpegtran and for lossy re-encoding.
         var jpegPath = path + ".img.jpg";
-        await TestImages.WriteAsync(jpegPath, MediaFormat.Jpeg, 400, 300);
+        await TestImages.WriteAsync(jpegPath, MediaFormat.Jpeg, jpegWidth, jpegHeight);
         var jpeg = await File.ReadAllBytesAsync(jpegPath);
         File.Delete(jpegPath);
 
@@ -28,27 +31,31 @@ internal static class TestPdf
         }
         var flate = Deflate(raw);
 
+        // In a form scaled by half, the image is drawn at 600×450 to end up at the same 300×225 points.
         var content = Encoding.ASCII.GetBytes(
             "BT /F1 24 Tf 50 750 Td (Smash It) Tj ET\n" +
-            "q 300 0 0 225 50 450 cm /Im1 Do Q\nq 300 0 0 200 50 200 cm /Im2 Do Q\n");
+            (imageInForm ? "q 1 0 0 1 50 450 cm /Fm1 Do Q\n" : "q 300 0 0 225 50 450 cm /Im1 Do Q\n") +
+            "q 300 0 0 200 50 200 cm /Im2 Do Q\n");
+        var form = Encoding.ASCII.GetBytes("q 600 0 0 450 0 0 cm /Im1 Do Q");
 
         var objects = new List<byte[]>
         {
-            Obj(1, "<< /Type /Catalog /Pages 2 0 R" + (signed ? " /AcroForm << /Fields [8 0 R] /SigFlags 3 >>" : "") + " >>"),
+            Obj(1, "<< /Type /Catalog /Pages 2 0 R" + (signed ? " /AcroForm << /Fields [9 0 R] /SigFlags 3 >>" : "") + " >>"),
             Obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
             Obj(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] " +
-                   "/Resources << /XObject << /Im1 4 0 R /Im2 5 0 R >> /Font << /F1 7 0 R >> >> " +
+                   $"/Resources << /XObject << {(imageInForm ? "/Fm1 8 0 R" : "/Im1 4 0 R")} /Im2 5 0 R >> /Font << /F1 7 0 R >> >> " +
                    "/Annots [<< /Type /Annot /Subtype /Link /Rect [50 740 200 780] /A << /S /URI /URI (https://example.org) >> >>] " +
                    "/Contents 6 0 R >>"),
-            Stream(4, $"/Type /XObject /Subtype /Image /Width 400 /Height 300 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", jpeg),
+            Stream(4, $"/Type /XObject /Subtype /Image /Width {jpegWidth} /Height {jpegHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", jpeg),
             Stream(5, $"/Type /XObject /Subtype /Image /Width {w} /Height {h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode", flate),
             Stream(6, "", content),
             Obj(7, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
+            Stream(8, "/Type /XObject /Subtype /Form /BBox [0 0 600 450] /Matrix [0.5 0 0 0.5 0 0] /Resources << /XObject << /Im1 4 0 R >> >>", form),
         };
         if (signed)
         {
-            objects.Add(Obj(8, "<< /FT /Sig /T (Signature) /V 9 0 R /Rect [0 0 0 0] >>"));
-            objects.Add(Obj(9, "<< /Type /Sig /Filter /Adobe.PPKLite /SubFilter /adbe.pkcs7.detached " +
+            objects.Add(Obj(9, "<< /FT /Sig /T (Signature) /V 10 0 R /Rect [0 0 0 0] >>"));
+            objects.Add(Obj(10, "<< /Type /Sig /Filter /Adobe.PPKLite /SubFilter /adbe.pkcs7.detached " +
                                "/ByteRange [0 0 0 0] /Contents <00> >>"));
         }
 

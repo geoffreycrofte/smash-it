@@ -1,5 +1,6 @@
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
+using SmashIt.Core.Imaging;
 using SmashIt.Core.Pdf;
 using SmashIt.Core.Tools;
 
@@ -71,15 +72,36 @@ public sealed class PdfCompressor : ICompressor
                     "Signed PDF: any change would invalidate the signature.",
                     "PDF signé : toute modification invaliderait la signature."));
 
-            // 3. Lossless JPEG optimization of every image.
+            // 3. Lossy: images far finer than needed at their size on the page are scaled down.
+            //    Then every JPEG is optimized losslessly.
+            var maxDpi = job.Options.Mode == CompressionMode.Lossy ? job.Options.PdfMaxImageDpi : 0;
+            var displaySizes = maxDpi > 0 ? document.ImageDisplaySizes() : [];
             var replacements = new List<(PdfImageStream, string)>();
-            if (_jpegtran is not null)
+            foreach (var original in document.Images().Where(i => i.IsPlainJpeg))
             {
-                foreach (var image in document.Images().Where(i => i.IsPlainJpeg))
+                var image = original;
+                var data = image.DataFile;
+                if (displaySizes.TryGetValue(image.ObjectKey, out var shown) &&
+                    image.CanResample(document.Resolve, out var grayscale) &&
+                    ResampledSize(image.Width, image.Height, shown.Width, shown.Height, maxDpi) is { } size)
                 {
-                    var optimized = await TryOptimizeJpegAsync(image.DataFile, job.Options, cancellationToken);
-                    if (optimized is not null) replacements.Add((image, optimized));
+                    var (width, height) = size;
+                    var resampled = data + ".resampled.jpg";
+                    await JpegResampler.ResizeAsync(data, resampled, (uint)width, (uint)height, grayscale,
+                        Math.Clamp(job.Options.Quality, 1, 100), cancellationToken);
+                    if (new FileInfo(resampled).Length < new FileInfo(data).Length)
+                    {
+                        var dictionary = image.Dictionary.DeepClone().AsObject();
+                        dictionary["/Width"] = width;
+                        dictionary["/Height"] = height;
+                        image = image with { Dictionary = dictionary };
+                        data = resampled;
+                    }
                 }
+
+                var optimized = _jpegtran is null ? null : await TryOptimizeJpegAsync(data, job.Options, cancellationToken);
+                if (optimized is not null) data = optimized;
+                if (data != original.DataFile) replacements.Add((image, data));
             }
 
             // 4. Write back.
@@ -108,6 +130,26 @@ public sealed class PdfCompressor : ICompressor
         {
             try { Directory.Delete(work, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
+    }
+
+    /// <summary>
+    /// Ghostscript's rule: an image is only scaled down when it is more than 1.5 times finer than the target, so
+    /// one just above it isn't resampled for a small gain.
+    /// </summary>
+    public const double ResampleThreshold = 1.5;
+
+    /// <summary>
+    /// The new pixel size of an image of <paramref name="width"/>×<paramref name="height"/> pixels drawn at
+    /// <paramref name="shownWidth"/>×<paramref name="shownHeight"/> points (1/72 inch), so that neither direction
+    /// goes below <paramref name="maxDpi"/>; <c>null</c> when it should stay as it is.
+    /// </summary>
+    public static (int Width, int Height)? ResampledSize(int width, int height, double shownWidth, double shownHeight, int maxDpi)
+    {
+        if (maxDpi <= 0 || shownWidth <= 0 || shownHeight <= 0 || width <= 0 || height <= 0) return null;
+        var dpi = Math.Min(width / (shownWidth / 72), height / (shownHeight / 72));
+        if (dpi <= maxDpi * ResampleThreshold) return null;
+        var scale = maxDpi / dpi;
+        return ((int)Math.Max(1, Math.Round(width * scale)), (int)Math.Max(1, Math.Round(height * scale)));
     }
 
     /// <summary>Returns the path of a smaller, valid JPEG, or <c>null</c> to keep the original stream.</summary>
