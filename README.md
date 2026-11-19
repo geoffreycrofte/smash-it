@@ -46,7 +46,7 @@ The builds are not code-signed yet, so Windows SmartScreen may warn on first lau
 
 | | Today | Planned |
 |---|---|---|
-| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; WebP (cwebp) and AVIF (avifenc) encoding | gifsicle, svgo, pngquant |
+| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); WebP (cwebp) and AVIF (avifenc) encoding | gifsicle, svgo |
 | **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4 | ffmpeg for fine tuning (CRF, AV1, VP9) |
 | **PDF** | Images recompressed in place (qpdf + jpegtran), object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | Image downsampling (DPI cap) |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
@@ -56,6 +56,14 @@ The builds are not code-signed yet, so Windows SmartScreen may warn on first lau
 | **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
 | **Integration** | Drag & drop, `smashit` command line | Explorer right-click menu, custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
+
+### Lossy PNG
+
+In lossy mode, pngquant reduces a PNG to a palette of up to 256 colors with dithering, often 60–80 % smaller
+for screenshots, illustrations and UI graphics; oxipng then polishes the result. The quality setting is pngquant's
+target, and an image that can't stay within 30 points of it (a photo with fine gradients, say) is left to the
+lossless engines rather than visibly damaged. The color profile is kept: the pixels are quantized in the image's
+own color space. Animated PNGs are skipped.
 
 ### PDF
 

@@ -33,7 +33,9 @@ internal static class TestImages
         return tiff;
     }
 
-    public static async Task<string> WriteAsync(string path, MediaFormat format, uint width, uint height, ImageMetadata? metadata = null)
+    /// <param name="noisy">Random blue channel (hard to compress); off for a photo-like gradient with light grain.</param>
+    public static async Task<string> WriteAsync(
+        string path, MediaFormat format, uint width, uint height, ImageMetadata? metadata = null, bool noisy = true)
     {
         var pixels = new byte[width * height * 4];
         var random = new Random(42);
@@ -41,9 +43,10 @@ internal static class TestImages
         for (var x = 0; x < width; x++)
         {
             var i = (y * (int)width + x) * 4;
-            pixels[i] = (byte)(x * 255 / Math.Max(1, width - 1));
-            pixels[i + 1] = (byte)(y * 255 / Math.Max(1, height - 1));
-            pixels[i + 2] = (byte)random.Next(256);
+            var grain = noisy ? 0 : random.Next(-6, 7);
+            pixels[i] = (byte)Math.Clamp(x * 255 / Math.Max(1, width - 1) + grain, 0, 255);
+            pixels[i + 1] = (byte)Math.Clamp(y * 255 / Math.Max(1, height - 1) + grain, 0, 255);
+            pixels[i + 2] = noisy ? (byte)random.Next(256) : (byte)Math.Clamp((x + y) * 255 / Math.Max(1, width + height - 2) + grain, 0, 255);
             pixels[i + 3] = 255;
         }
 

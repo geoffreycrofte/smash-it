@@ -72,8 +72,22 @@ internal static class PngMetadataIO
 
         // Right after IHDR: before PLTE/IDAT as the spec requires for iCCP and eXIf.
         chunks.InsertRange(1, added);
+        return Serialize(chunks, file.Length + added.Sum(c => c.Data.Length + 12));
+    }
 
-        using var output = new MemoryStream(file.Length + added.Sum(c => c.Data.Length + 12));
+    /// <summary>True when the PNG contains a chunk of this type (e.g. <c>acTL</c> for an animated PNG).</summary>
+    public static bool HasChunk(byte[] file, string type) => Parse(file).Any(c => c.Type == type);
+
+    /// <summary>Returns the PNG without the chunks of the given types; the other chunks are copied as they are.</summary>
+    public static byte[] RemoveChunks(byte[] file, IReadOnlySet<string> types)
+    {
+        var chunks = Parse(file).Where(c => !types.Contains(c.Type)).ToList();
+        return Serialize(chunks, file.Length);
+    }
+
+    private static byte[] Serialize(List<Chunk> chunks, int capacity)
+    {
+        using var output = new MemoryStream(capacity);
         output.Write(Signature);
         Span<byte> header = stackalloc byte[8];
         Span<byte> crcBytes = stackalloc byte[4];
