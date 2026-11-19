@@ -23,6 +23,7 @@ public static class Strings
     // Main window: footer
     public static string Settings => T("Settings", "Réglages");
     public static string Add => T("Add", "Ajouter");
+    public static string AddFiles => T("Add files", "Ajouter des fichiers");
     public static string Recompress => T("Recompress", "Recompresser");
     public static string RecompressTip => T("Compress again with the current settings", "Recompresser avec les réglages actuels");
     public static string Clear => T("Clear the list", "Vider la liste");

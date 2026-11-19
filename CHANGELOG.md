@@ -19,6 +19,8 @@ How this file works:
 ### Improved
 - **Better with a screen reader.** Each file in the list is read as one sentence ("photo.jpg, 2.3 MB → 1.1 MB, −52 %"), every button has a name, and settings that looked alike now have names that tell them apart.
 - **Enter opens the before/after view** of the selected file, like a double-click.
+- **A tidier empty window.** "Add files" now sits right under the drop area. The list buttons (Add, Recompress, Clear) and the column titles only show once there are files.
+- **The Tab key follows the screen**: the files, then the settings when they're open, then the bottom bar.
 
 ## v0.3.0 · November 19, 2026
 

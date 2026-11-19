@@ -9,9 +9,13 @@ today, what we haven't checked yet, and how to tell us when something gets in yo
 they work with the keyboard, Narrator and other screen readers the way you expect.
 
 **No mouse needed.**
-- Use Tab and Shift+Tab to move around, then Space or Enter to press a button.
-- No need to drag and drop: **Add** opens a file picker, and "Compress with Smash It" works from the File Explorer
-  right-click menu (or the menu key, or Shift+F10).
+- Use Tab and Shift+Tab to move around, then Space or Enter to press a button. Tab goes in the order you see:
+  the files, then the settings when they're open, then the bottom bar, and back to the files.
+- No need to drag and drop: **Add files**, in the middle of the empty window (then **Add** in the bottom bar),
+  opens a file picker, and "Compress with Smash It" works from the File Explorer right-click menu (or the menu
+  key, or Shift+F10).
+- When a button disappears under the focus (the list is cleared, or files arrive), the focus goes to what took its
+  place instead of getting lost.
 - In the file list, the arrow keys move from file to file, and Enter opens the before/after view.
 
 **Every control has a name.** Buttons that only show an icon (Settings, Clear the list, Stop, Compare, 100 %)
