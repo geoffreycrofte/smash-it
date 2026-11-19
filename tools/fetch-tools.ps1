@@ -57,6 +57,15 @@ $tools = @(
         Needs7z = $true
     },
     @{
+        # pngquant.org only publishes this unversioned zip (2.17.0, unchanged since December 2023): the SHA-256
+        # pins it, so a silent update upstream stops the script instead of shipping an untested build.
+        Name    = 'pngquant 2.17.0'
+        Url     = 'https://pngquant.org/pngquant-windows.zip'
+        Sha256  = 'bd0257aeeccfe446a4cd764927e26f8af6051796f28abed104307284107b120d'
+        Files   = @('pngquant.exe')
+        License = @{ 'COPYRIGHT' = 'pngquant.txt' }
+    },
+    @{
         Name    = 'qpdf 12.4.2'
         Url     = 'https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-msvc64.zip'
         Sha256  = 'db87077e683630c1217e0e8f9a20a9749d952ab676e881c3689187763a5de25d'

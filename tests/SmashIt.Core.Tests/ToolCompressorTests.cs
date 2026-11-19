@@ -84,4 +84,94 @@ public class ToolCompressorTests
         Assert.Equal(CompressionStatus.Converted, result.Status);
         Assert.Equal(MediaFormat.Avif, FormatDetector.DetectFile(result.OutputPath!));
     }
+
+    private static readonly CompressionOptions LossyPng = new()
+    {
+        Mode = CompressionMode.Lossy, Quality = 85, OriginalHandling = OriginalHandling.Overwrite,
+    };
+
+    /// <summary>PNG color type from IHDR: 3 is a palette, 2/6 are truecolor.</summary>
+    private static byte PngColorType(string path) => File.ReadAllBytes(path)[25];
+
+    private static IEnumerable<string> PngChunkTypes(string path)
+    {
+        var bytes = File.ReadAllBytes(path);
+        for (var pos = 8; pos + 8 <= bytes.Length;)
+        {
+            var length = (bytes[pos] << 24) | (bytes[pos + 1] << 16) | (bytes[pos + 2] << 8) | bytes[pos + 3];
+            yield return System.Text.Encoding.ASCII.GetString(bytes, pos + 4, 4);
+            pos += 12 + length;
+        }
+    }
+
+    [Fact]
+    public async Task Pngquant_turns_a_truecolor_png_into_a_smaller_palette_png()
+    {
+        var pngquant = Require(new PngquantCompressor());
+        using var dir = new TempDirectory();
+        var path = await TestImages.WriteAsync(dir.File("a.png"), MediaFormat.Png, 320, 200, noisy: false);
+        var before = new FileInfo(path).Length;
+
+        var result = await new CompressionPipeline([pngquant]).ProcessAsync(path, LossyPng, Ct);
+
+        Assert.Equal(CompressionStatus.Optimized, result.Status);
+        Assert.Equal("pngquant", result.CompressorId);
+        Assert.True(new FileInfo(path).Length < before);
+        Assert.Equal(3, PngColorType(path));
+        Assert.Equal((320u, 200u), await TestImages.SizeAsync(path));
+    }
+
+    [Fact]
+    public async Task Pngquant_keeps_the_source_color_profile_instead_of_converting_to_srgb()
+    {
+        var pngquant = Require(new PngquantCompressor());
+        using var dir = new TempDirectory();
+        var metadata = new ImageMetadata { SourceFormat = MediaFormat.Png, Icc = TestImages.FakeIcc };
+        var path = await TestImages.WriteAsync(dir.File("a.png"), MediaFormat.Png, 320, 200, metadata, noisy: false);
+
+        var result = await new CompressionPipeline([pngquant]).ProcessAsync(path, LossyPng, Ct);
+
+        Assert.Equal(CompressionStatus.Optimized, result.Status);
+        Assert.Equal(TestImages.FakeIcc, MetadataTransfer.Read(path, MediaFormat.Png)!.Icc);
+        var chunks = PngChunkTypes(path).ToList();
+        Assert.DoesNotContain("sRGB", chunks); // sRGB and iCCP must not coexist
+        Assert.DoesNotContain("gAMA", chunks);
+    }
+
+    [Fact]
+    public async Task Pngquant_gives_way_to_lossless_engines_when_the_quality_floor_is_not_met()
+    {
+        var pngquant = Require(new PngquantCompressor());
+        var oxipng = Require(new OxipngCompressor());
+        using var dir = new TempDirectory();
+        // Random noise can't fit in 256 colors at quality 100 (floor 70): pngquant writes nothing.
+        var path = await TestImages.WriteAsync(dir.File("a.png"), MediaFormat.Png, 200, 100);
+
+        var result = await new CompressionPipeline([pngquant, oxipng])
+            .ProcessAsync(path, LossyPng with { Quality = 100 }, Ct);
+
+        Assert.NotEqual(CompressionStatus.Failed, result.Status);
+        Assert.DoesNotContain("pngquant", result.CompressorId ?? string.Empty);
+        Assert.NotEqual(3, PngColorType(path));
+    }
+
+    [Fact]
+    public void Pngquant_only_runs_in_lossy_mode_and_only_writes_png()
+    {
+        var pngquant = new PngquantCompressor();
+        var lossy = new CompressionOptions { Mode = CompressionMode.Lossy };
+
+        Assert.True(pngquant.CanHandle(MediaFormat.Png, MediaFormat.Png, lossy));
+        Assert.True(pngquant.CanHandle(MediaFormat.Jpeg, MediaFormat.Png, lossy));
+        Assert.False(pngquant.CanHandle(MediaFormat.Png, MediaFormat.Png, CompressionOptions.Default));
+        Assert.False(pngquant.CanHandle(MediaFormat.Png, MediaFormat.WebP, lossy));
+    }
+
+    [Theory]
+    [InlineData(85, 55, 85)]
+    [InlineData(100, 70, 100)]
+    [InlineData(20, 0, 20)]
+    [InlineData(0, 0, 1)]
+    public void Pngquant_quality_range_follows_the_quality_setting(int quality, int min, int max) =>
+        Assert.Equal((min, max), PngquantCompressor.QualityRange(quality));
 }

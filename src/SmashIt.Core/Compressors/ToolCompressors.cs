@@ -1,6 +1,7 @@
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
 using SmashIt.Core.Imaging;
+using SmashIt.Core.Metadata;
 using SmashIt.Core.Tools;
 
 namespace SmashIt.Core.Compressors;
@@ -91,6 +92,99 @@ public sealed class JpegtranCompressor() : ToolCompressor("jpegtran.exe")
         finally
         {
             File.Delete(baseline);
+        }
+    }
+}
+
+/// <summary>
+/// pngquant: lossy PNG compression (GPL-3.0). Reduces the image to a palette of at most 256 colors with
+/// dithering, usually 60–80 % smaller; oxipng then polishes the result.
+/// </summary>
+/// <remarks>
+/// pngquant converts pixels tagged with an ICC profile to sRGB. When the pipeline is about to write the
+/// source profile back (<see cref="MetadataTransfer.PipelineHandles"/>), that would apply the profile twice, so
+/// pngquant gets the pixels without any color tag and quantizes them in the source color space instead.
+/// </remarks>
+public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
+{
+    /// <summary>pngquant's exit code when it can't reach the minimum quality: no file is written.</summary>
+    private const int QualityTooLow = 99;
+
+    private static readonly HashSet<string> ColorChunks = ["iCCP", "sRGB", "gAMA", "cHRM"];
+
+    public override string Id => "pngquant";
+
+    public override string DisplayName => "pngquant";
+
+    public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
+        output == MediaFormat.Png && options.Mode == CompressionMode.Lossy && WicImageCompressor.CanRead(input);
+
+    /// <summary>
+    /// pngquant's --quality range for a Smash It quality: the target is the upper bound, and images that can't
+    /// stay within 30 points of it are left to the lossless engines rather than visibly damaged.
+    /// </summary>
+    public static (int Min, int Max) QualityRange(int quality)
+    {
+        var max = Math.Clamp(quality, 1, 100);
+        return (Math.Max(0, max - 30), max);
+    }
+
+    public override async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
+    {
+        var source = job.OutputPath + ".src.png";
+        try
+        {
+            byte[] png;
+            if (job.InputFormat == MediaFormat.Png)
+            {
+                png = await File.ReadAllBytesAsync(job.InputPath, cancellationToken);
+                // A palette has no room for animation: pngquant would keep the first frame only.
+                if (PngMetadataIO.HasChunk(png, "acTL"))
+                    throw new NotSupportedException(L10n.T(
+                        "Animated PNGs aren't supported yet.",
+                        "Les PNG animés ne sont pas encore pris en charge."));
+            }
+            else
+            {
+                await IntermediatePng.CreateAsync(job, source, cancellationToken);
+                png = await File.ReadAllBytesAsync(source, cancellationToken);
+            }
+
+            var profileRestored = MetadataTransfer.PipelineHandles(job.InputFormat, job.OutputFormat)
+                && MetadataTransfer.Read(job.InputPath, job.InputFormat)?.Icc is not null;
+            if (profileRestored) png = PngMetadataIO.RemoveChunks(png, ColorChunks);
+            await File.WriteAllBytesAsync(source, png, cancellationToken);
+
+            var (min, max) = QualityRange(job.Options.Quality);
+            var speed = job.Options.Effort switch
+            {
+                CompressionEffort.Fast => "10",
+                CompressionEffort.Maximum => "1",
+                _ => "4",
+            };
+            // Metadata is written by the pipeline (or was already chosen in the intermediate PNG).
+            var result = await ExternalTool.RunRawAsync(
+                ToolPath ?? throw new ExternalToolException(L10n.T("pngquant not found.", "pngquant est introuvable.")),
+                ["--quality", $"{min}-{max}", "--speed", speed, "--strip", "--force", "--output", job.OutputPath, "--", source],
+                cancellationToken);
+
+            if (result.ExitCode == QualityTooLow)
+            {
+                File.Delete(job.OutputPath); // no result: the lossless engines win
+                return;
+            }
+            if (result.ExitCode != 0) throw ExternalTool.Failure(ToolPath, result);
+
+            // pngquant tags its output as sRGB; the source profile replaces that tag.
+            if (profileRestored)
+            {
+                var output = await File.ReadAllBytesAsync(job.OutputPath, cancellationToken);
+                await File.WriteAllBytesAsync(job.OutputPath, PngMetadataIO.RemoveChunks(output, ColorChunks), cancellationToken);
+            }
+        }
+        finally
+        {
+            File.Delete(source);
         }
     }
 }
