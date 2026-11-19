@@ -188,10 +188,12 @@ internal sealed class QpdfJson
     /// <summary>A page attribute, looked up through its /Parent page tree nodes when the page doesn't set it.</summary>
     private JsonNode? Inherited(JsonObject node, string attribute)
     {
-        for (var depth = 0; depth < 64 && node is not null; depth++)
+        // Up the page tree until a node sets the attribute, or the root (no /Parent) is passed.
+        JsonObject? current = node;
+        for (var depth = 0; depth < 64 && current is not null; depth++)
         {
-            if (node[attribute] is { } value) return Resolve(value);
-            node = Resolve(node["/Parent"]) as JsonObject;
+            if (current[attribute] is { } value) return Resolve(value);
+            current = Resolve(current["/Parent"]) as JsonObject;
         }
         return null;
     }
