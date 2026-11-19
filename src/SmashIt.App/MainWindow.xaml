@@ -253,6 +253,11 @@
             </StackPanel>
             <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.VideoQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
                     Value="{x:Bind ViewModel.VideoQuality, Mode=TwoWay}" />
+            <ComboBox Header="{x:Bind app:Strings.VideoResolution}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="{x:Bind app:Strings.VideoResolutionName}"
+                      ItemsSource="{x:Bind ViewModel.VideoResolutions}"
+                      SelectedItem="{x:Bind ViewModel.SelectedVideoResolution, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
             <ComboBox Header="{x:Bind app:Strings.Codec}" HorizontalAlignment="Stretch"
                       ItemsSource="{x:Bind ViewModel.VideoCodecs}"
                       SelectedItem="{x:Bind ViewModel.SelectedVideoCodec, Mode=TwoWay}"

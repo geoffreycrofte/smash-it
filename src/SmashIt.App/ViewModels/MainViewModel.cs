@@ -75,6 +75,20 @@ public sealed record PresetChoice(PresetId? Id)
 }
 
 /// <summary>A PDF image resolution cap, in pixels per inch; 0 keeps every image as it is.</summary>
+/// <summary>A video resolution cap, as the short side of the picture in pixels; 0 keeps the resolution.</summary>
+public sealed record VideoResolutionChoice(int ShortSide)
+{
+    public string Label => ShortSide switch
+    {
+        0 => L10n.T("Keep the resolution", "Conserver la résolution"),
+        1080 => L10n.T("1080p (Full HD)", "1080p (Full HD)"),
+        720 => L10n.T("720p (lighter)", "720p (plus léger)"),
+        _ => $"{ShortSide}p",
+    };
+
+    public override string ToString() => Label;
+}
+
 public sealed record PdfResolutionChoice(int Dpi)
 {
     public string Label => Dpi switch
@@ -169,7 +183,7 @@ public sealed partial class MainViewModel : ObservableObject
     private static readonly HashSet<string> PresetProperties =
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality),
-        nameof(SelectedPdfResolution), nameof(VideoQuality),
+        nameof(SelectedPdfResolution), nameof(VideoQuality), nameof(SelectedVideoResolution),
     ];
 
     private bool _applyingPreset;
@@ -188,6 +202,7 @@ public sealed partial class MainViewModel : ObservableObject
             PdfQuality = preset.PdfQuality;
             SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == preset.PdfMaxImageDpi) ?? SelectedPdfResolution;
             VideoQuality = preset.VideoQuality;
+            SelectedVideoResolution = VideoResolutions.FirstOrDefault(r => r.ShortSide == preset.VideoMaxShortSide) ?? VideoResolutions[0];
         }
         finally
         {
@@ -198,10 +213,10 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Shows the preset the current settings amount to, without applying anything.</summary>
     private void UpdateSelectedPreset()
     {
-        if (_applyingPreset || SelectedPdfResolution is null) return;
+        if (_applyingPreset || SelectedPdfResolution is null || SelectedVideoResolution is null) return;
         var id = CompressionPresets.Match(new PresetSettings(
             ImageLossy, (int)Math.Round(ImageQuality), StripMetadata, PdfLossy, (int)Math.Round(PdfQuality),
-            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality)));
+            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality), SelectedVideoResolution.ShortSide));
         var choice = Presets.First(p => p.Id == id);
         if (choice == SelectedPreset) return;
         _applyingPreset = true;
@@ -244,6 +259,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     public partial VideoCodecChoice SelectedVideoCodec { get; set; }
+
+    public IReadOnlyList<VideoResolutionChoice> VideoResolutions { get; } = [new(0), new(1080), new(720)];
+
+    /// <summary>Videos larger than this (4K phone videos, say) are scaled down to it.</summary>
+    [ObservableProperty]
+    public partial VideoResolutionChoice SelectedVideoResolution { get; set; }
 
     // All files
     // On by default: nothing is replaced until the user asks for it.
@@ -292,7 +313,7 @@ public sealed partial class MainViewModel : ObservableObject
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
-        nameof(SelectedVideoCodec), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
+        nameof(SelectedVideoCodec), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
         nameof(AskOutputLocation),
     ];
 
@@ -313,6 +334,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == settings.PdfMaxImageDpi) ?? PdfResolutions[^1];
         VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
         SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
+        SelectedVideoResolution = VideoResolutions.FirstOrDefault(r => r.ShortSide == settings.VideoMaxShortSide) ?? VideoResolutions[0];
         KeepOriginal = settings.KeepOriginal;
         OutputLocationIndex = settings.SaveInCompressedFolder ? 1 : 0;
         CopyAlreadyOptimal = settings.CopyAlreadyOptimal;
@@ -358,6 +380,7 @@ public sealed partial class MainViewModel : ObservableObject
         settings.PdfMaxImageDpi = SelectedPdfResolution.Dpi;
         settings.VideoQuality = (int)Math.Round(VideoQuality);
         settings.VideoCodec = SelectedVideoCodec.Codec;
+        settings.VideoMaxShortSide = SelectedVideoResolution.ShortSide;
         settings.KeepOriginal = KeepOriginal;
         settings.SaveInCompressedFolder = OutputLocationIndex == 1;
         settings.CopyAlreadyOptimal = CopyAlreadyOptimal;
@@ -428,6 +451,7 @@ public sealed partial class MainViewModel : ObservableObject
                 Mode = CompressionMode.Lossy,
                 Quality = (int)Math.Round(VideoQuality),
                 VideoCodec = SelectedVideoCodec.Codec,
+                VideoMaxShortSide = SelectedVideoResolution.ShortSide,
             },
             _ => common with
             {

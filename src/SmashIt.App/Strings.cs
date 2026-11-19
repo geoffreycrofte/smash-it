@@ -67,9 +67,11 @@ public static class Strings
     // Settings: video
     public static string Video => T("Video", "Vidéo");
     public static string Codec => T("Codec", "Codec");
+    public static string VideoResolution => T("Maximum resolution", "Résolution maximale");
+    public static string VideoResolutionName => T("Maximum video resolution", "Résolution maximale des vidéos");
     public static string VideoNote => T(
-        "Re-encoded to MP4 with the Windows encoder. MOV, MKV and AVI become MP4, only when they get smaller.",
-        "Réencodage en MP4 avec l'encodeur de Windows. Les MOV, MKV et AVI deviennent des MP4, seulement s'ils y gagnent.");
+        "Re-encoded to MP4 with the Windows encoder. MOV, MKV and AVI become MP4, only when they get smaller. Larger videos (4K) are brought down to the chosen resolution, never enlarged.",
+        "Réencodage en MP4 avec l'encodeur de Windows. Les MOV, MKV et AVI deviennent des MP4, seulement s'ils y gagnent. Les vidéos plus grandes (4K) sont ramenées à la résolution choisie, jamais agrandies.");
 
     // Settings: all files
     public static string AllFiles => T("All files", "Tous les fichiers");

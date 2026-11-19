@@ -14,6 +14,7 @@ How this file works:
 
 ### New
 - **Presets.** Pick "Web", "Email" or "Archive" and every setting follows, for images, PDFs and videos alike. The list sits at the bottom of the window, next to the Settings button. Change any setting and the preset becomes "Custom".
+- **Lighter videos from your phone.** Choose a maximum resolution, 1080p or 720p, and 4K videos are brought down to it: often 3 to 4 times smaller, still sharp on any screen. The Web preset uses 1080p, Email 720p.
 - **Zoom to 100 % in the before/after view.** Press "100 %" (or Z) to see every pixel and judge a lossy compression up close. Press it again to see the whole image.
 
 ### Improved

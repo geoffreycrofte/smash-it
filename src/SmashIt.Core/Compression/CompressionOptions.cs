@@ -90,5 +90,11 @@ public sealed record CompressionOptions
     /// </summary>
     public int PdfMaxImageDpi { get; init; }
 
+    /// <summary>
+    /// Videos: the short side of the picture is brought down to this many pixels at most (1080 for 1080p, 720 for
+    /// 720p), keeping the proportions. 0 keeps the resolution.
+    /// </summary>
+    public int VideoMaxShortSide { get; init; }
+
     public static CompressionOptions Default { get; } = new();
 }

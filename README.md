@@ -59,9 +59,9 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | | Today | Planned |
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding | |
-| **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4 | ffmpeg for fine tuning (CRF, AV1, VP9) |
+| **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4; optional 1080p or 720p cap | ffmpeg for fine tuning (CRF, AV1, VP9) |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
-| **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
+| **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
@@ -115,7 +115,10 @@ as they are. On the command line: `--pdf-dpi 300`, or `--pdf-dpi 0` to keep ever
 
 Videos are re-encoded with the encoder built into Windows, so no extra tool is needed and the GPU does the work when
 it can. Pick H.264 (plays everywhere) or HEVC (about 40 % smaller, needs a HEVC-capable player). The bitrate follows
-the quality setting, the resolution and the frame rate, and never exceeds the source bitrate. Portrait phone videos
+the quality setting, the resolution and the frame rate, and never exceeds the source bitrate. **Maximum resolution**
+brings larger videos down to 1080p or 720p (the short side of the picture, so portrait videos are treated the same),
+never up: a 4K phone video at 1080p is typically 3 to 4 times lighter. The Web preset uses 1080p, Email 720p; on
+the command line, `--video-max 1080`. Portrait phone videos
 come out upright. Windows can only write MP4, so MOV/MKV/AVI files become `.mp4`, and only when that makes them
 smaller. Videos need the lossy mode.
 
