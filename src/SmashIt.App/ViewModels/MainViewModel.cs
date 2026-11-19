@@ -154,6 +154,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string Summary { get; set; } = string.Empty;
 
+    /// <summary>True while files are waiting or being compressed: the footer shows a spinner.</summary>
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
     public bool IsEmpty => FileCount == 0;
 
     public bool HasFiles => FileCount > 0;
@@ -334,6 +338,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         item.State = FileItemState.Pending;
         item.Progress = 0;
+        UpdateSummary();
         var slots = item.Kind == MediaKind.Video ? _videoSlots : _slots;
         try
         {
@@ -347,6 +352,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             item.State = FileItemState.Working;
+            UpdateSummary();
 
             // The thumbnail must be read before the original may go to the Recycle Bin.
             if (item.ThumbnailLoading is { } thumbnail) await thumbnail;
@@ -389,19 +395,31 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // The footer shows the credit instead: the drop hint is already in the middle of the window.
             Summary = string.Empty;
+            IsBusy = false;
             return;
         }
 
         var saved = results.Sum(r => r.SavedBytes);
         var total = results.Sum(r => r.OriginalSize);
         var ratio = total > 0 ? (double)saved / total : 0;
-        var remaining = Files.Count(f => f.State is FileItemState.Pending or FileItemState.Working);
-        Summary = remaining > 0
-            ? L10n.T(
-                $"{remaining} file(s) in progress… {L10n.Size(saved)} saved so far.",
-                $"{remaining} fichier(s) en cours… {L10n.Size(saved)} économisés pour l'instant.")
-            : L10n.T(
+        var working = Files.Count(f => f.State == FileItemState.Working);
+        var waiting = Files.Count(f => f.State == FileItemState.Pending);
+        IsBusy = working + waiting > 0;
+        if (!IsBusy)
+        {
+            Summary = L10n.T(
                 $"{L10n.Size(saved)} saved out of {L10n.Size(total)} ({L10n.Percent(ratio)}).",
                 $"{L10n.Size(saved)} économisés sur {L10n.Size(total)} ({L10n.Percent(ratio)}).");
+            return;
+        }
+
+        // "3 being compressed, 12 waiting · 4.2 MB saved so far"
+        var progress = L10n.T(
+            $"{working} being compressed",
+            working == 1 ? "1 en cours de compression" : $"{working} en cours de compression");
+        if (waiting > 0) progress += L10n.T($", {waiting} waiting", $", {waiting} en attente");
+        Summary = saved > 0
+            ? progress + L10n.T($" · {L10n.Size(saved)} saved so far", $" · {L10n.Size(saved)} économisés pour l'instant")
+            : progress;
     }
 }

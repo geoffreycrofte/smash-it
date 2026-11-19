@@ -275,9 +275,18 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <!-- Empty list: the credit (the drop hint is already in the middle); otherwise the summary. -->
-      <TextBlock Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                 Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}" />
+      <!-- Empty list: the credit (the drop hint is already in the middle); otherwise the summary, with a spinner
+           while files are being compressed. -->
+      <Grid ColumnSpacing="10" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ProgressRing Width="16" Height="16" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                      Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite" />
+      </Grid>
       <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                  Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
