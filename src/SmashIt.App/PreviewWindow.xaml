@@ -25,7 +25,7 @@
     <!-- Title bar -->
     <Grid x:Name="AppTitleBar" Padding="16,0,0,0">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <Image x:Name="TitleBarIcon" Width="18" Height="18" />
+        <Image x:Name="TitleBarIcon" Width="18" Height="18" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock x:Name="TitleText" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
       </StackPanel>
     </Grid>
@@ -74,8 +74,8 @@
                     ZoomMode="Disabled" IsTabStop="False">
         <Viewbox x:Name="ImageBox" StretchDirection="DownOnly" Stretch="Uniform" Margin="12">
           <Grid x:Name="ImageHost">
-            <Image x:Name="AfterImage" Stretch="Fill" />
-            <Image x:Name="BeforeImage" Stretch="Fill" />
+            <Image x:Name="AfterImage" Stretch="Fill" AutomationProperties.Name="{x:Bind app:Strings.AfterImageName}" />
+            <Image x:Name="BeforeImage" Stretch="Fill" AutomationProperties.Name="{x:Bind app:Strings.BeforeImageName}" />
           </Grid>
         </Viewbox>
       </ScrollViewer>
