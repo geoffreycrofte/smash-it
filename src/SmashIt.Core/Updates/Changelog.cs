@@ -13,6 +13,9 @@ public static partial class Changelog
 {
     public const string FileName = "CHANGELOG.md";
 
+    /// <summary>The translation of the changelog for a language: CHANGELOG.fr.md for "fr".</summary>
+    public static string TranslatedFileName(string language) => $"CHANGELOG.{language.ToLowerInvariant()}.md";
+
     public static IReadOnlyList<ChangelogSection> Parse(string markdown)
     {
         var sections = new List<ChangelogSection>();

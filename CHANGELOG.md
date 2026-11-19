@@ -8,7 +8,16 @@ How this file works:
 - One section per version, titled "## vX.Y.Z" (a date can follow).
 - People see every section above the version they have.
 - "## Next version" is never shown: rename it to "## vX.Y.Z" when you tag the release.
+- CHANGELOG.fr.md holds the French translation, section by section, shown when the app is in French.
 -->
+
+## Next version
+
+### Improved
+- **"What's new" in your language.** When Smash It is in French, the notes of each update now show in French too.
+
+### Fixed
+- Sizes just under a megabyte read "0.98 MB" instead of "1003.4 KB".
 
 ## v0.4.0 · November 19, 2026
 

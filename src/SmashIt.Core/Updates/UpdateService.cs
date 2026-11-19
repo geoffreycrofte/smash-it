@@ -103,26 +103,25 @@ public sealed class UpdateService(HttpClient http)
     /// per version: the sections of CHANGELOG.md as tagged with <paramref name="upTo"/> (so unreleased work on the
     /// main branch never shows), or the GitHub release texts when that tag has no changelog.
     /// </summary>
+    /// <param name="language">
+    /// Two-letter code of the app's language ("fr"): each version's section is taken from CHANGELOG.fr.md when it
+    /// has one, from CHANGELOG.md otherwise. English (null or "en") reads CHANGELOG.md only.
+    /// </param>
     public async Task<IReadOnlyList<ReleaseInfo>> GetNotesAsync(
-        IReadOnlyList<ReleaseInfo> releases, AppVersion after, AppVersion upTo, CancellationToken cancellationToken)
+        IReadOnlyList<ReleaseInfo> releases, AppVersion after, AppVersion upTo, CancellationToken cancellationToken,
+        string? language = null)
     {
         var fromReleases = Between(releases, after, upTo);
-        string? markdown = null;
-        try
-        {
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(TimeSpan.FromSeconds(15));
-            using var response = await http.GetAsync(
-                $"https://raw.githubusercontent.com/{Repository}/v{upTo}/{Changelog.FileName}", timeout.Token);
-            if (response.IsSuccessStatusCode) markdown = await response.Content.ReadAsStringAsync(timeout.Token);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
-        {
-            // Unreachable: the release texts will do.
-        }
-
-        var sections = markdown is null ? [] : Changelog.Between(Changelog.Parse(markdown), after, upTo);
+        var english = await FetchChangelogAsync(upTo, Changelog.FileName, cancellationToken);
+        var sections = english is null ? [] : Changelog.Between(Changelog.Parse(english), after, upTo);
         if (sections.Count == 0) return fromReleases;
+
+        if (language is { Length: > 0 } and not "en" &&
+            await FetchChangelogAsync(upTo, Changelog.TranslatedFileName(language), cancellationToken) is { } translated)
+        {
+            var bodies = Changelog.Parse(translated).ToDictionary(s => s.Version);
+            sections = sections.Select(s => bodies.TryGetValue(s.Version, out var t) ? t : s).ToList();
+        }
 
         return sections.Select(section =>
         {
@@ -136,6 +135,23 @@ public sealed class UpdateService(HttpClient http)
                 release?.InstallerUrl,
                 release?.ChecksumsUrl);
         }).ToList();
+    }
+
+    /// <summary>A changelog file as tagged with <paramref name="version"/>; <c>null</c> when missing or unreachable.</summary>
+    private async Task<string?> FetchChangelogAsync(AppVersion version, string fileName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(15));
+            using var response = await http.GetAsync(
+                $"https://raw.githubusercontent.com/{Repository}/v{version}/{fileName}", timeout.Token);
+            return response.IsSuccessStatusCode ? await response.Content.ReadAsStringAsync(timeout.Token) : null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            return null; // unreachable: the release texts will do
+        }
     }
 
     /// <summary>

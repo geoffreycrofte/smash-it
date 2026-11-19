@@ -60,12 +60,16 @@ public static class L10n
     public static string T(string english, string french) => IsFrench ? french : english;
 
     /// <summary>A file size: "1.5 MB" / "1,5 Mo".</summary>
+    /// <summary>
+    /// A file size in 1024 steps, switching unit from 1000 of the smaller one: "0.98 MB" rather than "1003.4 KB",
+    /// so a number never has four digits.
+    /// </summary>
     public static string Size(long bytes) => bytes switch
     {
         < 0 => "-" + Size(-bytes),
-        < 1024 => $"{bytes} {T("B", "o")}",
-        < 1024 * 1024 => $"{bytes / 1024d:0.#} {T("KB", "Ko")}",
-        < 1024L * 1024 * 1024 => $"{bytes / (1024d * 1024):0.##} {T("MB", "Mo")}",
+        < 1000 => $"{bytes} {T("B", "o")}",
+        < 1000 * 1024 => $"{bytes / 1024d:0.#} {T("KB", "Ko")}",
+        < 1000L * 1024 * 1024 => $"{bytes / (1024d * 1024):0.##} {T("MB", "Mo")}",
         _ => $"{bytes / (1024d * 1024 * 1024):0.##} {T("GB", "Go")}",
     };
 
