@@ -28,6 +28,7 @@ public sealed partial class MainWindow : Window
         CenterOnScreen();
         AppIcon.Apply(AppWindow, TitleBarIcon);
         ViewModel.AskWhereToSave = AskWhereToSaveAsync;
+        ViewModel.Updates.ShowNotes = ShowReleaseNotesAsync;
 
         PreviewCache.Clean(includeCurrent: false);
         // The preview copies belong to the files in the list: keep them when the window is only rebuilt.
@@ -123,6 +124,26 @@ public sealed partial class MainWindow : Window
 
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return null;
         return new OutputLocationAnswer(choice.SelectedIndex == 1, dontAsk.IsChecked == true);
+    }
+
+    /// <summary>The notes of one or more releases, newest first; offers the update when there is one.</summary>
+    private async Task ShowReleaseNotesAsync(string title, IReadOnlyList<SmashIt.Core.Updates.ReleaseInfo> releases)
+    {
+        var updates = ViewModel.Updates;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = title,
+            Content = ReleaseNotesView.Build(releases),
+            CloseButtonText = Strings.Close,
+        };
+        if (updates.IsUpdateOffered)
+        {
+            dialog.PrimaryButtonText = UpdateViewModel.InstallLabel;
+            dialog.DefaultButton = ContentDialogButton.Primary;
+        }
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            await updates.InstallCommand.ExecuteAsync(null);
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs e)

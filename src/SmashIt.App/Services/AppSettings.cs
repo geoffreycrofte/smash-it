@@ -35,6 +35,13 @@ public sealed class AppSettings
     public bool SaveInCompressedFolder { get; set; }
     public bool AskOutputLocation { get; set; } = true;
 
+    // Updates
+    public bool CheckForUpdates { get; set; } = true;
+    /// <summary>A version the user chose to skip: not offered again at startup (newer ones are).</summary>
+    public string? SkippedVersion { get; set; }
+    /// <summary>The version that ran last: a newer one at startup means it was just updated.</summary>
+    public string? LastRunVersion { get; set; }
+
     private static AppSettings Load()
     {
         try

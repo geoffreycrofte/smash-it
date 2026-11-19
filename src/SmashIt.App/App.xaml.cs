@@ -67,6 +67,14 @@ public partial class App : Application
             Splash = null;
             await shown.FadeOutAsync();
         }
+
+        // The installer replaces the app's files and starts it again: close everything (settings are saved).
+        _viewModel.Updates.ExitRequested += () =>
+        {
+            _window?.Close();
+            Exit();
+        };
+        await _viewModel.Updates.StartupAsync();
     }
 
     /// <summary>

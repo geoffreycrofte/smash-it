@@ -66,6 +66,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<FileItem> Files { get; } = [];
 
+    /// <summary>New versions: the banner above the list and the "Updates" part of Settings.</summary>
+    public UpdateViewModel Updates { get; }
+
     public IReadOnlyList<OutputFormatChoice> OutputFormats { get; } =
     [
         new(null, null),
@@ -186,6 +189,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
+        Updates = new UpdateViewModel(() => IsBusy);
         var settings = AppSettings.Current;
         ImageLossy = settings.ImageLossy;
         ImageQuality = Math.Clamp(settings.ImageQuality, 1, 100);
