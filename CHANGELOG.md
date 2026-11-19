@@ -19,15 +19,15 @@ How this file works:
 ### Improved
 - Files Smash It can't work on, like a signed PDF, now say "Not supported" with the reason, instead of "Error".
 
+### Fixed
+- In "What's new", long items no longer break into several lines.
+
 ## v0.2.0 · November 19, 2026
 
 ### New
-- **Right-click to compress.** Select images, PDFs, videos or whole folders in File Explorer and choose
-  "Compress with Smash It". On Windows 11, it's under "Show more options". Turn it on or off in Settings.
-- **Keep your originals tidy.** When you compress several files, choose where the smaller copies go: next to the
-  originals, or together in a "compressed" folder. Smash It remembers your choice.
-- **Get the whole set in one place.** With the "compressed" folder, files that were already as small as they can
-  get can be copied there too.
+- **Right-click to compress.** Select images, PDFs, videos or whole folders in File Explorer and choose "Compress with Smash It". On Windows 11, it's under "Show more options". Turn it on or off in Settings.
+- **Keep your originals tidy.** When you compress several files, choose where the smaller copies go: next to the originals, or together in a "compressed" folder. Smash It remembers your choice.
+- **Get the whole set in one place.** With the "compressed" folder, files that were already as small as they can get can be copied there too.
 - **Much smaller PNGs** in lossy mode.
 - **Updates in one click.** Smash It tells you when a new version is out, shows what's new, and updates itself.
 - **Your settings stay put** from one launch to the next.

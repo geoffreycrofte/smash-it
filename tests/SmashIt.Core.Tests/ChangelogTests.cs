@@ -63,6 +63,24 @@ public class ChangelogTests
         Assert.Null(Changelog.SectionFor(Markdown, AppVersion.Parse("0.9.0")));
     }
 
+    [Fact]
+    public void Joins_list_items_and_paragraphs_wrapped_in_the_file()
+    {
+        const string wrapped = """
+            ### New
+            - **Right-click to compress.** Select images
+              in File Explorer.
+            - Second item
+
+            A paragraph
+            on two lines.
+            """;
+
+        Assert.Equal(
+            ["### New", "- **Right-click to compress.** Select images in File Explorer.", "- Second item", "A paragraph on two lines."],
+            Changelog.LogicalLines(wrapped));
+    }
+
     private static readonly IReadOnlyList<ReleaseInfo> Releases =
     [
         new(AppVersion.Parse("0.3.0"), "Smash It 0.3.0", "texte de la release 0.3.0", new DateTimeOffset(2027, 1, 15, 9, 0, 0, TimeSpan.Zero),
