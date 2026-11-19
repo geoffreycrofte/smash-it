@@ -2,6 +2,7 @@ name: Release
 
 # Push a tag like v0.2.0 to build the installer and the portable zip and attach them to a draft
 # GitHub release. Review the draft, then publish it: the website links to releases/latest.
+# A release created on GitHub first (with a new tag) works too: the files are added to it.
 # "Run workflow" (manual) builds the same files as a workflow artifact, without any release.
 on:
   push:
@@ -64,14 +65,22 @@ jobs:
             artifacts/SmashIt-win-x64.zip
             artifacts/SHA256SUMS.txt
 
-      - name: Create draft release
+      - name: Attach to the release
         if: github.ref_type == 'tag'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $extra = @()
-          if ('${{ steps.version.outputs.value }}' -match '-') { $extra += '--prerelease' }
-          gh release create $env:GITHUB_REF_NAME `
-            artifacts/SmashIt-Setup-x64.exe artifacts/SmashIt-win-x64.zip artifacts/SHA256SUMS.txt `
-            --draft --generate-notes --title "Smash It ${{ steps.version.outputs.value }}" @extra
+          $files = 'artifacts/SmashIt-Setup-x64.exe', 'artifacts/SmashIt-win-x64.zip', 'artifacts/SHA256SUMS.txt'
+          # A release created by hand on GitHub (which also creates the tag) only gets the files.
+          gh release view $env:GITHUB_REF_NAME *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:GITHUB_REF_NAME @files --clobber
+          }
+          else {
+            $extra = @()
+            if ('${{ steps.version.outputs.value }}' -match '-') { $extra += '--prerelease' }
+            gh release create $env:GITHUB_REF_NAME @files `
+              --draft --generate-notes --title "Smash It ${{ steps.version.outputs.value }}" @extra
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
