@@ -41,7 +41,7 @@ public sealed record VideoCodecChoice(VideoCodec Codec)
 }
 
 /// <summary>The answer to "where do the compressed files go?".</summary>
-public sealed record OutputLocationAnswer(bool InCompressedFolder, bool DontAskAgain);
+public sealed record OutputLocationAnswer(bool InCompressedFolder, bool CopyAlreadyOptimal, bool DontAskAgain);
 
 public sealed record LanguageChoice(AppLanguage Language)
 {
@@ -145,7 +145,14 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Where kept-original results go: 0 next to the original ("name-compressed.ext"), 1 in a "compressed" folder.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SavesInCompressedFolder))]
     public partial int OutputLocationIndex { get; set; }
+
+    public bool SavesInCompressedFolder => OutputLocationIndex == 1;
+
+    /// <summary>With the "compressed" folder: files that are already optimal are copied there too.</summary>
+    [ObservableProperty]
+    public partial bool CopyAlreadyOptimal { get; set; }
 
     /// <summary>Ask where the results go when several files are added at once.</summary>
     [ObservableProperty]
@@ -178,7 +185,8 @@ public sealed partial class MainViewModel : ObservableObject
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(VideoQuality),
-        nameof(SelectedVideoCodec), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(AskOutputLocation),
+        nameof(SelectedVideoCodec), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
+        nameof(AskOutputLocation),
     ];
 
     // Sliders change many times per second: the file is written once they settle.
@@ -198,6 +206,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
         KeepOriginal = settings.KeepOriginal;
         OutputLocationIndex = settings.SaveInCompressedFolder ? 1 : 0;
+        CopyAlreadyOptimal = settings.CopyAlreadyOptimal;
         AskOutputLocation = settings.AskOutputLocation;
         SelectedLanguage = Languages.First(l => l.Language == settings.Language);
 
@@ -239,6 +248,7 @@ public sealed partial class MainViewModel : ObservableObject
         settings.VideoCodec = SelectedVideoCodec.Codec;
         settings.KeepOriginal = KeepOriginal;
         settings.SaveInCompressedFolder = OutputLocationIndex == 1;
+        settings.CopyAlreadyOptimal = CopyAlreadyOptimal;
         settings.AskOutputLocation = AskOutputLocation;
         settings.Save();
     }
@@ -291,6 +301,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
             KeptOriginalFolder = KeepOriginal && OutputLocationIndex == 1 ? CompressionOptions.CompressedFolderName : null,
+            CopyAlreadyOptimal = CopyAlreadyOptimal,
         };
         return kind switch
         {
@@ -348,6 +359,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (answer is null) return; // cancelled: nothing is added
 
             OutputLocationIndex = answer.InCompressedFolder ? 1 : 0;
+            if (answer.InCompressedFolder) CopyAlreadyOptimal = answer.CopyAlreadyOptimal;
             if (answer.DontAskAgain) AskOutputLocation = false;
         }
 
@@ -376,6 +388,21 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Stops the batch: waiting files are not started, the ones being compressed are abandoned (their originals stay as they were).</summary>
+    [RelayCommand]
+    private void Stop()
+    {
+        _cts.Cancel();
+        _cts = new CancellationTokenSource();
+    }
+
+    private static CompressionResult Cancelled(FileItem item)
+    {
+        long size = 0;
+        try { size = new FileInfo(item.Path).Length; } catch (IOException) { }
+        return new(item.Path, CompressionStatus.Cancelled, size, size);
+    }
+
     [RelayCommand]
     private void Clear()
     {
@@ -399,6 +426,10 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
+            // Stopped (or cleared) before its turn came.
+            item.Result = Cancelled(item);
+            item.State = FileItemState.Skipped;
+            UpdateSummary();
             return;
         }
 
@@ -427,6 +458,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
+            item.Result = Cancelled(item);
             item.State = FileItemState.Skipped;
         }
         catch (Exception ex)
@@ -443,7 +475,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void UpdateSummary()
     {
-        var results = Files.Select(f => f.Result).OfType<CompressionResult>().ToList();
+        // Stopped files were not compressed: they don't count in "saved out of".
+        var results = Files.Select(f => f.Result).OfType<CompressionResult>()
+            .Where(r => r.Status != CompressionStatus.Cancelled).ToList();
         if (Files.Count == 0)
         {
             // The footer shows the credit instead: the drop hint is already in the middle of the window.

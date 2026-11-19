@@ -138,6 +138,29 @@ public class CompressionPipelineTests
     }
 
     [Fact]
+    public async Task An_already_optimal_file_is_copied_into_the_compressed_folder_only_when_asked()
+    {
+        using var dir = new TempDirectory();
+        var file = WritePng(dir.File("photo.png"), 1000);
+        var pipeline = new CompressionPipeline([new FakeCompressor("bigger", 1200)]);
+        var options = Overwrite with
+        {
+            OriginalHandling = OriginalHandling.KeepAlongside, KeptOriginalFolder = CompressionOptions.CompressedFolderName,
+        };
+
+        var skipped = await pipeline.ProcessAsync(file, options, Ct);
+        Assert.Equal(CompressionStatus.AlreadyOptimal, skipped.Status);
+        Assert.Null(skipped.OutputPath);
+        Assert.False(Directory.Exists(dir.File("compressed")));
+
+        var copied = await pipeline.ProcessAsync(file, options with { CopyAlreadyOptimal = true }, Ct);
+        Assert.Equal(CompressionStatus.AlreadyOptimal, copied.Status);
+        Assert.Equal(dir.File(@"compressed\photo.png"), copied.OutputPath);
+        Assert.Equal(await File.ReadAllBytesAsync(file, Ct), await File.ReadAllBytesAsync(copied.OutputPath!, Ct));
+        Assert.Equal(0, copied.SavedBytes);
+    }
+
+    [Fact]
     public void A_folder_drop_skips_the_results_of_an_earlier_run()
     {
         using var dir = new TempDirectory();

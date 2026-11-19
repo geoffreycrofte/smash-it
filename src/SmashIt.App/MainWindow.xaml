@@ -118,6 +118,12 @@
                 <RadioButton Content="{x:Bind app:Strings.NextToOriginals}" />
                 <RadioButton Content="{x:Bind app:Strings.InCompressedFolder}" />
               </RadioButtons>
+              <CheckBox Margin="28,-4,0,0"
+                        IsChecked="{x:Bind ViewModel.CopyAlreadyOptimal, Mode=TwoWay}"
+                        IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.SavesInCompressedFolder, Mode=OneWay}">
+                <TextBlock Text="{x:Bind app:Strings.CopyAlreadyOptimal}" TextWrapping="Wrap" />
+              </CheckBox>
               <CheckBox Content="{x:Bind app:Strings.AskOutputLocation}"
                         IsChecked="{x:Bind ViewModel.AskOutputLocation, Mode=TwoWay}"
                         IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}" />
@@ -286,14 +292,20 @@
       </Grid.ColumnDefinitions>
       <!-- Empty list: the credit (the drop hint is already in the middle); otherwise the summary, with a spinner
            while files are being compressed. -->
-      <Grid ColumnSpacing="10" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}">
+      <Grid ColumnSpacing="10" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}">
         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <ProgressRing Width="16" Height="16" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+        <Button Command="{x:Bind ViewModel.StopCommand}" VerticalAlignment="Stretch"
+                Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                ToolTipService.ToolTip="{x:Bind app:Strings.Stop}" AutomationProperties.Name="{x:Bind app:Strings.Stop}">
+          <FontIcon Glyph="&#xE71A;" FontSize="14" />
+        </Button>
+        <ProgressRing Grid.Column="1" Width="16" Height="16" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
                       Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}" AutomationProperties.AccessibilityView="Raw" />
-        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center"
+        <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite" />
       </Grid>
       <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
@@ -302,7 +314,8 @@
         <Run Text="{x:Bind app:Strings.CreditPrefix}" /><Hyperlink NavigateUri="https://geoffreycrofte.com/project/smash-it" UnderlineStyle="None"
                    ToolTipService.ToolTip="geoffreycrofte.com/project/smash-it"><Run Text="Crofte Studio" /></Hyperlink>
       </TextBlock>
-      <ToggleButton Grid.Column="1" Margin="0,0,8,0"
+      <!-- Icon-only buttons stretch to the height of the labelled ones. -->
+      <ToggleButton Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Stretch"
                     IsChecked="{x:Bind ViewModel.IsSettingsOpen, Mode=TwoWay}"
                     ToolTipService.ToolTip="{x:Bind app:Strings.Settings}"
                     AutomationProperties.Name="{x:Bind app:Strings.Settings}">
@@ -320,7 +333,7 @@
           <TextBlock Text="{x:Bind app:Strings.Recompress}" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="4" Command="{x:Bind ViewModel.ClearCommand}"
+      <Button Grid.Column="4" Command="{x:Bind ViewModel.ClearCommand}" VerticalAlignment="Stretch"
               ToolTipService.ToolTip="{x:Bind app:Strings.Clear}" AutomationProperties.Name="{x:Bind app:Strings.Clear}">
         <FontIcon Glyph="&#xE74D;" FontSize="14" />
       </Button>

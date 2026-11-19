@@ -104,7 +104,8 @@ portable zip, or to remove it, use **Settings → Windows Explorer**. On Windows
   `photo-compressed.jpg` (or `photo-compressed.webp` for a conversion), or in a `compressed` folder next to them,
   under their own name (`compressed\photo.jpg`). When you drop several files or right-click a selection, Smash It
   asks which one you want, preset to your last choice; tick "Don't ask again" to stop the question (Settings brings
-  it back). A `compressed` folder inside a folder you drop is skipped, so results aren't compressed twice.
+  it back). With the folder, you can also have the files that are already optimal copied into it as they are, so
+  it holds the whole set, ready to send or upload. A `compressed` folder inside a folder you drop is skipped, so results aren't compressed twice.
   Turn **Keep originals** off and the compressed file replaces the original, which goes to the Recycle Bin.
 
 Reading HEIC, WebP and AVIF relies on the free *HEIF*, *HEVC*, *WebP* and *AV1* image extensions from the Microsoft Store.
@@ -182,6 +183,7 @@ smashit [options] <files or folders…>
   --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
   --keep               Keep the original, write "name-compressed.ext" next to it
   --folder             Keep the original, write the result into a "compressed" folder next to it
+  --copy-all           Like --folder, and also copy the files that are already optimal
   --no-recycle         Delete the original instead of using the Recycle Bin
   --keep-metadata      Keep EXIF, XMP, IPTC and comments
   --strip-metadata     Remove them (default; color profile and orientation are kept)

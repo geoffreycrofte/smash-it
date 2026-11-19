@@ -26,6 +26,7 @@ public static class Strings
     public static string Recompress => T("Recompress", "Recompresser");
     public static string RecompressTip => T("Compress again with the current settings", "Recompresser avec les réglages actuels");
     public static string Clear => T("Clear the list", "Vider la liste");
+    public static string Stop => T("Stop compressing (the remaining files stay as they are)", "Arrêter la compression (les fichiers restants ne sont pas modifiés)");
     public static string CreditPrefix => T("Free app made by ", "Application gratuite proposée par ");
 
     // Settings: images
@@ -66,6 +67,9 @@ public static class Strings
     public static string SaveResults => T("Save the compressed files", "Enregistrer les fichiers compressés");
     public static string NextToOriginals => T("Next to the originals, as “name-compressed.ext”", "À côté des originaux, sous le nom « nom-compressed.ext »");
     public static string InCompressedFolder => T("In a “compressed” folder next to the originals", "Dans un dossier « compressed » à côté des originaux");
+    public static string CopyAlreadyOptimal => T(
+        "Also copy the files that are already optimal, so the folder holds the whole set",
+        "Y copier aussi les fichiers déjà optimaux, pour avoir le lot complet dans ce dossier");
     public static string AskOutputLocation => T("Ask when I add several files", "Demander quand j'ajoute plusieurs fichiers");
 
     // Dialog: where do the compressed files go?

@@ -106,6 +106,16 @@ public sealed partial class MainWindow : Window
             Items = { Strings.NextToOriginals, Strings.InCompressedFolder },
             SelectedIndex = ViewModel.OutputLocationIndex,
         };
+        // Only meaningful with the folder: shown under that choice, preset to the last answer.
+        var copyAll = new CheckBox
+        {
+            Content = new TextBlock { Text = Strings.CopyAlreadyOptimal, TextWrapping = TextWrapping.Wrap },
+            IsChecked = ViewModel.CopyAlreadyOptimal,
+            Margin = new Thickness(28, -8, 0, 0),
+            Visibility = choice.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed,
+        };
+        choice.SelectionChanged += (_, _) =>
+            copyAll.Visibility = choice.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
         var dontAsk = new CheckBox { Content = Strings.DontAskAgain };
         var dialog = new ContentDialog
         {
@@ -114,7 +124,7 @@ public sealed partial class MainWindow : Window
             Content = new StackPanel
             {
                 Spacing = 12,
-                Children = { new TextBlock { Text = Strings.WhereIntro(files.Count), TextWrapping = TextWrapping.Wrap }, choice, dontAsk },
+                Children = { new TextBlock { Text = Strings.WhereIntro(files.Count), TextWrapping = TextWrapping.Wrap }, choice, copyAll, dontAsk },
             },
             PrimaryButtonText = Strings.CompressButton,
             CloseButtonText = Strings.Cancel,
@@ -122,7 +132,7 @@ public sealed partial class MainWindow : Window
         };
 
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return null;
-        return new OutputLocationAnswer(choice.SelectedIndex == 1, dontAsk.IsChecked == true);
+        return new OutputLocationAnswer(choice.SelectedIndex == 1, copyAll.IsChecked == true, dontAsk.IsChecked == true);
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs e)

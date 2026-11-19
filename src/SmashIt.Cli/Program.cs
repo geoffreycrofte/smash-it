@@ -37,6 +37,13 @@ for (var i = 0; i < args.Length; i++)
                 OriginalHandling = OriginalHandling.KeepAlongside, KeptOriginalFolder = CompressionOptions.CompressedFolderName,
             };
             break;
+        case "--copy-all":
+            options = options with
+            {
+                OriginalHandling = OriginalHandling.KeepAlongside, KeptOriginalFolder = CompressionOptions.CompressedFolderName,
+                CopyAlreadyOptimal = true,
+            };
+            break;
         case "--keep":
             options = options with { OriginalHandling = OriginalHandling.KeepAlongside };
             break;
@@ -122,6 +129,8 @@ static void PrintResult(CompressionResult r)
             $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {L10n.Size(r.OriginalSize)} → {L10n.Size(r.FinalSize)}  (-{L10n.Percent(r.SavedRatio)})  [{r.CompressorId}]",
         CompressionStatus.Optimized => $"✔ {name}  {L10n.Size(r.OriginalSize)} → {L10n.Size(r.FinalSize)}  (-{L10n.Percent(r.SavedRatio)})  [{r.CompressorId}]",
         CompressionStatus.Converted => $"✔ {name} → {Path.GetFileName(r.OutputPath)}  {L10n.Size(r.OriginalSize)} → {L10n.Size(r.FinalSize)}  [{r.CompressorId}]",
+        CompressionStatus.AlreadyOptimal when r.OutputPath is not null =>
+            $"• {name}  {L10n.T("already optimal, copied", "déjà optimal, copié")}",
         CompressionStatus.AlreadyOptimal => $"• {name}  {L10n.T("already optimal", "déjà optimal")}",
         CompressionStatus.Unsupported => $"– {name}  {r.Message}",
         CompressionStatus.Cancelled => $"– {name}  {L10n.T("cancelled", "annulé")}",
@@ -150,6 +159,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
       --keep               Keeps the original, writes "name-compressed.ext" next to it
       --folder             Keeps the original, writes the result into a "compressed" folder next to it
+      --copy-all           Like --folder, and also copies the files that are already optimal
       --no-recycle         Deletes the original instead of sending it to the Recycle Bin
       --keep-metadata      Keeps EXIF, XMP, IPTC and comments
       --strip-metadata     Removes them (default; color profile and orientation are kept)
@@ -167,6 +177,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --codec <codec>      Vidéo : h264 (par défaut) ou hevc ; nécessite --lossy ou -q
       --keep               Garde l'original, écrit « nom-compressed.ext » à côté
       --folder             Garde l'original, écrit le résultat dans un dossier « compressed » à côté
+      --copy-all           Comme --folder, et y copie aussi les fichiers déjà optimaux
       --no-recycle         Supprime l'original au lieu de l'envoyer à la Corbeille
       --keep-metadata      Conserve EXIF, XMP, IPTC et commentaires
       --strip-metadata     Les supprime (par défaut ; profil couleur et orientation conservés)

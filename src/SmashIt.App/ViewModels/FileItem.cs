@@ -102,6 +102,8 @@ public sealed partial class FileItem(string path) : ObservableObject
             CompressionStatus.Converted => Result.SavedRatio >= 0
                 ? L10n.T($"Converted, −{L10n.Percent(Result.SavedRatio)}", $"Converti, −{L10n.Percent(Result.SavedRatio)}")
                 : L10n.T($"Converted, +{L10n.Percent(-Result.SavedRatio)}", $"Converti, +{L10n.Percent(-Result.SavedRatio)}"),
+            CompressionStatus.AlreadyOptimal when Result.OutputPath is not null =>
+                L10n.T("Already optimal, copied", "Déjà optimal, copié"),
             CompressionStatus.AlreadyOptimal => L10n.T("Already optimal", "Déjà optimal"),
             CompressionStatus.Unsupported => L10n.T("Not supported", "Non pris en charge"),
             CompressionStatus.Cancelled => L10n.T("Cancelled", "Annulé"),
