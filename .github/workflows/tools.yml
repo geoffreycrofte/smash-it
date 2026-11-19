@@ -1,0 +1,77 @@
+name: Build tools
+
+# Some bundled tools publish no Windows x64 build. This workflow compiles one from the tool's own tagged source
+# and attaches it to a "tools-<name>-<version>" pre-release of this repository, where tools/fetch-tools.ps1
+# downloads it (pinned by SHA-256, like every other tool).
+#
+#   git tag tools-oxvg-0.0.9 && git push origin tools-oxvg-0.0.9
+#
+# These releases are pre-releases and never "latest": the app's download links and update check ignore them.
+on:
+  push:
+    tags: ['tools-oxvg-*']
+
+permissions:
+  contents: write
+
+jobs:
+  oxvg:
+    runs-on: windows-latest
+    steps:
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^tools-oxvg-', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Unexpected tag $env:GITHUB_REF_NAME" }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Get the oxvg source
+        shell: pwsh
+        run: git clone --depth 1 --branch "v${{ steps.version.outputs.value }}" https://github.com/noahbald/oxvg.git oxvg
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Build
+        working-directory: oxvg
+        shell: pwsh
+        env:
+          # The C runtime is linked in: the exe runs on its own, without the Visual C++ redistributable.
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: cargo build --locked --release --package oxvg --bins --target x86_64-pc-windows-msvc
+
+      - name: Check
+        shell: pwsh
+        run: |
+          $exe = 'oxvg/target/x86_64-pc-windows-msvc/release/oxvg.exe'
+          & $exe --version
+          if ($LASTEXITCODE -ne 0) { throw 'oxvg.exe does not run.' }
+          '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><!-- c --><rect width="10" height="10"/></svg>' |
+            Set-Content test.svg -Encoding utf8
+          & $exe optimise test.svg --output test.min.svg
+          Get-Content test.min.svg
+
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ steps.version.outputs.value }}'
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item oxvg/target/x86_64-pc-windows-msvc/release/oxvg.exe dist/oxvg-$version-x86_64-pc-windows-msvc.exe
+          Copy-Item oxvg/LICENSE dist/oxvg-LICENSE.txt
+          $hash = (Get-FileHash "dist/oxvg-$version-x86_64-pc-windows-msvc.exe" -Algorithm SHA256).Hash.ToLowerInvariant()
+          @"
+          oxvg $version (https://github.com/noahbald/oxvg, MIT), compiled for Windows x64 from its v$version tag
+          by this repository's *Build tools* workflow, because the upstream release only has an ARM64 Windows build.
+
+          SHA-256 of the exe: ``$hash``
+
+          Used by tools/fetch-tools.ps1. Not a Smash It release.
+          "@ | Set-Content notes.md -Encoding utf8
+          # No checkout of this repository here: name it for gh.
+          gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
+            --title "Build tool: oxvg $version (Windows x64)" --notes-file notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

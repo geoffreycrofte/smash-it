@@ -189,6 +189,45 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
     }
 }
 
+/// <summary>
+/// gifsicle: GIF optimizer (GPL-2.0), animated GIFs included. Lossless, it rebuilds each frame to store only what
+/// changes and recompresses it; lossy, its <c>--lossy</c> option trades invisible noise for a much smaller file.
+/// Frames, timing and looping are kept.
+/// </summary>
+public sealed class GifsicleCompressor() : ToolCompressor("gifsicle.exe")
+{
+    public override string Id => "gifsicle";
+
+    public override string DisplayName => "gifsicle";
+
+    public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
+        input == MediaFormat.Gif && output == MediaFormat.Gif;
+
+    /// <summary>gifsicle's lossiness for a Smash It quality: 0 at 100, 30 at 85, 100 at 50, 200 at most.</summary>
+    public static int Lossiness(int quality) => Math.Clamp((100 - Math.Clamp(quality, 1, 100)) * 2, 0, 200);
+
+    public override Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
+    {
+        var options = job.Options;
+        var args = new List<string>
+        {
+            options.Effort switch
+            {
+                CompressionEffort.Fast => "-O1",
+                CompressionEffort.Maximum => "-O3",
+                _ => "-O2",
+            },
+            "--no-warnings",
+        };
+        if (options.Mode == CompressionMode.Lossy && Lossiness(options.Quality) > 0)
+            args.Add($"--lossy={Lossiness(options.Quality)}");
+        // Comments, frame names and extra extensions (XMP…); the loop count is not an extension and stays.
+        if (options.StripMetadata) args.AddRange(["--no-comments", "--no-names", "--no-extensions"]);
+        args.AddRange(["--output", job.OutputPath, job.InputPath]);
+        return RunAsync(args, cancellationToken);
+    }
+}
+
 /// <summary>cwebp (libwebp): WebP encoder, lossy or lossless (BSD).</summary>
 public sealed class CwebpCompressor() : ToolCompressor("cwebp.exe")
 {

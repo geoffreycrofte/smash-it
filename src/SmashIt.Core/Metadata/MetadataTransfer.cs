@@ -25,10 +25,11 @@ public static class MetadataTransfer
 
     /// <summary>
     /// True when Smash It can carry EXIF/XMP over for this conversion.
-    /// PDFs keep their document metadata; only the images inside are rewritten.
+    /// PDFs keep their document metadata; only the images inside are rewritten. GIFs keep their comments and
+    /// extensions (gifsicle copies them), SVGs their comments and &lt;metadata&gt; (oxvg is told to).
     /// </summary>
     public static bool CanPreserve(MediaFormat input, MediaFormat output) =>
-        (input == MediaFormat.Pdf && output == MediaFormat.Pdf) ||
+        (input == output && input is MediaFormat.Pdf or MediaFormat.Gif or MediaFormat.Svg) ||
         (CanRead(input) && (CanWrite(output) || output is MediaFormat.WebP or MediaFormat.Avif));
 
     /// <summary>

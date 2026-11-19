@@ -181,6 +181,8 @@
                 <TextBlock Text="{x:Bind app:Strings.OpenSourceProjects}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                 <TextBlock><Hyperlink NavigateUri="https://github.com/oxipng/oxipng">oxipng</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
                 <TextBlock><Hyperlink NavigateUri="https://pngquant.org">pngquant</Hyperlink><Run Text=" · GPL-3.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+                <TextBlock><Hyperlink NavigateUri="https://www.lcdf.org/gifsicle/">gifsicle</Hyperlink><Run Text=" · GPL-2.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+                <TextBlock><Hyperlink NavigateUri="https://github.com/noahbald/oxvg">oxvg</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
                 <TextBlock><Hyperlink NavigateUri="https://github.com/libjpeg-turbo/libjpeg-turbo">libjpeg-turbo</Hyperlink><Run Text=" · IJG, BSD, zlib" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
                 <TextBlock><Hyperlink NavigateUri="https://chromium.googlesource.com/webm/libwebp">libwebp</Hyperlink><Run Text=" · BSD-3-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
                 <TextBlock><Hyperlink NavigateUri="https://github.com/AOMediaCodec/libavif">libavif</Hyperlink><Run Text=" · BSD-2-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>

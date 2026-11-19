@@ -66,6 +66,26 @@ $tools = @(
         License = @{ 'COPYRIGHT' = 'pngquant.txt' }
     },
     @{
+        # Windows builds by Jernej Simončič, linked from the official site (lcdf.org/gifsicle). No checksum is
+        # published there: this SHA-256 was taken from the first download.
+        Name    = 'gifsicle 1.97'
+        Url     = 'https://eternallybored.org/misc/gifsicle/releases/gifsicle-1.97-win64.zip'
+        Sha256  = 'bb3ad4e1521a3953152f406eaafabda153fb5986938405860a7e7f12a3d13227'
+        Files   = @('gifsicle.exe')
+        License = @{ 'COPYING' = 'gifsicle.txt' }
+    },
+    @{
+        # oxvg's own release only has an ARM64 Windows exe: this x64 one is compiled from its v0.0.9 tag by this
+        # repository's "Build tools" workflow (.github/workflows/tools.yml). A single exe, no archive.
+        Name       = 'oxvg 0.0.9'
+        Url        = 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-oxvg-0.0.9/oxvg-0.0.9-x86_64-pc-windows-msvc.exe'
+        Sha256     = 'fb45c074180c0fb17626e56335e124280307f123fc5c981be9b78e4e3a0c4aae'
+        Files      = @('oxvg.exe')
+        Executable = $true
+        LicenseUrl = @{ 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-oxvg-0.0.9/oxvg-LICENSE.txt' = 'oxvg.txt' }
+        License    = @{}
+    },
+    @{
         Name    = 'qpdf 12.4.2'
         Url     = 'https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-msvc64.zip'
         Sha256  = 'db87077e683630c1217e0e8f9a20a9749d952ab676e881c3689187763a5de25d'
@@ -112,6 +132,16 @@ foreach ($tool in $tools) {
     if ($hash -ne $tool.Sha256) {
         Remove-Item $archive -Force
         throw "Empreinte SHA-256 inattendue pour $($tool.Name) : $hash"
+    }
+
+    if ($tool.Executable) {
+        # Downloaded as the program itself: copied under its usual name, license fetched next to it.
+        Copy-Item $archive (Join-Path $bin $tool.Files[0]) -Force
+        foreach ($entry in $tool.LicenseUrl.GetEnumerator()) {
+            Invoke-WebRequest $entry.Key -OutFile (Join-Path $licenses $entry.Value) -UseBasicParsing
+        }
+        Write-Host "✔ $($tool.Name)"
+        continue
     }
 
     $extracted = Join-Path $cache ([IO.Path]::GetFileNameWithoutExtension($archive))

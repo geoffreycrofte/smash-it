@@ -16,8 +16,8 @@ public static class Strings
     public static string Compare => T("Compare before / after", "Comparer avant / après");
     public static string EmptyTitle => T("Drop your images, PDFs and videos here", "Déposez vos images, PDF et vidéos ici");
     public static string EmptyDetails => T(
-        "Files or folders. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, PDF, MP4, MOV, MKV, AVI.",
-        "Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, PDF, MP4, MOV, MKV, AVI.");
+        "Files or folders. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI.",
+        "Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI.");
     public static string DropCaption => T("Compress", "Compresser");
 
     // Main window: footer

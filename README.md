@@ -58,7 +58,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 
 | | Today | Planned |
 |---|---|---|
-| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); WebP (cwebp) and AVIF (avifenc) encoding | gifsicle, svgo |
+| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding | |
 | **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4 | ffmpeg for fine tuning (CRF, AV1, VP9) |
 | **PDF** | Images recompressed in place (qpdf + jpegtran), object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | Image downsampling (DPI cap) |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
@@ -76,6 +76,24 @@ for screenshots, illustrations and UI graphics; oxipng then polishes the result.
 target, and an image that can't stay within 30 points of it (a photo with fine gradients, say) is left to the
 lossless engines rather than visibly damaged. The color profile is kept: the pixels are quantized in the image's
 own color space. Animated PNGs are skipped.
+
+### GIF
+
+gifsicle optimizes GIFs, animated ones included: every frame, delay and loop setting is kept. Lossless, it stores
+only what changes from one frame to the next and recompresses it. Lossy, it adds noise you can't see to make the
+file compress much better: the lower the quality setting, the stronger (quality 85 is gifsicle's `--lossy=30`).
+Comments and extensions are removed with the other metadata, unless you keep metadata.
+
+### SVG
+
+oxvg, a Rust port of SVGO, cleans what design tools leave in an SVG (editor data, hidden and empty elements,
+default values, comments and metadata unless you keep metadata), rounds coordinates to 3 decimals and writes
+shapes and paths more compactly. The image looks the same. A few things are kept on purpose: IDs (a stylesheet,
+a script or another file may point to them), the `viewBox` (so the image still scales) and the title (read by
+screen readers). As a safety net, the result is only used when it is a valid SVG with the same width, height and
+`viewBox` as the original, and still has something to draw. SVG fonts (an old icon font format) are left as they
+are: oxvg would remove their glyphs. oxvg publishes no Windows x64 build, so the *Build tools* workflow compiles it from its
+tagged source (`git tag tools-oxvg-<version>`).
 
 ### PDF
 
