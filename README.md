@@ -177,9 +177,17 @@ and off again afterwards: it points to the build you turned it on from.
 ```
 
 The app and the command line are published into one folder and share a single self-contained runtime; the CLI
-is `SmashIt.Cli.exe`, and `cmd\smashit.cmd` keeps the `smashit` command. To ship a version, bump `<Version>` in
-`Directory.Build.props`, then push a tag (`git tag v0.2.0 && git push origin v0.2.0`): the *Release* workflow tests,
-builds and attaches both files to a draft GitHub release, ready to review and publish.
+is `SmashIt.Cli.exe`, and `cmd\smashit.cmd` keeps the `smashit` command.
+
+To ship a version:
+
+1. In `CHANGELOG.md`, rename "## Next version" to the version and date (`## v0.3.0 · January 15, 2027`).
+2. Set the same number in `<Version>` in `Directory.Build.props`, and commit both on `main`.
+3. Push a tag (`git tag v0.3.0 && git push origin v0.3.0`), or create the release on GitHub with a new tag.
+
+The *Release* workflow tests and builds, then attaches the installer, the zip and `SHA256SUMS.txt`. A tag pushed
+from git gets a draft release, ready to review and publish; a release created on GitHub gets the files and its
+text replaced with the changelog section.
 
 What's new lives in [`CHANGELOG.md`](CHANGELOG.md), written for users: one `## vX.Y.Z` section per version,
 newest first. Work in progress goes under a heading that isn't a version ("## Next version"); rename it to
