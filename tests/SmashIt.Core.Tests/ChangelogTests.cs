@@ -102,6 +102,43 @@ public class ChangelogTests
         Assert.Equal(Releases[0].PublishedAt, notes[0].PublishedAt); // date taken from the release
     }
 
+    private const string French = """
+        # Journal des modifications
+
+        ## v0.3.0 · 15 janvier 2027
+
+        - Préréglages
+        """;
+
+    [Fact]
+    public async Task French_notes_come_from_the_translation_and_untranslated_versions_stay_in_english()
+    {
+        var requested = new List<string>();
+        var service = new UpdateService(new HttpClient(new Handler(url =>
+        {
+            requested.Add(url);
+            return url.EndsWith("CHANGELOG.fr.md") ? French : Markdown;
+        })));
+
+        var notes = await service.GetNotesAsync(Releases, AppVersion.Parse("0.1.0"), AppVersion.Parse("0.3.0"), Ct, "fr");
+
+        Assert.Contains("https://raw.githubusercontent.com/geoffreycrofte/smash-it/v0.3.0/CHANGELOG.fr.md", requested);
+        Assert.Equal(["0.3.0", "0.2.1", "0.2.0"], notes.Select(n => n.Version.ToString()));
+        Assert.Equal("- Préréglages", notes[0].Notes);      // translated
+        Assert.Equal("### Corrections\n- Un bug", notes[1].Notes); // not translated: English text
+    }
+
+    [Fact]
+    public async Task English_notes_never_ask_for_a_translation()
+    {
+        var requested = new List<string>();
+        var service = new UpdateService(new HttpClient(new Handler(url => { requested.Add(url); return Markdown; })));
+
+        await service.GetNotesAsync(Releases, AppVersion.Parse("0.1.0"), AppVersion.Parse("0.3.0"), Ct, "en");
+
+        Assert.Single(requested);
+    }
+
     [Fact]
     public async Task Without_a_changelog_the_release_texts_are_used()
     {

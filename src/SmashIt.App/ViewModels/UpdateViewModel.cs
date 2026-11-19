@@ -21,6 +21,9 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
     /// <summary>Installed with the installer (its uninstaller sits next to the app), not run from the zip.</summary>
     public static bool IsInstalled { get; } = File.Exists(Path.Combine(AppContext.BaseDirectory, "unins000.exe"));
 
+    /// <summary>The language of the release notes: the app's own (CHANGELOG.fr.md in French).</summary>
+    private static string NotesLanguage => L10n.IsFrench ? "fr" : "en";
+
     private static readonly string DownloadFolder = Path.Combine(Path.GetTempPath(), "SmashIt-update");
 
     private static readonly Lazy<UpdateService> Service = new(() => new UpdateService(UpdateService.CreateHttpClient(Current)));
@@ -131,9 +134,9 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
 
         var newer = UpdateService.NewerThan(releases, Current);
         if (newer.Count > 0 && newer[0].Version.ToString() != settings.SkippedVersion)
-            Offer(newer[0], await Service.Value.GetNotesAsync(releases, Current, newer[0].Version, CancellationToken.None));
+            Offer(newer[0], await Service.Value.GetNotesAsync(releases, Current, newer[0].Version, CancellationToken.None, NotesLanguage));
         else if (justUpdated)
-            ShowUpdated(await Service.Value.GetNotesAsync(releases, previous!, Current, CancellationToken.None));
+            ShowUpdated(await Service.Value.GetNotesAsync(releases, previous!, Current, CancellationToken.None, NotesLanguage));
     }
 
     [RelayCommand]
@@ -151,7 +154,7 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
             }
             Status = L10n.T($"Smash It {newer[0].Version} is available.", $"Smash It {newer[0].Version} est disponible.");
             // Even a skipped version: the user asked.
-            Offer(newer[0], await Service.Value.GetNotesAsync(releases, Current, newer[0].Version, CancellationToken.None));
+            Offer(newer[0], await Service.Value.GetNotesAsync(releases, Current, newer[0].Version, CancellationToken.None, NotesLanguage));
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException
                                        or InvalidOperationException)
