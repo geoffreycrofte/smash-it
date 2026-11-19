@@ -126,26 +126,39 @@ Adding a new engine (a bundled tool or your own script) means adding one class.
 Requirements: Windows 10 1809+ / Windows 11, [.NET 10 SDK](https://dotnet.microsoft.com/download),
 and [7-Zip](https://www.7-zip.org/) to unpack jpegtran (`winget install 7zip.7zip`).
 
-```powershell
-# Download the bundled tools (pinned versions, SHA-256 verified) into tools\bin
-powershell -ExecutionPolicy Bypass -File tools\fetch-tools.ps1
+`dev` at the repository root wraps the usual commands (`dev.cmd`, so it works from PowerShell and cmd alike,
+whatever the execution policy):
 
+| Command | Does |
+|---|---|
+| `.\dev tools` | Downloads the bundled tools (pinned versions, SHA-256 verified) into `tools\bin`: run it once first |
+| `.\dev run [files…]` | Runs the app; files or folders given are compressed right away |
+| `.\dev cli [options…]` | Runs the command line, e.g. `.\dev cli -q 75 C:\Photos` |
+| `.\dev build` | Builds the solution |
+| `.\dev test` | Runs the tests |
+| `.\dev release` | Builds the installer and the portable zip into `artifacts\` (`-SkipInstaller` for the zip only) |
+| `.\dev setup` | Builds the installer and starts it |
+| `.\dev clean` | Deletes the build folders (`bin`, `obj`, `artifacts`); `tools\bin` stays |
+| `.\dev` | Lists these commands |
+
+The same with plain commands:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\fetch-tools.ps1
 dotnet build SmashIt.slnx
 dotnet test --solution SmashIt.slnx
-
-# Run the app
 dotnet run --project src/SmashIt.App
-
-# Command line
-dotnet run --project src/SmashIt.Cli -- --help
 dotnet run --project src/SmashIt.Cli -- -q 75 "C:\Photos"
 ```
+
+To try the Explorer right-click menu with a development build, turn it on in **Settings → Windows Explorer**,
+and off again afterwards: it points to the build you turned it on from.
 
 ### Release
 
 ```powershell
 # Installer + portable zip + SHA256SUMS.txt in artifacts\ (needs Inno Setup 6: winget install JRSoftware.InnoSetup)
-powershell -ExecutionPolicy Bypass -File tools\publish.ps1
+.\dev release
 ```
 
 The app and the command line are published into one folder and share a single self-contained runtime; the CLI
