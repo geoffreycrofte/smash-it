@@ -10,6 +10,11 @@ How this file works:
 - "## Next version" is never shown: rename it to "## vX.Y.Z" when you tag the release.
 -->
 
+## Next version
+
+### New
+- **Presets.** Pick "Web", "Email" or "Archive" and every setting follows, for images, PDFs and videos alike. The list sits at the bottom of the window, next to the Settings button. Change any setting and the preset becomes "Custom".
+
 ## v0.3.0 · November 19, 2026
 
 ### New
