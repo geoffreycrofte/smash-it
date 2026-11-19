@@ -36,6 +36,8 @@ internal static class IntermediatePng
         };
         await WicCodec.EncodeAsync(pngPath, BitmapEncoder.PngEncoderId, options, image, BitmapAlphaMode.Straight, cancellationToken);
 
+        // HEIC/AVIF/WebP sources: their pixels are now sRGB, but EXIF and XMP still describe the picture.
+        metadata ??= job.Options.StripMetadata ? null : MetadataTransfer.ReadDescriptive(job.InputPath, job.InputFormat);
         if (metadata is not null)
         {
             var selected = MetadataTransfer.Select(metadata, job.Options, orientationBaked: true, MediaFormat.Png);

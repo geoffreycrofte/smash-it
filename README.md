@@ -63,7 +63,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
-| **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
+| **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them: JPEG, PNG, WebP and AVIF results, from JPEG, PNG, WebP, HEIC and AVIF sources | HEIC results |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split, fitted or at 100 % | |
 | **Presets** | Best quality (lossless, the default), Web, Email (lightest) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
@@ -142,6 +142,9 @@ portable zip, or to remove it, use **Settings → Windows Explorer**. On Windows
 
 - **Strip metadata** (default) removes camera info, dates, GPS, XMP, IPTC and comments. The color profile and the
   orientation are always kept, since dropping them would change how the picture looks.
+- Untick it and EXIF and XMP follow the picture, including from an iPhone HEIC, an AVIF or a WebP to a JPEG, PNG,
+  WebP or AVIF. Smash It reads them from the WebP chunks and the HEIF items itself, and adds them to WebP results
+  (the Windows build of cwebp only copies the color profile). HEIC results can't carry them yet.
 - **Keep originals** (on by default) leaves your files untouched and saves the results either next to them as
   `photo-compressed.jpg` (or `photo-compressed.webp` for a conversion), or in a `compressed` folder next to them,
   under their own name (`compressed\photo.jpg`). When you drop several files or right-click a selection, Smash It

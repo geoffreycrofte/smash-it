@@ -15,6 +15,7 @@ How this file works:
 ### New
 - **Presets.** Pick "Web", "Email" or "Archive" and every setting follows, for images, PDFs and videos alike. The list sits at the bottom of the window, next to the Settings button. Change any setting and the preset becomes "Custom".
 - **Lighter videos from your phone.** Choose a maximum resolution, 1080p or 720p, and 4K videos are brought down to it: often 3 to 4 times smaller, still sharp on any screen. The Web preset uses 1080p, Email 720p.
+- **Your photos keep their story.** With "Remove metadata" unticked, the date, camera and location of an iPhone HEIC, an AVIF or a WebP now follow it when you convert it.
 - **Zoom to 100 % in the before/after view.** Press "100 %" (or Z) to see every pixel and judge a lossy compression up close. Press it again to see the whole image.
 
 ### Improved
@@ -22,6 +23,9 @@ How this file works:
 - **Enter opens the before/after view** of the selected file, like a double-click.
 - **A tidier empty window.** "Add files" now sits right under the drop area. The list buttons (Add, Recompress, Clear) and the column titles only show once there are files.
 - **The Tab key follows the screen**: the files, then the settings when they're open, then the bottom bar.
+
+### Fixed
+- WebP files made by Smash It now keep the date, camera and location when you choose to keep metadata. Until now, only the color profile made it.
 
 ## v0.3.0 · November 19, 2026
 

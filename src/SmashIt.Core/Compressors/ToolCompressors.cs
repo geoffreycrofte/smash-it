@@ -268,6 +268,16 @@ public sealed class CwebpCompressor() : ToolCompressor("cwebp.exe")
 
             args.AddRange(["-metadata", options.StripMetadata ? "icc" : "all", "-mt", "-quiet", source, "-o", job.OutputPath]);
             await RunAsync(args, cancellationToken);
+
+            // cwebp's Windows build only copies the ICC profile of a PNG: EXIF and XMP (already chosen for the
+            // intermediate PNG) are added here.
+            if (!options.StripMetadata &&
+                PngMetadataIO.Read(await File.ReadAllBytesAsync(source, cancellationToken)) is { } kept &&
+                (kept.Exif is not null || kept.Xmp is not null))
+            {
+                var webp = await File.ReadAllBytesAsync(job.OutputPath, cancellationToken);
+                await File.WriteAllBytesAsync(job.OutputPath, ContainerMetadataIO.WriteWebP(webp, kept.Exif, kept.Xmp), cancellationToken);
+            }
         }
         finally
         {
