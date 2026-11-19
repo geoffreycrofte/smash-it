@@ -12,7 +12,7 @@ the result is saved next to each file as `name-compressed.ext`, or in a `compres
 
 > Status: early development (v0.4). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
-What changed in each version: [CHANGELOG.md](CHANGELOG.md). Using a keyboard or a screen reader:
+What changed in each version: [CHANGELOG.md](CHANGELOG.md) ([en français](CHANGELOG.fr.md)). Using a keyboard or a screen reader:
 [ACCESSIBILITY.md](ACCESSIBILITY.md).
 
 ## Download
@@ -39,11 +39,15 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 
 ## Screenshots
 
-![Eight photos compressed with lossy mode at quality 85: 12.4 MB saved out of 31.9 MB](docs/screenshots/files.png)
+![Eight photos compressed with the Web preset, about half their size each: 7.24 MB saved out of 14.22 MB](docs/screenshots/files.png)
 
-| Settings, one section per kind of file | Before / after, with a draggable split |
+| Before / after, with a draggable split | The same at 100 %, pixel for pixel |
 |---|---|
-| ![The settings panel open next to the file list](docs/screenshots/settings.png) | ![Before/after comparison of a fjord photo, 1.98 MB down to 1.07 MB](docs/screenshots/before-after.png) |
+| ![Before/after comparison of a Yosemite photo, 2.8 MB down to 1.37 MB](docs/screenshots/before-after.png) | ![The Yosemite comparison at 100 %, centered on the split: the rock and trees look the same on both sides](docs/screenshots/zoom.png) |
+
+| Presets and settings, one section per kind of file | Ready for your files |
+|---|---|
+| ![The settings panel open next to the file list, with the Web preset selected](docs/screenshots/settings.png) | ![The empty window: drop your images, PDFs and videos here, or Add files](docs/screenshots/empty.png) |
 
 <details>
 <summary>Splash screen</summary>
@@ -52,7 +56,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 
 </details>
 
-<sub>Demo photos from [Lorem Picsum](https://picsum.photos) (Unsplash License). Splash screen shown over the default Windows 11 wallpaper.</sub>
+<sub>Demo photos from [Lorem Picsum](https://picsum.photos) (Unsplash License), saved as high-quality JPEGs as a camera would. Splash screen shown over the default Windows 11 wallpaper.</sub>
 
 ## Features
 
@@ -215,8 +219,9 @@ is `SmashIt.Cli.exe`, and `cmd\smashit.cmd` keeps the `smashit` command.
 
 To ship a version:
 
-1. In `CHANGELOG.md`, rename "## Next version" to the version and date (`## v0.3.0 · January 15, 2027`).
-2. Set the same number in `<Version>` in `Directory.Build.props`, and commit both on `main`.
+1. In `CHANGELOG.md`, rename "## Next version" to the version and date (`## v0.3.0 · January 15, 2027`), and
+   add the same section, translated, to `CHANGELOG.fr.md`.
+2. Set the same number in `<Version>` in `Directory.Build.props`, and commit all three on `main`.
 3. Push a tag (`git tag v0.3.0 && git push origin v0.3.0`), or create the release on GitHub with a new tag.
 
 The *Release* workflow tests and builds, then attaches the installer, the zip and `SHA256SUMS.txt`. A tag pushed
@@ -230,6 +235,10 @@ section above the version a person has, read from `CHANGELOG.md` as tagged with 
 work on `main` never shows). A version without a section falls back to the release text. Headings, lists,
 **bold**, `code` and links are rendered. The update banner reaches people as soon as the release is published
 (drafts are never seen).
+
+When the app is in French, each version's notes come from [`CHANGELOG.fr.md`](CHANGELOG.fr.md) instead, with the
+same `## vX.Y.Z` titles; a version not translated yet shows in English. Other languages will follow the same
+pattern (`CHANGELOG.<code>.md`).
 
 ## Command line
 
