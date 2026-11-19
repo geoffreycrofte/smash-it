@@ -1,5 +1,6 @@
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
+using SmashIt.Core.IO;
 
 namespace SmashIt.Core.Tests;
 
@@ -113,6 +114,45 @@ public class CompressionPipelineTests
 
         Assert.Equal(dir.File("photo-compressed (2).png"), result.OutputPath);
         Assert.Equal("already here", File.ReadAllText(dir.File("photo-compressed.png")));
+    }
+
+    [Fact]
+    public async Task Keeping_the_original_in_a_compressed_folder_keeps_the_original_name()
+    {
+        using var dir = new TempDirectory();
+        var file = WritePng(dir.File("photo.png"), 1000);
+        var pipeline = new CompressionPipeline([new FakeCompressor("small", 400)]);
+        var options = Overwrite with
+        {
+            OriginalHandling = OriginalHandling.KeepAlongside, KeptOriginalFolder = CompressionOptions.CompressedFolderName,
+        };
+
+        var first = await pipeline.ProcessAsync(file, options, Ct);
+        var second = await pipeline.ProcessAsync(file, options, Ct);
+
+        Assert.Equal(dir.File(@"compressed\photo.png"), first.OutputPath);
+        Assert.Equal(400, new FileInfo(first.OutputPath!).Length);
+        Assert.Equal(1000, new FileInfo(file).Length);
+        // A second run never overwrites the first result.
+        Assert.Equal(dir.File(@"compressed\photo (2).png"), second.OutputPath);
+    }
+
+    [Fact]
+    public void A_folder_drop_skips_the_results_of_an_earlier_run()
+    {
+        using var dir = new TempDirectory();
+        Directory.CreateDirectory(dir.File(@"trip\compressed"));
+        Directory.CreateDirectory(dir.File(@"trip\day 2\compressed"));
+        File.WriteAllText(dir.File(@"trip\a.png"), "");
+        File.WriteAllText(dir.File(@"trip\compressed\a.png"), "");
+        File.WriteAllText(dir.File(@"trip\day 2\b.jpg"), "");
+        File.WriteAllText(dir.File(@"trip\day 2\compressed\b.jpg"), "");
+
+        var files = InputCollector.Expand([dir.File("trip")], CompressionOptions.CompressedFolderName).ToList();
+
+        Assert.Equal([dir.File(@"trip\a.png"), dir.File(@"trip\day 2\b.jpg")], files.Order());
+        // A "compressed" folder given on purpose is still compressed.
+        Assert.Single(InputCollector.Expand([dir.File(@"trip\compressed")], CompressionOptions.CompressedFolderName));
     }
 
     [Fact]

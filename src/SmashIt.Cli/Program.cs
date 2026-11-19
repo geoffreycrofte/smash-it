@@ -31,6 +31,12 @@ for (var i = 0; i < args.Length; i++)
                 return Fail(L10n.T($"Unknown format: {args[i]}", $"Format inconnu : {args[i]}"));
             options = options with { TargetFormat = target };
             break;
+        case "--folder":
+            options = options with
+            {
+                OriginalHandling = OriginalHandling.KeepAlongside, KeptOriginalFolder = CompressionOptions.CompressedFolderName,
+            };
+            break;
         case "--keep":
             options = options with { OriginalHandling = OriginalHandling.KeepAlongside };
             break;
@@ -71,7 +77,7 @@ for (var i = 0; i < args.Length; i++)
     }
 }
 
-var files = InputCollector.Expand(inputs).ToList();
+var files = InputCollector.Expand(inputs, CompressionOptions.CompressedFolderName).ToList();
 if (files.Count == 0)
 {
     PrintHelp();
@@ -143,6 +149,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -e, --effort <n>     fast, balanced (default) or max
       --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
       --keep               Keeps the original, writes "name-compressed.ext" next to it
+      --folder             Keeps the original, writes the result into a "compressed" folder next to it
       --no-recycle         Deletes the original instead of sending it to the Recycle Bin
       --keep-metadata      Keeps EXIF, XMP, IPTC and comments
       --strip-metadata     Removes them (default; color profile and orientation are kept)
@@ -159,6 +166,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -e, --effort <n>     fast, balanced (par défaut) ou max
       --codec <codec>      Vidéo : h264 (par défaut) ou hevc ; nécessite --lossy ou -q
       --keep               Garde l'original, écrit « nom-compressed.ext » à côté
+      --folder             Garde l'original, écrit le résultat dans un dossier « compressed » à côté
       --no-recycle         Supprime l'original au lieu de l'envoyer à la Corbeille
       --keep-metadata      Conserve EXIF, XMP, IPTC et commentaires
       --strip-metadata     Les supprime (par défaut ; profil couleur et orientation conservés)

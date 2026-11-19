@@ -6,6 +6,7 @@ using SmashIt.Core;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
 using SmashIt.Core.IO;
+using SmashIt.Core.Shell;
 
 namespace SmashIt.App.ViewModels;
 
@@ -38,6 +39,9 @@ public sealed record VideoCodecChoice(VideoCodec Codec)
 
     public override string ToString() => Label;
 }
+
+/// <summary>The answer to "where do the compressed files go?".</summary>
+public sealed record OutputLocationAnswer(bool InCompressedFolder, bool DontAskAgain);
 
 public sealed record LanguageChoice(AppLanguage Language)
 {
@@ -139,6 +143,20 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool KeepOriginal { get; set; } = true;
 
+    /// <summary>Where kept-original results go: 0 next to the original ("name-compressed.ext"), 1 in a "compressed" folder.</summary>
+    [ObservableProperty]
+    public partial int OutputLocationIndex { get; set; }
+
+    /// <summary>Ask where the results go when several files are added at once.</summary>
+    [ObservableProperty]
+    public partial bool AskOutputLocation { get; set; } = true;
+
+    // Explorer: the registry is the source of truth, not the settings file.
+    private readonly ExplorerContextMenu _contextMenu = ExplorerContextMenu.ForCurrentUser();
+
+    [ObservableProperty]
+    public partial bool ContextMenuEnabled { get; set; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
     [NotifyPropertyChangedFor(nameof(HasFiles))]
@@ -147,18 +165,92 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string Summary { get; set; } = string.Empty;
 
+    /// <summary>True while files are waiting or being compressed: the footer shows a spinner.</summary>
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
     public bool IsEmpty => FileCount == 0;
 
     public bool HasFiles => FileCount > 0;
 
+    /// <summary>Properties saved in <see cref="AppSettings"/> when they change.</summary>
+    private static readonly HashSet<string> SavedProperties =
+    [
+        nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
+        nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(VideoQuality),
+        nameof(SelectedVideoCodec), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(AskOutputLocation),
+    ];
+
+    // Sliders change many times per second: the file is written once they settle.
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer? _saveTimer;
+
     public MainViewModel()
     {
-        SelectedOutputFormat = OutputFormats[0];
-        SelectedEffort = Efforts[1];
-        SelectedVideoCodec = VideoCodecs[0];
-        SelectedLanguage = Languages.First(l => l.Language == AppSettings.Current.Language);
+        var settings = AppSettings.Current;
+        ImageLossy = settings.ImageLossy;
+        ImageQuality = Math.Clamp(settings.ImageQuality, 1, 100);
+        SelectedOutputFormat = OutputFormats.FirstOrDefault(f => f.Format == settings.OutputFormat) ?? OutputFormats[0];
+        SelectedEffort = Efforts.FirstOrDefault(e => e.Effort == settings.Effort) ?? Efforts[1];
+        StripMetadata = settings.StripMetadata;
+        PdfLossy = settings.PdfLossy;
+        PdfQuality = Math.Clamp(settings.PdfQuality, 1, 100);
+        VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
+        SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
+        KeepOriginal = settings.KeepOriginal;
+        OutputLocationIndex = settings.SaveInCompressedFolder ? 1 : 0;
+        AskOutputLocation = settings.AskOutputLocation;
+        SelectedLanguage = Languages.First(l => l.Language == settings.Language);
+
+        // The entry points to a program that is gone (portable folder moved, old install): point it here.
+        if (_contextMenu.RegisteredExecutable is { } registered && !File.Exists(registered)) UpdateContextMenu(true);
+        ContextMenuEnabled = _contextMenu.IsRegistered;
+
+        if (Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread() is { } dispatcher)
+        {
+            _saveTimer = dispatcher.CreateTimer();
+            _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _saveTimer.IsRepeating = false;
+            _saveTimer.Tick += (_, _) => SaveSettings();
+        }
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is { } name && SavedProperties.Contains(name))
+            {
+                if (_saveTimer is null) SaveSettings();
+                else { _saveTimer.Stop(); _saveTimer.Start(); }
+            }
+        };
+
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
         UpdateSummary();
+    }
+
+    private void SaveSettings()
+    {
+        var settings = AppSettings.Current;
+        settings.ImageLossy = ImageLossy;
+        settings.ImageQuality = (int)Math.Round(ImageQuality);
+        settings.OutputFormat = SelectedOutputFormat.Format;
+        settings.Effort = SelectedEffort.Effort;
+        settings.StripMetadata = StripMetadata;
+        settings.PdfLossy = PdfLossy;
+        settings.PdfQuality = (int)Math.Round(PdfQuality);
+        settings.VideoQuality = (int)Math.Round(VideoQuality);
+        settings.VideoCodec = SelectedVideoCodec.Codec;
+        settings.KeepOriginal = KeepOriginal;
+        settings.SaveInCompressedFolder = OutputLocationIndex == 1;
+        settings.AskOutputLocation = AskOutputLocation;
+        settings.Save();
+    }
+
+    /// <summary>Writes a pending change right away (the window is closing).</summary>
+    public void FlushSettings()
+    {
+        if (_saveTimer is { IsRunning: true })
+        {
+            _saveTimer.Stop();
+            SaveSettings();
+        }
     }
 
     partial void OnSelectedLanguageChanged(LanguageChoice value)
@@ -167,8 +259,29 @@ public sealed partial class MainViewModel : ObservableObject
         AppSettings.Current.Language = value.Language;
         AppSettings.Current.Save();
         L10n.Use(value.Language);
+        // The menu label follows the language, when the entry is this program's.
+        if (_contextMenu.IsRegisteredFor(Environment.ProcessPath!)) UpdateContextMenu(true);
         UpdateSummary();
         LanguageChanged?.Invoke();
+    }
+
+    partial void OnContextMenuEnabledChanged(bool value)
+    {
+        if (value != _contextMenu.IsRegistered) UpdateContextMenu(value);
+    }
+
+    private void UpdateContextMenu(bool enabled)
+    {
+        try
+        {
+            if (enabled) _contextMenu.Register(Environment.ProcessPath!, Strings.ContextMenuLabel);
+            else _contextMenu.Unregister();
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+        {
+            // Registry locked by a policy: the switch shows what is really there.
+        }
+        ContextMenuEnabled = _contextMenu.IsRegistered;
     }
 
     /// <summary>The settings of the section matching the kind of file (images, PDF, video).</summary>
@@ -177,6 +290,7 @@ public sealed partial class MainViewModel : ObservableObject
         var common = new CompressionOptions
         {
             OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
+            KeptOriginalFolder = KeepOriginal && OutputLocationIndex == 1 ? CompressionOptions.CompressedFolderName : null,
         };
         return kind switch
         {
@@ -203,9 +317,41 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Adds files and folders and starts processing them with the current settings.</summary>
-    public void AddPaths(IEnumerable<string> paths)
+    /// <remarks>
+    /// With the originals kept and several files at once, asks first where the results go (unless the user said
+    /// not to ask again). Files arriving while the question is open join that batch.
+    /// </remarks>
+    public async Task AddPathsAsync(IEnumerable<string> paths)
     {
-        foreach (var path in InputCollector.Expand(paths))
+        // An earlier run's "compressed" folder is not compressed again when its parent folder is dropped.
+        var files = InputCollector.Expand(paths, CompressionOptions.CompressedFolderName).ToList();
+        if (files.Count == 0) return;
+
+        if (_askingBatch is { } open)
+        {
+            open.AddRange(files);
+            return;
+        }
+
+        if (KeepOriginal && AskOutputLocation && files.Count > 1 && AskWhereToSave is { } ask)
+        {
+            _askingBatch = files;
+            OutputLocationAnswer? answer;
+            try
+            {
+                answer = await ask(files);
+            }
+            finally
+            {
+                _askingBatch = null;
+            }
+            if (answer is null) return; // cancelled: nothing is added
+
+            OutputLocationIndex = answer.InCompressedFolder ? 1 : 0;
+            if (answer.DontAskAgain) AskOutputLocation = false;
+        }
+
+        foreach (var path in files)
         {
             var item = new FileItem(path);
             Files.Add(item);
@@ -213,6 +359,11 @@ public sealed partial class MainViewModel : ObservableObject
             _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
+
+    /// <summary>Shows the "where do the compressed files go?" question; <c>null</c> when cancelled. Set by the window.</summary>
+    public Func<IReadOnlyList<string>, Task<OutputLocationAnswer?>>? AskWhereToSave { get; set; }
+
+    private List<string>? _askingBatch;
 
     [RelayCommand]
     private void Reprocess()
@@ -240,6 +391,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         item.State = FileItemState.Pending;
         item.Progress = 0;
+        UpdateSummary();
         var slots = item.Kind == MediaKind.Video ? _videoSlots : _slots;
         try
         {
@@ -253,6 +405,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             item.State = FileItemState.Working;
+            UpdateSummary();
 
             // The thumbnail must be read before the original may go to the Recycle Bin.
             if (item.ThumbnailLoading is { } thumbnail) await thumbnail;
@@ -295,19 +448,31 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // The footer shows the credit instead: the drop hint is already in the middle of the window.
             Summary = string.Empty;
+            IsBusy = false;
             return;
         }
 
         var saved = results.Sum(r => r.SavedBytes);
         var total = results.Sum(r => r.OriginalSize);
         var ratio = total > 0 ? (double)saved / total : 0;
-        var remaining = Files.Count(f => f.State is FileItemState.Pending or FileItemState.Working);
-        Summary = remaining > 0
-            ? L10n.T(
-                $"{remaining} file(s) in progress… {L10n.Size(saved)} saved so far.",
-                $"{remaining} fichier(s) en cours… {L10n.Size(saved)} économisés pour l'instant.")
-            : L10n.T(
+        var working = Files.Count(f => f.State == FileItemState.Working);
+        var waiting = Files.Count(f => f.State == FileItemState.Pending);
+        IsBusy = working + waiting > 0;
+        if (!IsBusy)
+        {
+            Summary = L10n.T(
                 $"{L10n.Size(saved)} saved out of {L10n.Size(total)} ({L10n.Percent(ratio)}).",
                 $"{L10n.Size(saved)} économisés sur {L10n.Size(total)} ({L10n.Percent(ratio)}).");
+            return;
+        }
+
+        // "3 being compressed, 12 waiting · 4.2 MB saved so far"
+        var progress = L10n.T(
+            $"{working} being compressed",
+            working == 1 ? "1 en cours de compression" : $"{working} en cours de compression");
+        if (waiting > 0) progress += L10n.T($", {waiting} waiting", $", {waiting} en attente");
+        Summary = saved > 0
+            ? progress + L10n.T($" · {L10n.Size(saved)} saved so far", $" · {L10n.Size(saved)} économisés pour l'instant")
+            : progress;
     }
 }

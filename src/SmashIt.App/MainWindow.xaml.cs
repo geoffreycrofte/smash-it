@@ -27,14 +27,30 @@ public sealed partial class MainWindow : Window
         AppWindow.Resize(new SizeInt32(1040, 720));
         CenterOnScreen();
         AppIcon.Apply(AppWindow, TitleBarIcon);
+        ViewModel.AskWhereToSave = AskWhereToSaveAsync;
 
         PreviewCache.Clean(includeCurrent: false);
         // The preview copies belong to the files in the list: keep them when the window is only rebuilt.
         Closed += (_, _) =>
         {
-            if (!_replaced) PreviewCache.Clean(includeCurrent: true);
+            if (_replaced) return;
+            ViewModel.FlushSettings();
+            PreviewCache.Clean(includeCurrent: true);
         };
     }
+
+    /// <summary>Shows the window on top, restored if it was minimized (files arrived from Explorer).</summary>
+    public void BringToFront()
+    {
+        if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized } presenter)
+            presenter.Restore();
+        Activate();
+        SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+    }
+
+    [System.Runtime.InteropServices.LibraryImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static partial bool SetForegroundWindow(nint window);
 
     /// <summary>Closes this window after a new one took its place (language change).</summary>
     public void CloseForReplacement()
@@ -78,7 +94,35 @@ public sealed partial class MainWindow : Window
     {
         if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
         var items = await e.DataView.GetStorageItemsAsync();
-        ViewModel.AddPaths(items.Select(i => i.Path));
+        await ViewModel.AddPathsAsync(items.Select(i => i.Path));
+    }
+
+    /// <summary>"Where should the compressed files go?", preset to the last choice.</summary>
+    private async Task<OutputLocationAnswer?> AskWhereToSaveAsync(IReadOnlyList<string> files)
+    {
+        BringToFront();
+        var choice = new RadioButtons
+        {
+            Items = { Strings.NextToOriginals, Strings.InCompressedFolder },
+            SelectedIndex = ViewModel.OutputLocationIndex,
+        };
+        var dontAsk = new CheckBox { Content = Strings.DontAskAgain };
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = Strings.WhereTitle,
+            Content = new StackPanel
+            {
+                Spacing = 12,
+                Children = { new TextBlock { Text = Strings.WhereIntro(files.Count), TextWrapping = TextWrapping.Wrap }, choice, dontAsk },
+            },
+            PrimaryButtonText = Strings.CompressButton,
+            CloseButtonText = Strings.Cancel,
+            DefaultButton = ContentDialogButton.Primary,
+        };
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return null;
+        return new OutputLocationAnswer(choice.SelectedIndex == 1, dontAsk.IsChecked == true);
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs e)
@@ -90,6 +134,6 @@ public sealed partial class MainWindow : Window
         WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
 
         IReadOnlyList<StorageFile> files = await picker.PickMultipleFilesAsync();
-        ViewModel.AddPaths(files.Select(f => f.Path));
+        await ViewModel.AddPathsAsync(files.Select(f => f.Path));
     }
 }

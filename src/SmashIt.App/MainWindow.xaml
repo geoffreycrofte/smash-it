@@ -112,8 +112,28 @@
               </StackPanel>
               <CheckBox Content="{x:Bind app:Strings.KeepOriginals}"
                         IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}" />
+              <RadioButtons Header="{x:Bind app:Strings.SaveResults}"
+                            SelectedIndex="{x:Bind ViewModel.OutputLocationIndex, Mode=TwoWay}"
+                            IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}">
+                <RadioButton Content="{x:Bind app:Strings.NextToOriginals}" />
+                <RadioButton Content="{x:Bind app:Strings.InCompressedFolder}" />
+              </RadioButtons>
+              <CheckBox Content="{x:Bind app:Strings.AskOutputLocation}"
+                        IsChecked="{x:Bind ViewModel.AskOutputLocation, Mode=TwoWay}"
+                        IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}" />
               <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
                          Text="{x:Bind app:Strings.KeepOriginalsNote}" />
+            </StackPanel>
+
+            <StackPanel Style="{StaticResource SectionCardStyle}">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xEC50;" FontSize="16" />
+                <TextBlock Text="{x:Bind app:Strings.Explorer}" Style="{StaticResource SectionHeaderStyle}" />
+              </StackPanel>
+              <ToggleSwitch Header="{x:Bind app:Strings.ContextMenuToggle}"
+                            IsOn="{x:Bind ViewModel.ContextMenuEnabled, Mode=TwoWay}" />
+              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                         Text="{x:Bind app:Strings.ContextMenuNote}" />
             </StackPanel>
 
             <StackPanel Style="{StaticResource SectionCardStyle}">
@@ -264,9 +284,18 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <!-- Empty list: the credit (the drop hint is already in the middle); otherwise the summary. -->
-      <TextBlock Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                 Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}" />
+      <!-- Empty list: the credit (the drop hint is already in the middle); otherwise the summary, with a spinner
+           while files are being compressed. -->
+      <Grid ColumnSpacing="10" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ProgressRing Width="16" Height="16" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"
+                      Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.Summary, Mode=OneWay}" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite" />
+      </Grid>
       <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                  Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">

@@ -130,7 +130,18 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
             if (options.OriginalHandling == OriginalHandling.KeepAlongside)
             {
                 var directory = Path.GetDirectoryName(path) ?? string.Empty;
-                var name = Path.GetFileNameWithoutExtension(path) + options.KeptOriginalSuffix + extension;
+                string name;
+                if (options.KeptOriginalFolder is { Length: > 0 } folder)
+                {
+                    // "photos\compressed\photo.jpg": the folder already says what it is.
+                    directory = Path.Combine(directory, folder);
+                    Directory.CreateDirectory(directory);
+                    name = Path.GetFileNameWithoutExtension(path) + extension;
+                }
+                else
+                {
+                    name = Path.GetFileNameWithoutExtension(path) + options.KeptOriginalSuffix + extension;
+                }
                 finalPath = FileOutput.UniquePath(Path.Combine(directory, name));
                 File.Move(bestPath, finalPath);
             }
