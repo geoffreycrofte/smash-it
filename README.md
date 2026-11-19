@@ -7,9 +7,10 @@
 A native Windows app to make images, videos and PDFs smaller — in the spirit of ImageOptim on macOS.
 
 Drop files or folders on the window: Smash It tries every engine that can handle them, keeps the smallest
-result, and only touches your file when it actually got smaller. Originals go to the Recycle Bin by default.
+result, and only keeps it when it actually got smaller. By default the app is lossless and keeps your originals:
+the result is saved next to each file as `name-compressed.ext`.
 
-> Status: early development (v0.1). Image compression works today; see the roadmap below for what's coming.
+> Status: early development (v0.1). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
 ## Screenshots
 
@@ -38,7 +39,7 @@ result, and only touches your file when it actually got smaller. Originals go to
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
-| **Originals** | Recycle Bin by default, or kept with the result saved as `name-compressed.ext` | |
+| **Originals** | Kept by default, with the result saved as `name-compressed.ext`; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
 | **Integration** | Drag & drop, `smashit` command line | Explorer right-click menu, custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
@@ -69,8 +70,9 @@ each original so the preview still works after the original went to the Recycle 
 
 - **Strip metadata** (default) removes camera info, dates, GPS, XMP, IPTC and comments. The color profile and the
   orientation are always kept, since dropping them would change how the picture looks.
-- **Keep originals** leaves your files untouched and writes `photo-compressed.jpg` (or `photo-compressed.webp` for a
-  conversion) next to them. Without it, the compressed file replaces the original, which goes to the Recycle Bin.
+- **Keep originals** (on by default) leaves your files untouched and writes `photo-compressed.jpg` (or
+  `photo-compressed.webp` for a conversion) next to them. Turn it off and the compressed file replaces the original,
+  which goes to the Recycle Bin.
 
 Reading HEIC, WebP and AVIF relies on the free *HEIF*, *HEVC*, *WebP* and *AV1* image extensions from the Microsoft Store.
 
