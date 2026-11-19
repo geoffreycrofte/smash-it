@@ -28,6 +28,7 @@ public sealed partial class MainWindow : Window
         CenterOnScreen();
         AppIcon.Apply(AppWindow, TitleBarIcon);
         ViewModel.AskWhereToSave = AskWhereToSaveAsync;
+        Root.LosingFocus += OnRootLosingFocus;
         ViewModel.Updates.ShowNotes = ShowReleaseNotesAsync;
 
         PreviewCache.Clean(includeCurrent: false);
@@ -52,6 +53,20 @@ public sealed partial class MainWindow : Window
     [System.Runtime.InteropServices.LibraryImport("user32.dll")]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
     private static partial bool SetForegroundWindow(nint window);
+
+    /// <summary>
+    /// The list's actions only show when it has files, and "Add files" only when it's empty: when the focused
+    /// button disappears, the keyboard focus goes to what replaced it instead of being lost.
+    /// </summary>
+    private void OnRootLosingFocus(UIElement sender, LosingFocusEventArgs e)
+    {
+        // Only when the focused control is being hidden, not when the user moves on.
+        if (e.OldFocusedElement is not Control { Visibility: Visibility.Collapsed } && e.OldFocusedElement != EmptyAddButton) return;
+        if (ViewModel.HasFiles && e.OldFocusedElement == EmptyAddButton)
+            e.TrySetNewFocusedElement((DependencyObject?)FileList.ContainerFromIndex(0) ?? FileList); // the first file
+        else if (ViewModel.IsEmpty && e.OldFocusedElement is Control { Visibility: Visibility.Collapsed })
+            e.TrySetNewFocusedElement(EmptyAddButton); // after "Clear the list"
+    }
 
     /// <summary>Closes this window after a new one took its place (language change).</summary>
     public void CloseForReplacement()

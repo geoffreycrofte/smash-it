@@ -40,179 +40,13 @@
       </StackPanel>
     </Grid>
 
-    <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" OpenPaneLength="360"
-               IsPaneOpen="{x:Bind ViewModel.IsSettingsOpen, Mode=TwoWay}"
-               PaneBackground="Transparent">
-
-      <!-- Settings, one section per kind of file -->
-      <SplitView.Pane>
-        <ScrollViewer Padding="0,0,16,0">
-          <StackPanel Spacing="16" Padding="4,0,0,16">
-            <TextBlock Text="{x:Bind app:Strings.Settings}" Style="{StaticResource SubtitleTextBlockStyle}" />
-
-            <!-- Preset: one choice for every kind of file; touching a setting below turns it into "Custom". -->
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xE71D;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.Preset}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <ComboBox HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Bind app:Strings.Preset}"
-                        ItemsSource="{x:Bind ViewModel.Presets}"
-                        SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}"
-                        DisplayMemberPath="Label" />
-              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
-                         Text="{x:Bind ViewModel.SelectedPreset.Description, Mode=OneWay}" />
-            </StackPanel>
-
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xEB9F;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.Images}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <ToggleSwitch Header="{x:Bind app:Strings.Compression}"
-                            OffContent="{x:Bind app:Strings.Lossless}" OnContent="{x:Bind app:Strings.Lossy}"
-                            IsOn="{x:Bind ViewModel.ImageLossy, Mode=TwoWay}" />
-              <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.ImageQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
-                      IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
-                      Value="{x:Bind ViewModel.ImageQuality, Mode=TwoWay}" />
-              <ComboBox Header="{x:Bind app:Strings.OutputFormat}" HorizontalAlignment="Stretch"
-                        ItemsSource="{x:Bind ViewModel.OutputFormats}"
-                        SelectedItem="{x:Bind ViewModel.SelectedOutputFormat, Mode=TwoWay}"
-                        DisplayMemberPath="Label" />
-              <ComboBox Header="{x:Bind app:Strings.Effort}" HorizontalAlignment="Stretch"
-                        ItemsSource="{x:Bind ViewModel.Efforts}"
-                        SelectedItem="{x:Bind ViewModel.SelectedEffort, Mode=TwoWay}"
-                        DisplayMemberPath="Label"
-                        ToolTipService.ToolTip="{x:Bind app:Strings.EffortTip}" />
-              <CheckBox Content="{x:Bind app:Strings.StripMetadata}"
-                        IsChecked="{x:Bind ViewModel.StripMetadata, Mode=TwoWay}"
-                        ToolTipService.ToolTip="{x:Bind app:Strings.StripMetadataTip}" />
-            </StackPanel>
-
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xEA90;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.Pdf}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <ToggleSwitch Header="{x:Bind app:Strings.PdfImages}"
-                            OffContent="{x:Bind app:Strings.Lossless}" OnContent="{x:Bind app:Strings.Lossy}"
-                            IsOn="{x:Bind ViewModel.PdfLossy, Mode=TwoWay}" />
-              <Slider Header="{x:Bind app:Strings.PdfQuality}" AutomationProperties.Name="{x:Bind app:Strings.PdfQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
-                      IsEnabled="{x:Bind ViewModel.PdfLossy, Mode=OneWay}"
-                      Value="{x:Bind ViewModel.PdfQuality, Mode=TwoWay}" />
-              <ComboBox Header="{x:Bind app:Strings.PdfResolution}" HorizontalAlignment="Stretch"
-                        IsEnabled="{x:Bind ViewModel.PdfLossy, Mode=OneWay}"
-                        ItemsSource="{x:Bind ViewModel.PdfResolutions}"
-                        SelectedItem="{x:Bind ViewModel.SelectedPdfResolution, Mode=TwoWay}"
-                        DisplayMemberPath="Label" />
-              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
-                         Text="{x:Bind app:Strings.PdfNote}" />
-            </StackPanel>
-
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xE714;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.Video}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.VideoQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
-                      Value="{x:Bind ViewModel.VideoQuality, Mode=TwoWay}" />
-              <ComboBox Header="{x:Bind app:Strings.Codec}" HorizontalAlignment="Stretch"
-                        ItemsSource="{x:Bind ViewModel.VideoCodecs}"
-                        SelectedItem="{x:Bind ViewModel.SelectedVideoCodec, Mode=TwoWay}"
-                        DisplayMemberPath="Label" />
-              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
-                         Text="{x:Bind app:Strings.VideoNote}" />
-            </StackPanel>
-
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xE8B7;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.AllFiles}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <CheckBox Content="{x:Bind app:Strings.KeepOriginals}"
-                        IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}" />
-              <RadioButtons Header="{x:Bind app:Strings.SaveResults}"
-                            SelectedIndex="{x:Bind ViewModel.OutputLocationIndex, Mode=TwoWay}"
-                            IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}">
-                <RadioButton Content="{x:Bind app:Strings.NextToOriginals}" />
-                <RadioButton Content="{x:Bind app:Strings.InCompressedFolder}" />
-              </RadioButtons>
-              <CheckBox Margin="28,-4,0,0"
-                        IsChecked="{x:Bind ViewModel.CopyAlreadyOptimal, Mode=TwoWay}"
-                        IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.SavesInCompressedFolder, Mode=OneWay}">
-                <TextBlock Text="{x:Bind app:Strings.CopyAlreadyOptimal}" TextWrapping="Wrap" />
-              </CheckBox>
-              <CheckBox Content="{x:Bind app:Strings.AskOutputLocation}"
-                        IsChecked="{x:Bind ViewModel.AskOutputLocation, Mode=TwoWay}"
-                        IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}" />
-              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
-                         Text="{x:Bind app:Strings.KeepOriginalsNote}" />
-            </StackPanel>
-
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xEC50;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.Explorer}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <ToggleSwitch Header="{x:Bind app:Strings.ContextMenuToggle}"
-                            IsOn="{x:Bind ViewModel.ContextMenuEnabled, Mode=TwoWay}" />
-              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
-                         Text="{x:Bind app:Strings.ContextMenuNote}" />
-            </StackPanel>
-
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xF2B7;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.Language}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <ComboBox HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Bind app:Strings.Language}"
-                        ItemsSource="{x:Bind ViewModel.Languages}"
-                        SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}"
-                        DisplayMemberPath="Label" />
-            </StackPanel>
-
-            <!-- About: author, license, and the open source projects the app relies on -->
-            <StackPanel Style="{StaticResource SectionCardStyle}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xE946;" FontSize="16" />
-                <TextBlock Text="{x:Bind app:Strings.About}" Style="{StaticResource SectionHeaderStyle}" />
-              </StackPanel>
-              <StackPanel Spacing="4">
-                <TextBlock Text="{x:Bind app:Strings.AppNameAndVersion}" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <CheckBox Content="{x:Bind app:Strings.CheckForUpdates}" Margin="0,4,0,0"
-                          IsChecked="{x:Bind ViewModel.Updates.CheckAtStartup, Mode=TwoWay}" />
-                <Button Content="{x:Bind app:Strings.CheckNow}" Command="{x:Bind ViewModel.Updates.CheckNowCommand}" />
-                <TextBlock Text="{x:Bind ViewModel.Updates.Status, Mode=OneWay}" TextWrapping="Wrap"
-                           AutomationProperties.LiveSetting="Polite" />
-                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
-                           Margin="0,0,0,8" Text="{x:Bind app:Strings.UpdatesNote}" />
-                <TextBlock TextWrapping="Wrap">
-                  <Run Text="{x:Bind app:Strings.CreditPrefix}" /><Hyperlink NavigateUri="https://geoffreycrofte.com/project/smash-it"
-                             ToolTipService.ToolTip="geoffreycrofte.com/project/smash-it"><Run Text="Crofte Studio" /></Hyperlink><Run Text=" (Geoffrey Crofte)." />
-                </TextBlock>
-                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                  <Run Text="{x:Bind app:Strings.FreeSoftware}" /><Hyperlink NavigateUri="https://github.com/geoffreycrofte/smash-it"
-                             ToolTipService.ToolTip="github.com/geoffreycrofte/smash-it"><Run Text="{x:Bind app:Strings.SourceCode}" /></Hyperlink>
-                </TextBlock>
-              </StackPanel>
-              <StackPanel Spacing="4">
-                <TextBlock Text="{x:Bind app:Strings.OpenSourceProjects}" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <TextBlock><Hyperlink NavigateUri="https://github.com/oxipng/oxipng">oxipng</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://pngquant.org">pngquant</Hyperlink><Run Text=" · GPL-3.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://www.lcdf.org/gifsicle/">gifsicle</Hyperlink><Run Text=" · GPL-2.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://github.com/noahbald/oxvg">oxvg</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://github.com/libjpeg-turbo/libjpeg-turbo">libjpeg-turbo</Hyperlink><Run Text=" · IJG, BSD, zlib" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://chromium.googlesource.com/webm/libwebp">libwebp</Hyperlink><Run Text=" · BSD-3-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://github.com/AOMediaCodec/libavif">libavif</Hyperlink><Run Text=" · BSD-2-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://github.com/qpdf/qpdf">qpdf</Hyperlink><Run Text=" · Apache-2.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://github.com/dotnet/runtime">.NET</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-                <TextBlock><Hyperlink NavigateUri="https://github.com/CommunityToolkit/dotnet">CommunityToolkit.Mvvm</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
-              </StackPanel>
-            </StackPanel>
-          </StackPanel>
-        </ScrollViewer>
-      </SplitView.Pane>
+    <!-- Files on the left, settings on the right when open. In this order in the markup, so that Tab follows the
+         screen: files, settings, then the footer. -->
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
 
       <Grid>
         <Grid.RowDefinitions>
@@ -252,7 +86,8 @@
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Padding="16,10" ColumnSpacing="12"
+        <!-- Column headers: only above files. -->
+        <Grid Padding="16,10" ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}"
               BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="40" />
@@ -269,7 +104,8 @@
           <TextBlock Grid.Column="5" Text="{x:Bind app:Strings.ColumnGain}" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </Grid>
 
-        <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.Files}" SelectionMode="Extended" Padding="0,4"
+        <ListView x:Name="FileList" Grid.Row="1" ItemsSource="{x:Bind ViewModel.Files}" SelectionMode="Extended" Padding="0,4"
+                  Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}"
                   DoubleTapped="OnFileDoubleTapped" PreviewKeyDown="OnFileListKeyDown"
                   AutomationProperties.Name="{x:Bind app:Strings.FileList}">
           <ListView.ItemContainerStyle>
@@ -334,12 +170,188 @@
           <TextBlock Text="{x:Bind app:Strings.EmptyDetails}"
                      Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"
                      TextWrapping="Wrap" TextAlignment="Center" MaxWidth="420" />
+          <!-- For those who don't or can't drag and drop. -->
+          <Button x:Name="EmptyAddButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Center" Margin="0,12,0,0"
+                  Click="OnAddFilesClick" AutomationProperties.Name="{x:Bind app:Strings.AddFiles}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xE710;" FontSize="14" />
+              <TextBlock Text="{x:Bind app:Strings.AddFiles}" />
+            </StackPanel>
+          </Button>
         </StackPanel>
       </Grid>
       </Grid>
-    </SplitView>
 
-    <!-- Footer: summary, then settings and the actions -->
+      <!-- Settings, one section per kind of file -->
+      <ScrollViewer Grid.Column="1" Width="360" Padding="0,0,16,0" Visibility="{x:Bind ViewModel.IsSettingsOpen, Mode=OneWay}">
+        <StackPanel Spacing="16" Padding="4,0,0,16">
+          <TextBlock Text="{x:Bind app:Strings.Settings}" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+          <!-- Preset: one choice for every kind of file; touching a setting below turns it into "Custom". -->
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xE71D;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Preset}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <ComboBox HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Bind app:Strings.Preset}"
+                      ItemsSource="{x:Bind ViewModel.Presets}"
+                      SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                       Text="{x:Bind ViewModel.SelectedPreset.Description, Mode=OneWay}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xEB9F;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Images}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <ToggleSwitch Header="{x:Bind app:Strings.Compression}"
+                          OffContent="{x:Bind app:Strings.Lossless}" OnContent="{x:Bind app:Strings.Lossy}"
+                          IsOn="{x:Bind ViewModel.ImageLossy, Mode=TwoWay}" />
+            <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.ImageQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
+                    IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
+                    Value="{x:Bind ViewModel.ImageQuality, Mode=TwoWay}" />
+            <ComboBox Header="{x:Bind app:Strings.OutputFormat}" HorizontalAlignment="Stretch"
+                      ItemsSource="{x:Bind ViewModel.OutputFormats}"
+                      SelectedItem="{x:Bind ViewModel.SelectedOutputFormat, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
+            <ComboBox Header="{x:Bind app:Strings.Effort}" HorizontalAlignment="Stretch"
+                      ItemsSource="{x:Bind ViewModel.Efforts}"
+                      SelectedItem="{x:Bind ViewModel.SelectedEffort, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      ToolTipService.ToolTip="{x:Bind app:Strings.EffortTip}" />
+            <CheckBox Content="{x:Bind app:Strings.StripMetadata}"
+                      IsChecked="{x:Bind ViewModel.StripMetadata, Mode=TwoWay}"
+                      ToolTipService.ToolTip="{x:Bind app:Strings.StripMetadataTip}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xEA90;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Pdf}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <ToggleSwitch Header="{x:Bind app:Strings.PdfImages}"
+                          OffContent="{x:Bind app:Strings.Lossless}" OnContent="{x:Bind app:Strings.Lossy}"
+                          IsOn="{x:Bind ViewModel.PdfLossy, Mode=TwoWay}" />
+            <Slider Header="{x:Bind app:Strings.PdfQuality}" AutomationProperties.Name="{x:Bind app:Strings.PdfQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
+                    IsEnabled="{x:Bind ViewModel.PdfLossy, Mode=OneWay}"
+                    Value="{x:Bind ViewModel.PdfQuality, Mode=TwoWay}" />
+            <ComboBox Header="{x:Bind app:Strings.PdfResolution}" HorizontalAlignment="Stretch"
+                      IsEnabled="{x:Bind ViewModel.PdfLossy, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.PdfResolutions}"
+                      SelectedItem="{x:Bind ViewModel.SelectedPdfResolution, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                       Text="{x:Bind app:Strings.PdfNote}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xE714;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Video}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.VideoQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
+                    Value="{x:Bind ViewModel.VideoQuality, Mode=TwoWay}" />
+            <ComboBox Header="{x:Bind app:Strings.Codec}" HorizontalAlignment="Stretch"
+                      ItemsSource="{x:Bind ViewModel.VideoCodecs}"
+                      SelectedItem="{x:Bind ViewModel.SelectedVideoCodec, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                       Text="{x:Bind app:Strings.VideoNote}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xE8B7;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.AllFiles}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <CheckBox Content="{x:Bind app:Strings.KeepOriginals}"
+                      IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}" />
+            <RadioButtons Header="{x:Bind app:Strings.SaveResults}"
+                          SelectedIndex="{x:Bind ViewModel.OutputLocationIndex, Mode=TwoWay}"
+                          IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}">
+              <RadioButton Content="{x:Bind app:Strings.NextToOriginals}" />
+              <RadioButton Content="{x:Bind app:Strings.InCompressedFolder}" />
+            </RadioButtons>
+            <CheckBox Margin="28,-4,0,0"
+                      IsChecked="{x:Bind ViewModel.CopyAlreadyOptimal, Mode=TwoWay}"
+                      IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}"
+                      Visibility="{x:Bind ViewModel.SavesInCompressedFolder, Mode=OneWay}">
+              <TextBlock Text="{x:Bind app:Strings.CopyAlreadyOptimal}" TextWrapping="Wrap" />
+            </CheckBox>
+            <CheckBox Content="{x:Bind app:Strings.AskOutputLocation}"
+                      IsChecked="{x:Bind ViewModel.AskOutputLocation, Mode=TwoWay}"
+                      IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}" />
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                       Text="{x:Bind app:Strings.KeepOriginalsNote}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xEC50;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Explorer}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <ToggleSwitch Header="{x:Bind app:Strings.ContextMenuToggle}"
+                          IsOn="{x:Bind ViewModel.ContextMenuEnabled, Mode=TwoWay}" />
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                       Text="{x:Bind app:Strings.ContextMenuNote}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xF2B7;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Language}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <ComboBox HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Bind app:Strings.Language}"
+                      ItemsSource="{x:Bind ViewModel.Languages}"
+                      SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
+          </StackPanel>
+
+          <!-- About: author, license, and the open source projects the app relies on -->
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xE946;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.About}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+              <TextBlock Text="{x:Bind app:Strings.AppNameAndVersion}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+              <CheckBox Content="{x:Bind app:Strings.CheckForUpdates}" Margin="0,4,0,0"
+                        IsChecked="{x:Bind ViewModel.Updates.CheckAtStartup, Mode=TwoWay}" />
+              <Button Content="{x:Bind app:Strings.CheckNow}" Command="{x:Bind ViewModel.Updates.CheckNowCommand}" />
+              <TextBlock Text="{x:Bind ViewModel.Updates.Status, Mode=OneWay}" TextWrapping="Wrap"
+                         AutomationProperties.LiveSetting="Polite" />
+              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                         Margin="0,0,0,8" Text="{x:Bind app:Strings.UpdatesNote}" />
+              <TextBlock TextWrapping="Wrap">
+                <Run Text="{x:Bind app:Strings.CreditPrefix}" /><Hyperlink NavigateUri="https://geoffreycrofte.com/project/smash-it"
+                           ToolTipService.ToolTip="geoffreycrofte.com/project/smash-it"><Run Text="Crofte Studio" /></Hyperlink><Run Text=" (Geoffrey Crofte)." />
+              </TextBlock>
+              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                <Run Text="{x:Bind app:Strings.FreeSoftware}" /><Hyperlink NavigateUri="https://github.com/geoffreycrofte/smash-it"
+                           ToolTipService.ToolTip="github.com/geoffreycrofte/smash-it"><Run Text="{x:Bind app:Strings.SourceCode}" /></Hyperlink>
+              </TextBlock>
+            </StackPanel>
+            <StackPanel Spacing="4">
+              <TextBlock Text="{x:Bind app:Strings.OpenSourceProjects}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+              <TextBlock><Hyperlink NavigateUri="https://github.com/oxipng/oxipng">oxipng</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://pngquant.org">pngquant</Hyperlink><Run Text=" · GPL-3.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://www.lcdf.org/gifsicle/">gifsicle</Hyperlink><Run Text=" · GPL-2.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://github.com/noahbald/oxvg">oxvg</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://github.com/libjpeg-turbo/libjpeg-turbo">libjpeg-turbo</Hyperlink><Run Text=" · IJG, BSD, zlib" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://chromium.googlesource.com/webm/libwebp">libwebp</Hyperlink><Run Text=" · BSD-3-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://github.com/AOMediaCodec/libavif">libavif</Hyperlink><Run Text=" · BSD-2-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://github.com/qpdf/qpdf">qpdf</Hyperlink><Run Text=" · Apache-2.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://github.com/dotnet/runtime">.NET</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://github.com/CommunityToolkit/dotnet">CommunityToolkit.Mvvm</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- Footer: summary, then settings and the actions. -->
     <Grid Grid.Row="2" Padding="16,12,16,12" ColumnSpacing="8">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
@@ -381,26 +393,28 @@
                 AutomationProperties.Name="{x:Bind app:Strings.Preset}"
                 ToolTipService.ToolTip="{x:Bind ViewModel.SelectedPreset.Description, Mode=OneWay}" />
       <!-- Icon-only buttons stretch to the height of the labelled ones. -->
-      <ToggleButton Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Stretch"
+      <ToggleButton Grid.Column="2" VerticalAlignment="Stretch"
                     IsChecked="{x:Bind ViewModel.IsSettingsOpen, Mode=TwoWay}"
                     ToolTipService.ToolTip="{x:Bind app:Strings.Settings}"
                     AutomationProperties.Name="{x:Bind app:Strings.Settings}">
         <FontIcon Glyph="&#xE713;" FontSize="14" />
       </ToggleButton>
-      <Button Grid.Column="3" Click="OnAddFilesClick" AutomationProperties.Name="{x:Bind app:Strings.Add}">
+      <!-- The list's actions, once it has files (the empty list has its own "Add files" button). -->
+      <Button Grid.Column="3" Margin="8,0,0,0" Click="OnAddFilesClick" AutomationProperties.Name="{x:Bind app:Strings.Add}"
+              Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <FontIcon Glyph="&#xE710;" FontSize="14" />
           <TextBlock Text="{x:Bind app:Strings.Add}" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="4" Command="{x:Bind ViewModel.ReprocessCommand}" ToolTipService.ToolTip="{x:Bind app:Strings.RecompressTip}"
+      <Button Grid.Column="4" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}" Command="{x:Bind ViewModel.ReprocessCommand}" ToolTipService.ToolTip="{x:Bind app:Strings.RecompressTip}"
               AutomationProperties.Name="{x:Bind app:Strings.Recompress}">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <FontIcon Glyph="&#xE72C;" FontSize="14" />
           <TextBlock Text="{x:Bind app:Strings.Recompress}" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="5" Command="{x:Bind ViewModel.ClearCommand}" VerticalAlignment="Stretch"
+      <Button Grid.Column="5" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}" Command="{x:Bind ViewModel.ClearCommand}" VerticalAlignment="Stretch"
               ToolTipService.ToolTip="{x:Bind app:Strings.Clear}" AutomationProperties.Name="{x:Bind app:Strings.Clear}">
         <FontIcon Glyph="&#xE74D;" FontSize="14" />
       </Button>
