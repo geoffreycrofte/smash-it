@@ -33,6 +33,7 @@ public sealed class AppSettings
     public VideoCodec VideoCodec { get; set; } = VideoCodec.H264;
     public bool KeepOriginal { get; set; } = true;
     public bool SaveInCompressedFolder { get; set; }
+    public bool CopyAlreadyOptimal { get; set; }
     public bool AskOutputLocation { get; set; } = true;
 
     private static AppSettings Load()

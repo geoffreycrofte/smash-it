@@ -122,8 +122,19 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
             // 4. Output.
             var compressorId = string.Join("+", usedIds);
             if (!isRequestedConversion && bestSize >= originalSize)
-                return new(path, CompressionStatus.AlreadyOptimal, originalSize, originalSize,
+            {
+                string? copy = null;
+                if (options is { OriginalHandling: OriginalHandling.KeepAlongside, CopyAlreadyOptimal: true,
+                        KeptOriginalFolder: { Length: > 0 } copyFolder })
+                {
+                    var directory = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, copyFolder);
+                    Directory.CreateDirectory(directory);
+                    copy = FileOutput.UniquePath(Path.Combine(directory, Path.GetFileName(path)));
+                    File.Copy(path, copy);
+                }
+                return new(path, CompressionStatus.AlreadyOptimal, originalSize, originalSize, copy,
                     CompressorId: compressorId, Message: Note(notes));
+            }
 
             var status = isConversion ? CompressionStatus.Converted : CompressionStatus.Optimized;
             string finalPath;

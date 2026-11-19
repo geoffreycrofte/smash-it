@@ -78,5 +78,11 @@ public sealed record CompressionOptions
     /// </summary>
     public string? KeptOriginalFolder { get; init; }
 
+    /// <summary>
+    /// With <see cref="KeptOriginalFolder"/>: files no engine could make smaller are copied there as they are,
+    /// so the folder holds the whole set.
+    /// </summary>
+    public bool CopyAlreadyOptimal { get; init; }
+
     public static CompressionOptions Default { get; } = new();
 }
