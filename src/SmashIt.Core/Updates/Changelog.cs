@@ -59,6 +59,38 @@ public static partial class Changelog
     public static string? SectionFor(string markdown, AppVersion version) =>
         Parse(markdown).FirstOrDefault(s => s.Version.CompareTo(version) == 0)?.Body;
 
+    /// <summary>
+    /// Joins the lines that only continue the one above (a list item or a paragraph wrapped in the file), so each
+    /// returned line is a whole heading, list item or paragraph. Blank lines are dropped.
+    /// </summary>
+    public static IReadOnlyList<string> LogicalLines(string markdown)
+    {
+        var lines = new List<string>();
+        var previousBlank = true;
+        foreach (var raw in markdown.Replace("\r\n", "\n").Split('\n'))
+        {
+            var line = raw.TrimEnd();
+            if (line.Trim().Length == 0)
+            {
+                previousBlank = true;
+                continue;
+            }
+            // A heading never continues on the next line; anything else that isn't a new block does.
+            var continues = !previousBlank && lines.Count > 0 && !StartsBlock().IsMatch(line)
+                && !lines[^1].TrimStart().StartsWith('#');
+            if (continues)
+                lines[^1] = lines[^1] + " " + line.Trim();
+            else
+                lines.Add(line);
+            previousBlank = false;
+        }
+        return lines;
+    }
+
+    /// <summary>A line that opens its own block: heading, list item, quote, rule or HTML comment.</summary>
+    [GeneratedRegex(@"^\s*(#{1,6}\s|[-*+]\s|\d+\.\s|>|---|\*\*\*|<!--)")]
+    private static partial Regex StartsBlock();
+
     [GeneratedRegex(@"^##\s+\[?v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\]?(?:\s|$)")]
     private static partial Regex VersionHeading();
 }
