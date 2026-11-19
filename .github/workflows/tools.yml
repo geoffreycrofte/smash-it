@@ -71,6 +71,7 @@ jobs:
 
           Used by tools/fetch-tools.ps1. Not a Smash It release.
           "@ | Set-Content notes.md -Encoding utf8
-          gh release create $env:GITHUB_REF_NAME dist/* --prerelease --latest=false `
+          # No checkout of this repository here: name it for gh.
+          gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
             --title "Build tool: oxvg $version (Windows x64)" --notes-file notes.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
