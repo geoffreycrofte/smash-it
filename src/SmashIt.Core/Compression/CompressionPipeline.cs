@@ -57,7 +57,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         try
         {
             // 1. Encoders: keep the smallest output.
-            var errors = new List<string>();
+            var errors = new List<RunError>();
             (string Path, long Size, ICompressor Compressor)? best = null;
             foreach (var compressor in candidates)
             {
@@ -71,8 +71,13 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
             }
 
             if (best is null)
-                return new(path, CompressionStatus.Failed, originalSize, originalSize,
-                    Message: errors.Count > 0 ? string.Join(Environment.NewLine, errors) : L10n.T("No result produced.", "Aucun résultat produit."));
+                // Every engine turned the file down (signed PDF, SVG font, animated PNG…): not supported, not an error.
+                return new(path,
+                    errors.Count > 0 && errors.All(e => e.Unsupported) ? CompressionStatus.Unsupported : CompressionStatus.Failed,
+                    originalSize, originalSize,
+                    Message: errors.Count > 0
+                        ? string.Join(Environment.NewLine, errors.Select(e => e.Message))
+                        : L10n.T("No result produced.", "Aucun résultat produit."));
 
             var (bestPath, bestSize, bestCompressor) = best.Value;
             var usedIds = new List<string> { bestCompressor.Id };
@@ -197,7 +202,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
     private static async Task<long> TryRunAsync(
         ICompressor compressor,
         CompressionJob job,
-        List<string> errors,
+        List<RunError> errors,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -211,12 +216,17 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         }
         catch (Exception ex)
         {
-            errors.Add(L10n.T($"{compressor.DisplayName}: {ex.Message}", $"{compressor.DisplayName} : {ex.Message}"));
+            errors.Add(new RunError(
+                L10n.T($"{compressor.DisplayName}: {ex.Message}", $"{compressor.DisplayName} : {ex.Message}"),
+                ex is NotSupportedException));
             return 0;
         }
 
         return File.Exists(job.OutputPath) ? new FileInfo(job.OutputPath).Length : 0;
     }
+
+    /// <summary>What an engine said when it gave up; <paramref name="Unsupported"/> when it turned the file down.</summary>
+    private sealed record RunError(string Message, bool Unsupported);
 
     private static string? Note(List<string> notes) => notes.Count > 0 ? string.Join(Environment.NewLine, notes) : null;
 }
