@@ -65,7 +65,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
-| **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
+| **Preview** | Before/after comparison for every compressed image, with a draggable split, fitted or at 100 % | |
 | **Presets** | Best quality (lossless, the default), Web, Email (lightest) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
 | **Integration** | Drag & drop, Explorer right-click menu, `smashit` command line; settings remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
@@ -122,7 +122,9 @@ smaller. Videos need the lossy mode.
 ### Before/after preview
 
 Every compressed image gets a compare button (or double-click its row). Both versions are stacked in one view; drag
-the handle, click anywhere, or use ← → (Shift for finer steps) to move the split. The app keeps a temporary copy of
+the handle, click anywhere, or use ← → (Shift for finer steps) to move the split. **100 %** (or Z) shows the images
+pixel for pixel, whatever the Windows display scaling, centered on the split: scroll with the wheel (Shift+wheel
+sideways) or the scrollbars, and press it again to fit the window. The app keeps a temporary copy of
 each original so the preview still works after the original went to the Recycle Bin.
 
 ### Explorer right-click menu
