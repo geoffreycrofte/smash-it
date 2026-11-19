@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:app="using:SmashIt.App"
     xmlns:vm="using:SmashIt.App.ViewModels"
+    xmlns:services="using:SmashIt.App.Services"
     Title="Smash It">
 
   <Window.SystemBackdrop>
@@ -90,13 +91,13 @@
         <Grid Padding="16,10" ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasFiles, Mode=OneWay}"
               BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="40" />
-            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="{x:Bind services:TextScale.Width(40, services:TextScale.Current.Factor), Mode=OneWay}" />
+            <ColumnDefinition Width="{x:Bind services:TextScale.Width(24, services:TextScale.Current.Factor), Mode=OneWay}" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="100" />
-            <ColumnDefinition Width="100" />
-            <ColumnDefinition Width="150" />
-            <ColumnDefinition Width="40" />
+            <ColumnDefinition Width="{x:Bind services:TextScale.Width(100, services:TextScale.Current.Factor), Mode=OneWay}" />
+            <ColumnDefinition Width="{x:Bind services:TextScale.Width(100, services:TextScale.Current.Factor), Mode=OneWay}" />
+            <ColumnDefinition Width="{x:Bind services:TextScale.Width(150, services:TextScale.Current.Factor), Mode=OneWay}" />
+            <ColumnDefinition Width="{x:Bind services:TextScale.Width(40, services:TextScale.Current.Factor), Mode=OneWay}" />
           </Grid.ColumnDefinitions>
           <TextBlock Grid.Column="2" Text="{x:Bind app:Strings.ColumnFile}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
           <TextBlock Grid.Column="3" Text="{x:Bind app:Strings.ColumnSize}" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -117,13 +118,13 @@
             <DataTemplate x:DataType="vm:FileItem">
               <Grid ColumnSpacing="12" Padding="0,6" ToolTipService.ToolTip="{x:Bind Message, Mode=OneWay}">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="40" />
-                  <ColumnDefinition Width="24" />
+                  <ColumnDefinition Width="{x:Bind services:TextScale.Width(40, services:TextScale.Current.Factor), Mode=OneWay}" />
+                  <ColumnDefinition Width="{x:Bind services:TextScale.Width(24, services:TextScale.Current.Factor), Mode=OneWay}" />
                   <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="100" />
-                  <ColumnDefinition Width="100" />
-                  <ColumnDefinition Width="150" />
-                  <ColumnDefinition Width="40" />
+                  <ColumnDefinition Width="{x:Bind services:TextScale.Width(100, services:TextScale.Current.Factor), Mode=OneWay}" />
+                  <ColumnDefinition Width="{x:Bind services:TextScale.Width(100, services:TextScale.Current.Factor), Mode=OneWay}" />
+                  <ColumnDefinition Width="{x:Bind services:TextScale.Width(150, services:TextScale.Current.Factor), Mode=OneWay}" />
+                  <ColumnDefinition Width="{x:Bind services:TextScale.Width(40, services:TextScale.Current.Factor), Mode=OneWay}" />
                 </Grid.ColumnDefinitions>
 
                 <!-- Thumbnail, or an icon for the kind of file when Windows has no preview. -->
@@ -141,7 +142,7 @@
                 <ProgressRing Grid.Column="1" IsActive="{x:Bind IsWorking, Mode=OneWay}" Width="16" Height="16" />
                 <FontIcon Grid.Column="1" Glyph="{x:Bind StatusGlyph, Mode=OneWay}" FontSize="14" />
                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                  <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Name}" />
                   <TextBlock Text="{x:Bind Folder}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
                              ToolTipService.ToolTip="{x:Bind Folder}"
                              Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -183,7 +184,7 @@
       </Grid>
 
       <!-- Settings, one section per kind of file -->
-      <ScrollViewer Grid.Column="1" Width="360" Padding="0,0,16,0" Visibility="{x:Bind ViewModel.IsSettingsOpen, Mode=OneWay}">
+      <ScrollViewer Grid.Column="1" Width="{x:Bind services:TextScale.Length(360, services:TextScale.Current.Factor), Mode=OneWay}" Padding="0,0,16,0" Visibility="{x:Bind ViewModel.IsSettingsOpen, Mode=OneWay}">
         <StackPanel Spacing="16" Padding="4,0,0,16">
           <TextBlock Text="{x:Bind app:Strings.Settings}" Style="{StaticResource SubtitleTextBlockStyle}" />
 
@@ -388,7 +389,7 @@
                    ToolTipService.ToolTip="geoffreycrofte.com/project/smash-it"><Run Text="Crofte Studio" /></Hyperlink>
       </TextBlock>
       <!-- The preset, at hand without opening Settings. -->
-      <ComboBox Grid.Column="1" MinWidth="210" VerticalAlignment="Center"
+      <ComboBox Grid.Column="1" MinWidth="{x:Bind services:TextScale.Length(210, services:TextScale.Current.Factor), Mode=OneWay}" VerticalAlignment="Center"
                 ItemsSource="{x:Bind ViewModel.Presets}"
                 SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}"
                 DisplayMemberPath="Label"

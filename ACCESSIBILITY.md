@@ -61,8 +61,9 @@ We'd rather be upfront about these:
 
 - **High contrast themes**: the app uses the colors Windows provides, so it should follow them, but we haven't
   looked at every screen with one turned on.
-- **Large text** (Windows "Text size" setting): some columns of the file list have a fixed width and may cut long
-  text short.
+- **Large text** (Windows "Text size" setting): the file list columns, the settings panel and the preset list now
+  widen with the text size, and a file name cut short shows in full in its tooltip. We checked that the widths
+  follow, but haven't looked at every screen with the setting turned up to 200 % and more.
 - **Listening with Narrator from start to finish**: the automated pass says everything has a name, but nothing
   replaces hearing it, especially while a batch runs.
 
