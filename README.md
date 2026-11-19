@@ -8,7 +8,7 @@ A native Windows app to make images, videos and PDFs smaller — in the spirit o
 
 Drop files or folders on the window: Smash It tries every engine that can handle them, keeps the smallest
 result, and only keeps it when it actually got smaller. By default the app is lossless and keeps your originals:
-the result is saved next to each file as `name-compressed.ext`.
+the result is saved next to each file as `name-compressed.ext`, or in a `compressed` folder if you prefer.
 
 > Status: early development (v0.1). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
@@ -53,7 +53,7 @@ The builds are not code-signed yet, so Windows SmartScreen may warn on first lau
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
-| **Originals** | Kept by default, with the result saved as `name-compressed.ext`; or replaced, the original going to the Recycle Bin | |
+| **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
 | **Integration** | Drag & drop, Explorer right-click menu, `smashit` command line; settings remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
@@ -100,9 +100,12 @@ portable zip, or to remove it, use **Settings → Windows Explorer**. On Windows
 
 - **Strip metadata** (default) removes camera info, dates, GPS, XMP, IPTC and comments. The color profile and the
   orientation are always kept, since dropping them would change how the picture looks.
-- **Keep originals** (on by default) leaves your files untouched and writes `photo-compressed.jpg` (or
-  `photo-compressed.webp` for a conversion) next to them. Turn it off and the compressed file replaces the original,
-  which goes to the Recycle Bin.
+- **Keep originals** (on by default) leaves your files untouched and saves the results either next to them as
+  `photo-compressed.jpg` (or `photo-compressed.webp` for a conversion), or in a `compressed` folder next to them,
+  under their own name (`compressed\photo.jpg`). When you drop several files or right-click a selection, Smash It
+  asks which one you want, preset to your last choice; tick "Don't ask again" to stop the question (Settings brings
+  it back). A `compressed` folder inside a folder you drop is skipped, so results aren't compressed twice.
+  Turn **Keep originals** off and the compressed file replaces the original, which goes to the Recycle Bin.
 
 Reading HEIC, WebP and AVIF relies on the free *HEIF*, *HEVC*, *WebP* and *AV1* image extensions from the Microsoft Store.
 

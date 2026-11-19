@@ -32,15 +32,33 @@ public partial class App : Application
         }
         window.Activate();
 
-        // Files passed on the command line (e.g. "Open with Smash It") are processed right away.
-        var files = Environment.GetCommandLineArgs().Skip(1).ToArray();
-        if (files.Length > 0) _viewModel.AddPaths(files);
-
-        // Later launches (one per file selected in Explorer) land in this window.
+        // Explorer starts the app once per selected file, a few milliseconds apart: the files are gathered
+        // until the launches stop, so 40 selected photos make one batch (and one question), not 40.
         var dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        var incoming = new List<string>();
+        var gather = dispatcher.CreateTimer();
+        gather.Interval = TimeSpan.FromMilliseconds(400);
+        gather.IsRepeating = false;
+        gather.Tick += (_, _) =>
+        {
+            var batch = incoming.ToArray();
+            incoming.Clear();
+            if (batch.Length > 0) _ = _viewModel.AddPathsAsync(batch);
+        };
+        void Receive(IEnumerable<string> paths)
+        {
+            incoming.AddRange(paths);
+            gather.Stop();
+            gather.Start();
+        }
+
+        // Files passed on the command line ("Compress with Smash It") are processed right away.
+        Receive(Environment.GetCommandLineArgs().Skip(1));
+
+        // Later launches land in this window.
         SingleInstance.OnLaunchForwarded(paths => dispatcher.TryEnqueue(() =>
         {
-            if (paths.Length > 0) _viewModel.AddPaths(paths);
+            Receive(paths);
             _window?.BringToFront();
         }));
 

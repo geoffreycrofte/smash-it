@@ -112,6 +112,15 @@
               </StackPanel>
               <CheckBox Content="{x:Bind app:Strings.KeepOriginals}"
                         IsChecked="{x:Bind ViewModel.KeepOriginal, Mode=TwoWay}" />
+              <RadioButtons Header="{x:Bind app:Strings.SaveResults}"
+                            SelectedIndex="{x:Bind ViewModel.OutputLocationIndex, Mode=TwoWay}"
+                            IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}">
+                <RadioButton Content="{x:Bind app:Strings.NextToOriginals}" />
+                <RadioButton Content="{x:Bind app:Strings.InCompressedFolder}" />
+              </RadioButtons>
+              <CheckBox Content="{x:Bind app:Strings.AskOutputLocation}"
+                        IsChecked="{x:Bind ViewModel.AskOutputLocation, Mode=TwoWay}"
+                        IsEnabled="{x:Bind ViewModel.KeepOriginal, Mode=OneWay}" />
               <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
                          Text="{x:Bind app:Strings.KeepOriginalsNote}" />
             </StackPanel>

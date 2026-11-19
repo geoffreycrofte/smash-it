@@ -40,6 +40,9 @@ public sealed record VideoCodecChoice(VideoCodec Codec)
     public override string ToString() => Label;
 }
 
+/// <summary>The answer to "where do the compressed files go?".</summary>
+public sealed record OutputLocationAnswer(bool InCompressedFolder, bool DontAskAgain);
+
 public sealed record LanguageChoice(AppLanguage Language)
 {
     public string Label => Language switch
@@ -140,6 +143,14 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool KeepOriginal { get; set; } = true;
 
+    /// <summary>Where kept-original results go: 0 next to the original ("name-compressed.ext"), 1 in a "compressed" folder.</summary>
+    [ObservableProperty]
+    public partial int OutputLocationIndex { get; set; }
+
+    /// <summary>Ask where the results go when several files are added at once.</summary>
+    [ObservableProperty]
+    public partial bool AskOutputLocation { get; set; } = true;
+
     // Explorer: the registry is the source of truth, not the settings file.
     private readonly ExplorerContextMenu _contextMenu = ExplorerContextMenu.ForCurrentUser();
 
@@ -167,7 +178,7 @@ public sealed partial class MainViewModel : ObservableObject
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(VideoQuality),
-        nameof(SelectedVideoCodec), nameof(KeepOriginal),
+        nameof(SelectedVideoCodec), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(AskOutputLocation),
     ];
 
     // Sliders change many times per second: the file is written once they settle.
@@ -186,6 +197,8 @@ public sealed partial class MainViewModel : ObservableObject
         VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
         SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
         KeepOriginal = settings.KeepOriginal;
+        OutputLocationIndex = settings.SaveInCompressedFolder ? 1 : 0;
+        AskOutputLocation = settings.AskOutputLocation;
         SelectedLanguage = Languages.First(l => l.Language == settings.Language);
 
         // The entry points to a program that is gone (portable folder moved, old install): point it here.
@@ -225,6 +238,8 @@ public sealed partial class MainViewModel : ObservableObject
         settings.VideoQuality = (int)Math.Round(VideoQuality);
         settings.VideoCodec = SelectedVideoCodec.Codec;
         settings.KeepOriginal = KeepOriginal;
+        settings.SaveInCompressedFolder = OutputLocationIndex == 1;
+        settings.AskOutputLocation = AskOutputLocation;
         settings.Save();
     }
 
@@ -275,6 +290,7 @@ public sealed partial class MainViewModel : ObservableObject
         var common = new CompressionOptions
         {
             OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
+            KeptOriginalFolder = KeepOriginal && OutputLocationIndex == 1 ? CompressionOptions.CompressedFolderName : null,
         };
         return kind switch
         {
@@ -301,9 +317,41 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>Adds files and folders and starts processing them with the current settings.</summary>
-    public void AddPaths(IEnumerable<string> paths)
+    /// <remarks>
+    /// With the originals kept and several files at once, asks first where the results go (unless the user said
+    /// not to ask again). Files arriving while the question is open join that batch.
+    /// </remarks>
+    public async Task AddPathsAsync(IEnumerable<string> paths)
     {
-        foreach (var path in InputCollector.Expand(paths))
+        // An earlier run's "compressed" folder is not compressed again when its parent folder is dropped.
+        var files = InputCollector.Expand(paths, CompressionOptions.CompressedFolderName).ToList();
+        if (files.Count == 0) return;
+
+        if (_askingBatch is { } open)
+        {
+            open.AddRange(files);
+            return;
+        }
+
+        if (KeepOriginal && AskOutputLocation && files.Count > 1 && AskWhereToSave is { } ask)
+        {
+            _askingBatch = files;
+            OutputLocationAnswer? answer;
+            try
+            {
+                answer = await ask(files);
+            }
+            finally
+            {
+                _askingBatch = null;
+            }
+            if (answer is null) return; // cancelled: nothing is added
+
+            OutputLocationIndex = answer.InCompressedFolder ? 1 : 0;
+            if (answer.DontAskAgain) AskOutputLocation = false;
+        }
+
+        foreach (var path in files)
         {
             var item = new FileItem(path);
             Files.Add(item);
@@ -311,6 +359,11 @@ public sealed partial class MainViewModel : ObservableObject
             _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
+
+    /// <summary>Shows the "where do the compressed files go?" question; <c>null</c> when cancelled. Set by the window.</summary>
+    public Func<IReadOnlyList<string>, Task<OutputLocationAnswer?>>? AskWhereToSave { get; set; }
+
+    private List<string>? _askingBatch;
 
     [RelayCommand]
     private void Reprocess()

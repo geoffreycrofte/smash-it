@@ -61,8 +61,21 @@ public static class Strings
     public static string AllFiles => T("All files", "Tous les fichiers");
     public static string KeepOriginals => T("Keep the originals", "Garder les originaux");
     public static string KeepOriginalsNote => T(
-        "Checked: the result is saved next to it as “name-compressed.ext”. Unchecked: it replaces the original, which goes to the Recycle Bin.",
-        "Coché : le résultat est enregistré à côté sous le nom « nom-compressed.ext ». Décoché : il remplace l'original, qui part dans la Corbeille.");
+        "Unchecked, the result replaces the original, which goes to the Recycle Bin.",
+        "Décoché, le résultat remplace l'original, qui part dans la Corbeille.");
+    public static string SaveResults => T("Save the compressed files", "Enregistrer les fichiers compressés");
+    public static string NextToOriginals => T("Next to the originals, as “name-compressed.ext”", "À côté des originaux, sous le nom « nom-compressed.ext »");
+    public static string InCompressedFolder => T("In a “compressed” folder next to the originals", "Dans un dossier « compressed » à côté des originaux");
+    public static string AskOutputLocation => T("Ask when I add several files", "Demander quand j'ajoute plusieurs fichiers");
+
+    // Dialog: where do the compressed files go?
+    public static string WhereTitle => T("Where should the compressed files go?", "Où enregistrer les fichiers compressés ?");
+    public static string WhereIntro(int count) => T(
+        $"{count} files to compress. The originals are kept.",
+        $"{count} fichiers à compresser. Les originaux sont conservés.");
+    public static string DontAskAgain => T("Don't ask again (you can change it in Settings)", "Ne plus demander (modifiable dans les réglages)");
+    public static string CompressButton => T("Compress", "Compresser");
+    public static string Cancel => T("Cancel", "Annuler");
 
     // Settings: app
     public static string Language => T("Language", "Langue");
