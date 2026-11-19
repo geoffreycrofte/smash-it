@@ -69,5 +69,14 @@ public sealed record CompressionOptions
     /// <summary>Suffix added before the extension when <see cref="OriginalHandling.KeepAlongside"/> is used.</summary>
     public string KeptOriginalSuffix { get; init; } = "-compressed";
 
+    /// <summary>Folder name used by <see cref="KeptOriginalFolder"/> in the app and the command line.</summary>
+    public const string CompressedFolderName = "compressed";
+
+    /// <summary>
+    /// With <see cref="OriginalHandling.KeepAlongside"/>: when set, results go into this subfolder of the
+    /// original's folder (created if needed), under the original name instead of "name-compressed.ext".
+    /// </summary>
+    public string? KeptOriginalFolder { get; init; }
+
     public static CompressionOptions Default { get; } = new();
 }

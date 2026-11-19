@@ -156,6 +156,7 @@ smashit [options] <files or folders…>
   -e, --effort <n>     fast, balanced (default) or max
   --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
   --keep               Keep the original, write "name-compressed.ext" next to it
+  --folder             Keep the original, write the result into a "compressed" folder next to it
   --no-recycle         Delete the original instead of using the Recycle Bin
   --keep-metadata      Keep EXIF, XMP, IPTC and comments
   --strip-metadata     Remove them (default; color profile and orientation are kept)
