@@ -23,6 +23,7 @@ How this file works:
 - **Enter opens the before/after view** of the selected file, like a double-click.
 - **A tidier empty window.** "Add files" now sits right under the drop area. The list buttons (Add, Recompress, Clear) and the column titles only show once there are files.
 - **The Tab key follows the screen**: the files, then the settings when they're open, then the bottom bar.
+- **Larger text, nothing cut off.** If you've made text bigger in Windows, the file list columns and the settings panel now grow with it.
 
 ### Fixed
 - WebP files made by Smash It now keep the date, camera and location when you choose to keep metadata. Until now, only the color profile made it.
