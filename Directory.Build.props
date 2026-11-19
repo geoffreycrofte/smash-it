@@ -9,6 +9,6 @@
     <Authors>Geoffrey Crofte</Authors>
     <Product>Smash It</Product>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
   </PropertyGroup>
 </Project>
