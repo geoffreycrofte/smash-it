@@ -2,7 +2,8 @@ name: Release
 
 # Push a tag like v0.2.0 to build the installer and the portable zip and attach them to a draft
 # GitHub release. Review the draft, then publish it: the website links to releases/latest.
-# A release created on GitHub first (with a new tag) works too: the files are added to it.
+# A release created on GitHub first (with a new tag) works too: the files are added to it, and its text is
+# replaced with the version's CHANGELOG.md section.
 # "Run workflow" (manual) builds the same files as a workflow artifact, without any release.
 on:
   push:
@@ -72,24 +73,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $files = 'artifacts/SmashIt-Setup-x64.exe', 'artifacts/SmashIt-win-x64.zip', 'artifacts/SHA256SUMS.txt'
-          # A release created by hand on GitHub (which also creates the tag) only gets the files.
+          # The release text is the version's section of CHANGELOG.md, the same one the app shows.
+          $notes = ./tools/changelog-section.ps1 -Version '${{ steps.version.outputs.value }}'
+          if ($notes) { $notes | Set-Content release-notes.md -Encoding utf8 }
+          else { Write-Warning "CHANGELOG.md has no '## v${{ steps.version.outputs.value }}' section." }
+
           gh release view $env:GITHUB_REF_NAME *> $null
           if ($LASTEXITCODE -eq 0) {
+            # A release created by hand on GitHub (which also creates the tag): add the files, and replace the
+            # text with the changelog's when there is a section for this version.
             gh release upload $env:GITHUB_REF_NAME @files --clobber
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if ($notes) { gh release edit $env:GITHUB_REF_NAME --notes-file release-notes.md }
           }
           else {
             $extra = @()
             if ('${{ steps.version.outputs.value }}' -match '-') { $extra += '--prerelease' }
-            # The release text is the version's section of CHANGELOG.md, the same one the app shows.
-            $notes = ./tools/changelog-section.ps1 -Version '${{ steps.version.outputs.value }}'
-            if ($notes) {
-              $notes | Set-Content release-notes.md -Encoding utf8
-              $extra += '--notes-file', 'release-notes.md'
-            }
-            else {
-              Write-Warning "CHANGELOG.md has no '## v${{ steps.version.outputs.value }}' section: the notes list the pull requests instead."
-              $extra += '--generate-notes'
-            }
+            if ($notes) { $extra += '--notes-file', 'release-notes.md' }
+            else { $extra += '--generate-notes' } # lists the pull requests instead
             gh release create $env:GITHUB_REF_NAME @files `
               --draft --title "Smash It ${{ steps.version.outputs.value }}" @extra
           }

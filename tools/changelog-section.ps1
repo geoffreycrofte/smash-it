@@ -25,4 +25,17 @@ $lines = foreach ($line in Get-Content $path -Encoding UTF8) {
     }
     if ($inside) { $line }
 }
-($lines -join "`n").Trim()
+# Lines wrapped in the file are joined back (GitHub shows each line break of a release text), like the app does.
+$joined = [Collections.Generic.List[string]]::new()
+$previousBlank = $true
+foreach ($line in $lines) {
+    $line = $line.TrimEnd()
+    if (-not $line.Trim()) { $joined.Add(''); $previousBlank = $true; continue }
+    $startsBlock = $line -match '^\s*(#{1,6}\s|[-*+]\s|\d+\.\s|>|---|\*\*\*|<!--)'
+    if (-not $previousBlank -and $joined.Count -gt 0 -and -not $startsBlock -and -not $joined[$joined.Count - 1].TrimStart().StartsWith('#')) {
+        $joined[$joined.Count - 1] += ' ' + $line.Trim()
+    }
+    else { $joined.Add($line) }
+    $previousBlank = $false
+}
+($joined -join "`n").Trim()

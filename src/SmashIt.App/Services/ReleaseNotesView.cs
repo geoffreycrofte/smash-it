@@ -45,10 +45,10 @@ public static partial class ReleaseNotesView
             return text;
         }
 
-        foreach (var raw in markdown.Replace("\r\n", "\n").Split('\n'))
+        // Wrapped list items and paragraphs come back as one line each.
+        foreach (var line in Changelog.LogicalLines(markdown))
         {
-            var line = raw.TrimEnd();
-            if (line.Length == 0 || line.Trim() is "---" or "***") continue;
+            if (line.Trim() is "---" or "***") continue;
             if (line.StartsWith("<!--", StringComparison.Ordinal)) continue;
 
             if (Heading().Match(line) is { Success: true } heading)
