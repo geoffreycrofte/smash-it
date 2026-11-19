@@ -10,7 +10,7 @@ Drop files or folders on the window: Smash It tries every engine that can handle
 result, and only keeps it when it actually got smaller. By default the app is lossless and keeps your originals:
 the result is saved next to each file as `name-compressed.ext`, or in a `compressed` folder if you prefer.
 
-> Status: early development (v0.1). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
+> Status: early development (v0.3). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md). Using a keyboard or a screen reader:
 [ACCESSIBILITY.md](ACCESSIBILITY.md).
