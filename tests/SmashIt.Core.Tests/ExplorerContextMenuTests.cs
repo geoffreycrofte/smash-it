@@ -34,7 +34,9 @@ public sealed class ExplorerContextMenuTests : IDisposable
         Assert.Contains(".pdf", ExplorerContextMenu.Extensions);
         Assert.Contains(".mp4", ExplorerContextMenu.Extensions);
         Assert.Contains(".mov", ExplorerContextMenu.Extensions);
-        Assert.DoesNotContain(".svg", ExplorerContextMenu.Extensions); // no SVG engine yet
+        Assert.Contains(".gif", ExplorerContextMenu.Extensions);
+        Assert.Contains(".svg", ExplorerContextMenu.Extensions);
+        Assert.DoesNotContain(".bmp", ExplorerContextMenu.Extensions); // BMP to BMP gains nothing
     }
 
     [Fact]

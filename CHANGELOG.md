@@ -14,6 +14,10 @@ How this file works:
 
 ### New
 - **Smaller GIFs, animations included.** Smash It now compresses GIFs while keeping every frame and the looping. In lossy mode, they often end up much lighter.
+- **Cleaner, lighter SVGs.** Smash It removes what design tools leave behind in SVG files and writes them more compactly. They look exactly the same.
+
+### Improved
+- Files Smash It can't work on, like a signed PDF, now say "Not supported" with the reason, instead of "Error".
 
 ## v0.2.0 · November 19, 2026
 
