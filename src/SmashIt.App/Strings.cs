@@ -100,6 +100,14 @@ public static class Strings
             return version is null ? "Smash It" : $"Smash It {version.Major}.{version.Minor}.{version.Build}";
         }
     }
+    public static string CheckForUpdates => T("Check for updates at startup", "Rechercher les mises à jour au démarrage");
+    public static string CheckNow => T("Check now", "Rechercher maintenant");
+    public static string UpdatesNote => T(
+        "Only the list of versions is requested from GitHub; nothing else is sent.",
+        "Seule la liste des versions est demandée à GitHub ; rien d'autre n'est envoyé.");
+    public static string WhatsNew => T("What's new", "Voir les nouveautés");
+    public static string SkipVersion => T("Skip this version", "Ignorer cette version");
+    public static string Close => T("Close", "Fermer");
     public static string FreeSoftware => T("Free software under the GPL-3.0 license. ", "Logiciel libre sous licence GPL-3.0. ");
     public static string SourceCode => T("Source code", "Code source");
     public static string OpenSourceProjects => T("Built with these open source projects", "Conçue avec ces projets open source");

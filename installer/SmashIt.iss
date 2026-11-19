@@ -74,6 +74,8 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 ; Registers for the user who started setup, even when it runs elevated for all users.
 Filename: "{app}\{#AppExe}"; Parameters: "--register-context-menu"; Tasks: contextmenu; Flags: runhidden waituntilterminated runasoriginaluser
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+; Update started from the app ("/SILENT /RELAUNCH=1"): the app closed itself, start it again.
+Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: RelaunchRequested
 
 [UninstallRun]
 Filename: "{app}\{#AppExe}"; Parameters: "--unregister-context-menu"; RunOnceId: "UnregisterContextMenu"; Flags: runhidden waituntilterminated
@@ -87,6 +89,11 @@ const
 function IsUpgradeOfSmashIt: Boolean;
 begin
   Result := FileExists(ExpandConstant('{app}\{#AppExe}')) and FileExists(ExpandConstant('{app}\SmashIt.pri'));
+end;
+
+function RelaunchRequested: Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
 end;
 
 function EnvRoot: Integer;

@@ -12,6 +12,9 @@ the result is saved next to each file as `name-compressed.ext`, or in a `compres
 
 > Status: early development (v0.1). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
+What changed in each version: [CHANGELOG.md](CHANGELOG.md). Using a keyboard or a screen reader:
+[ACCESSIBILITY.md](ACCESSIBILITY.md).
+
 ## Download
 
 Windows 10 (1809) or Windows 11, 64-bit. Nothing else to install: the .NET runtime and every compression tool
@@ -25,6 +28,14 @@ ship with the app.
 
 The builds are not code-signed yet, so Windows SmartScreen may warn on first launch: click **More info**, then
 **Run anyway**. Each release lists the SHA-256 of its files in `SHA256SUMS.txt`.
+
+### Updates
+
+At startup, Smash It asks GitHub for the list of releases (nothing else is sent) and shows a banner when a newer
+version is out, with its release notes. With the installer, **Update** downloads the new installer, checks it
+against the release's `SHA256SUMS.txt`, installs it silently and starts the app again, settings kept. The portable
+build links to the download instead. After an update, a banner offers what's new. The check can be turned off,
+or run on demand, in Settings → About. Pre-releases are only offered to people already running one.
 
 ## Screenshots
 
@@ -169,6 +180,14 @@ The app and the command line are published into one folder and share a single se
 is `SmashIt.Cli.exe`, and `cmd\smashit.cmd` keeps the `smashit` command. To ship a version, bump `<Version>` in
 `Directory.Build.props`, then push a tag (`git tag v0.2.0 && git push origin v0.2.0`): the *Release* workflow tests,
 builds and attaches both files to a draft GitHub release, ready to review and publish.
+
+What's new lives in [`CHANGELOG.md`](CHANGELOG.md), written for users: one `## vX.Y.Z` section per version,
+newest first. Work in progress goes under a heading that isn't a version ("## Next version"); rename it to
+the version before tagging. The workflow then uses that section as the release text, and the app shows every
+section above the version a person has, read from `CHANGELOG.md` as tagged with the new version (so unreleased
+work on `main` never shows). A version without a section falls back to the release text. Headings, lists,
+**bold**, `code` and links are rendered. The update banner reaches people as soon as the release is published
+(drafts are never seen).
 
 ## Command line
 
