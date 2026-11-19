@@ -135,8 +135,9 @@ public sealed partial class MainViewModel : ObservableObject
     public partial VideoCodecChoice SelectedVideoCodec { get; set; }
 
     // All files
+    // On by default: nothing is replaced until the user asks for it.
     [ObservableProperty]
-    public partial bool KeepOriginal { get; set; }
+    public partial bool KeepOriginal { get; set; } = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
