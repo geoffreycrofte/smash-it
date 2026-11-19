@@ -167,6 +167,74 @@ public class ToolCompressorTests
         Assert.False(pngquant.CanHandle(MediaFormat.Png, MediaFormat.WebP, lossy));
     }
 
+    /// <summary>A 3-frame looping GIF with a comment, assembled by gifsicle from WIC-encoded frames.</summary>
+    private static async Task<string> WriteAnimatedGifAsync(TempDirectory dir, string name)
+    {
+        var frames = new[]
+        {
+            await TestImages.WriteAsync(dir.File("f1.gif"), MediaFormat.Gif, 160, 120, noisy: false),
+            await TestImages.WriteAsync(dir.File("f2.gif"), MediaFormat.Gif, 160, 120, noisy: true),
+            await TestImages.WriteAsync(dir.File("f3.gif"), MediaFormat.Gif, 160, 120, noisy: false),
+        };
+        var path = dir.File(name);
+        await Tools.ExternalTool.RunAsync(Tools.ExternalTool.Find("gifsicle.exe")!,
+            ["--merge", "--loopcount=forever", "--delay=20", "--comment", "made by a test", .. frames, "--output", path], Ct);
+        foreach (var frame in frames) File.Delete(frame);
+        return path;
+    }
+
+    private static async Task<string> GifInfoAsync(string path) =>
+        (await Tools.ExternalTool.RunRawAsync(Tools.ExternalTool.Find("gifsicle.exe")!, ["--info", path], Ct)).StandardOutput;
+
+    [Theory]
+    [InlineData(CompressionMode.Lossless)]
+    [InlineData(CompressionMode.Lossy)]
+    public async Task Gifsicle_shrinks_an_animated_gif_and_keeps_its_frames_and_loop(CompressionMode mode)
+    {
+        var gifsicle = Require(new GifsicleCompressor());
+        using var dir = new TempDirectory();
+        var path = await WriteAnimatedGifAsync(dir, "anim.gif");
+        var before = new FileInfo(path).Length;
+
+        var result = await new CompressionPipeline([gifsicle]).ProcessAsync(path, new CompressionOptions
+        {
+            Mode = mode, Quality = 70, OriginalHandling = OriginalHandling.Overwrite,
+        }, Ct);
+
+        Assert.Equal(CompressionStatus.Optimized, result.Status);
+        Assert.True(new FileInfo(path).Length < before);
+        var info = await GifInfoAsync(path);
+        Assert.Contains("3 images", info);
+        Assert.Contains("loop forever", info);
+        Assert.Contains("delay 0.20s", info);
+        Assert.DoesNotContain("made by a test", info); // metadata stripped by default
+    }
+
+    [Fact]
+    public async Task Gifsicle_keeps_the_comment_when_metadata_is_kept()
+    {
+        var gifsicle = Require(new GifsicleCompressor());
+        using var dir = new TempDirectory();
+        var path = await WriteAnimatedGifAsync(dir, "anim.gif");
+
+        var result = await new CompressionPipeline([gifsicle]).ProcessAsync(path, new CompressionOptions
+        {
+            StripMetadata = false, OriginalHandling = OriginalHandling.Overwrite,
+        }, Ct);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains("made by a test", await GifInfoAsync(path));
+        Assert.Null(result.Message); // no "metadata can't be kept" note
+    }
+
+    [Theory]
+    [InlineData(100, 0)]
+    [InlineData(85, 30)]
+    [InlineData(50, 100)]
+    [InlineData(1, 198)]
+    public void Gifsicle_lossiness_follows_the_quality_setting(int quality, int lossiness) =>
+        Assert.Equal(lossiness, GifsicleCompressor.Lossiness(quality));
+
     [Theory]
     [InlineData(85, 55, 85)]
     [InlineData(100, 70, 100)]

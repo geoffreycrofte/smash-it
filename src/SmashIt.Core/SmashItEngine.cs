@@ -12,6 +12,7 @@ public static class SmashItEngine
         new JpegtranCompressor(),
         new OxipngCompressor(),
         new PngquantCompressor(),
+        new GifsicleCompressor(),
         new CwebpCompressor(),
         new AvifencCompressor(),
         new PdfCompressor(),

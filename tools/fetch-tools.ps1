@@ -66,6 +66,15 @@ $tools = @(
         License = @{ 'COPYRIGHT' = 'pngquant.txt' }
     },
     @{
+        # Windows builds by Jernej Simončič, linked from the official site (lcdf.org/gifsicle). No checksum is
+        # published there: this SHA-256 was taken from the first download.
+        Name    = 'gifsicle 1.97'
+        Url     = 'https://eternallybored.org/misc/gifsicle/releases/gifsicle-1.97-win64.zip'
+        Sha256  = 'bb3ad4e1521a3953152f406eaafabda153fb5986938405860a7e7f12a3d13227'
+        Files   = @('gifsicle.exe')
+        License = @{ 'COPYING' = 'gifsicle.txt' }
+    },
+    @{
         Name    = 'qpdf 12.4.2'
         Url     = 'https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-msvc64.zip'
         Sha256  = 'db87077e683630c1217e0e8f9a20a9749d952ab676e881c3689187763a5de25d'

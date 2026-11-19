@@ -10,6 +10,11 @@ How this file works:
 - "## Next version" is never shown: rename it to "## vX.Y.Z" when you tag the release.
 -->
 
+## Next version
+
+### New
+- **Smaller GIFs, animations included.** Smash It now compresses GIFs while keeping every frame and the looping. In lossy mode, they often end up much lighter.
+
 ## v0.2.0 · November 19, 2026
 
 ### New

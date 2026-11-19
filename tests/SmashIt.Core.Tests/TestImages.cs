@@ -50,7 +50,12 @@ internal static class TestImages
             pixels[i + 3] = 255;
         }
 
-        var encoderId = format == MediaFormat.Jpeg ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId;
+        var encoderId = format switch
+        {
+            MediaFormat.Jpeg => BitmapEncoder.JpegEncoderId,
+            MediaFormat.Gif => BitmapEncoder.GifEncoderId,
+            _ => BitmapEncoder.PngEncoderId,
+        };
         await using (var file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
         {
             using var stream = file.AsRandomAccessStream();
