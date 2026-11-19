@@ -1,0 +1,77 @@
+name: Release
+
+# Push a tag like v0.2.0 to build the installer and the portable zip and attach them to a draft
+# GitHub release. Review the draft, then publish it: the website links to releases/latest.
+# "Run workflow" (manual) builds the same files as a workflow artifact, without any release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $version = $env:GITHUB_REF_NAME.TrimStart('v')
+            $props = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version | Where-Object { $_ }
+            if ($props -ne ($version -split '-')[0]) {
+              Write-Warning "Tag $env:GITHUB_REF_NAME, but Directory.Build.props says $props."
+            }
+          }
+          else {
+            $version = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version | Where-Object { $_ }
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Fetch bundled tools
+        shell: pwsh
+        run: ./tools/fetch-tools.ps1
+
+      - name: Test
+        run: dotnet test --solution SmashIt.slnx -c Release
+
+      - name: Build installer and zip
+        shell: pwsh
+        run: ./tools/publish.ps1 -Version ${{ steps.version.outputs.value }}
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmashIt-${{ steps.version.outputs.value }}
+          path: |
+            artifacts/SmashIt-Setup-x64.exe
+            artifacts/SmashIt-win-x64.zip
+            artifacts/SHA256SUMS.txt
+
+      - name: Create draft release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $extra = @()
+          if ('${{ steps.version.outputs.value }}' -match '-') { $extra += '--prerelease' }
+          gh release create $env:GITHUB_REF_NAME `
+            artifacts/SmashIt-Setup-x64.exe artifacts/SmashIt-win-x64.zip artifacts/SHA256SUMS.txt `
+            --draft --generate-notes --title "Smash It ${{ steps.version.outputs.value }}" @extra

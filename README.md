@@ -12,6 +12,19 @@ the result is saved next to each file as `name-compressed.ext`.
 
 > Status: early development (v0.1). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
+## Download
+
+Windows 10 (1809) or Windows 11, 64-bit. Nothing else to install: the .NET runtime and every compression tool
+ship with the app.
+
+- **[Installer](https://github.com/geoffreycrofte/smash-it/releases/latest/download/SmashIt-Setup-x64.exe)**:
+  installs for your account only (no admin rights) and can add the `smashit` command to the PATH.
+- **[Portable zip](https://github.com/geoffreycrofte/smash-it/releases/latest/download/SmashIt-win-x64.zip)**:
+  unzip anywhere and run `SmashIt.exe`. The command line is `cmd\smashit.cmd`.
+
+The builds are not code-signed yet, so Windows SmartScreen may warn on first launch: click **More info**, then
+**Run anyway**. Each release lists the SHA-256 of its files in `SHA256SUMS.txt`.
+
 ## Screenshots
 
 ![Eight photos compressed with lossy mode at quality 85: 12.4 MB saved out of 31.9 MB](docs/screenshots/files.png)
@@ -110,6 +123,18 @@ dotnet run --project src/SmashIt.App
 dotnet run --project src/SmashIt.Cli -- --help
 dotnet run --project src/SmashIt.Cli -- -q 75 "C:\Photos"
 ```
+
+### Release
+
+```powershell
+# Installer + portable zip + SHA256SUMS.txt in artifacts\ (needs Inno Setup 6: winget install JRSoftware.InnoSetup)
+powershell -ExecutionPolicy Bypass -File tools\publish.ps1
+```
+
+The app and the command line are published into one folder and share a single self-contained runtime; the CLI
+is `SmashIt.Cli.exe`, and `cmd\smashit.cmd` keeps the `smashit` command. To ship a version, bump `<Version>` in
+`Directory.Build.props`, then push a tag (`git tag v0.2.0 && git push origin v0.2.0`): the *Release* workflow tests,
+builds and attaches both files to a draft GitHub release, ready to review and publish.
 
 ## Command line
 
