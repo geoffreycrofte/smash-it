@@ -5,7 +5,8 @@ using SmashIt.Core.IO;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-var options = CompressionOptions.Default;
+// Same default as the app: lossy PDFs get their over-detailed images scaled down to 150 dpi.
+var options = CompressionOptions.Default with { PdfMaxImageDpi = 150 };
 var inputs = new List<string>();
 
 for (var i = 0; i < args.Length; i++)
@@ -46,6 +47,10 @@ for (var i = 0; i < args.Length; i++)
             break;
         case "--keep":
             options = options with { OriginalHandling = OriginalHandling.KeepAlongside };
+            break;
+        case "--pdf-dpi" when i + 1 < args.Length && int.TryParse(args[i + 1], out var dpi) && dpi >= 0:
+            options = options with { PdfMaxImageDpi = dpi };
+            i++;
             break;
         case "--codec" when i + 1 < args.Length:
             VideoCodec? codec = args[++i].ToLowerInvariant() switch
@@ -157,6 +162,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -t, --to <format>    Converts to jpg, png, webp, avif, heic, tif, jxr, bmp
       -e, --effort <n>     fast, balanced (default) or max
       --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
+      --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
       --keep               Keeps the original, writes "name-compressed.ext" next to it
       --folder             Keeps the original, writes the result into a "compressed" folder next to it
       --copy-all           Like --folder, and also copies the files that are already optimal
@@ -175,6 +181,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -t, --to <format>    Convertit vers jpg, png, webp, avif, heic, tif, jxr, bmp
       -e, --effort <n>     fast, balanced (par défaut) ou max
       --codec <codec>      Vidéo : h264 (par défaut) ou hevc ; nécessite --lossy ou -q
+      --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
       --keep               Garde l'original, écrit « nom-compressed.ext » à côté
       --folder             Garde l'original, écrit le résultat dans un dossier « compressed » à côté
       --copy-all           Comme --folder, et y copie aussi les fichiers déjà optimaux

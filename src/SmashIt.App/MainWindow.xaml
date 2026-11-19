@@ -86,6 +86,11 @@
               <Slider Header="{x:Bind app:Strings.PdfQuality}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
                       IsEnabled="{x:Bind ViewModel.PdfLossy, Mode=OneWay}"
                       Value="{x:Bind ViewModel.PdfQuality, Mode=TwoWay}" />
+              <ComboBox Header="{x:Bind app:Strings.PdfResolution}" HorizontalAlignment="Stretch"
+                        IsEnabled="{x:Bind ViewModel.PdfLossy, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.PdfResolutions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedPdfResolution, Mode=TwoWay}"
+                        DisplayMemberPath="Label" />
               <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
                          Text="{x:Bind app:Strings.PdfNote}" />
             </StackPanel>

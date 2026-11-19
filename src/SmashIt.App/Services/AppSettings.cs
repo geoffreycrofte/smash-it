@@ -29,6 +29,8 @@ public sealed class AppSettings
     public bool StripMetadata { get; set; } = true;
     public bool PdfLossy { get; set; }
     public int PdfQuality { get; set; } = 75;
+    /// <summary>Lossy PDFs: images are scaled down to this resolution at most; 0 keeps them as they are.</summary>
+    public int PdfMaxImageDpi { get; set; } = 150;
     public int VideoQuality { get; set; } = 70;
     public VideoCodec VideoCodec { get; set; } = VideoCodec.H264;
     public bool KeepOriginal { get; set; } = true;
