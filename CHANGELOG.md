@@ -11,7 +11,9 @@ How this file works:
 - CHANGELOG.fr.md holds the French translation, section by section, shown when the app is in French.
 -->
 
-## Next version
+## v0.4.1 · November 20, 2026
+
+This version also brings everything from v0.4.0 (presets, lighter phone videos, metadata kept from iPhone photos, 100 % zoom…), whose download wasn't available.
 
 ### Improved
 - **"What's new" in your language.** When Smash It is in French, the notes of each update now show in French too.
