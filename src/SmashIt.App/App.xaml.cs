@@ -36,6 +36,14 @@ public partial class App : Application
         var files = Environment.GetCommandLineArgs().Skip(1).ToArray();
         if (files.Length > 0) _viewModel.AddPaths(files);
 
+        // Later launches (one per file selected in Explorer) land in this window.
+        var dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        SingleInstance.OnLaunchForwarded(paths => dispatcher.TryEnqueue(() =>
+        {
+            if (paths.Length > 0) _viewModel.AddPaths(paths);
+            _window?.BringToFront();
+        }));
+
         if (Splash is { } shown)
         {
             Splash = null;

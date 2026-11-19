@@ -6,6 +6,7 @@ using SmashIt.Core;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
 using SmashIt.Core.IO;
+using SmashIt.Core.Shell;
 
 namespace SmashIt.App.ViewModels;
 
@@ -139,6 +140,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool KeepOriginal { get; set; } = true;
 
+    // Explorer: the registry is the source of truth, not the settings file.
+    private readonly ExplorerContextMenu _contextMenu = ExplorerContextMenu.ForCurrentUser();
+
+    [ObservableProperty]
+    public partial bool ContextMenuEnabled { get; set; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
     [NotifyPropertyChangedFor(nameof(HasFiles))]
@@ -151,14 +158,80 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasFiles => FileCount > 0;
 
+    /// <summary>Properties saved in <see cref="AppSettings"/> when they change.</summary>
+    private static readonly HashSet<string> SavedProperties =
+    [
+        nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
+        nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(VideoQuality),
+        nameof(SelectedVideoCodec), nameof(KeepOriginal),
+    ];
+
+    // Sliders change many times per second: the file is written once they settle.
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer? _saveTimer;
+
     public MainViewModel()
     {
-        SelectedOutputFormat = OutputFormats[0];
-        SelectedEffort = Efforts[1];
-        SelectedVideoCodec = VideoCodecs[0];
-        SelectedLanguage = Languages.First(l => l.Language == AppSettings.Current.Language);
+        var settings = AppSettings.Current;
+        ImageLossy = settings.ImageLossy;
+        ImageQuality = Math.Clamp(settings.ImageQuality, 1, 100);
+        SelectedOutputFormat = OutputFormats.FirstOrDefault(f => f.Format == settings.OutputFormat) ?? OutputFormats[0];
+        SelectedEffort = Efforts.FirstOrDefault(e => e.Effort == settings.Effort) ?? Efforts[1];
+        StripMetadata = settings.StripMetadata;
+        PdfLossy = settings.PdfLossy;
+        PdfQuality = Math.Clamp(settings.PdfQuality, 1, 100);
+        VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
+        SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
+        KeepOriginal = settings.KeepOriginal;
+        SelectedLanguage = Languages.First(l => l.Language == settings.Language);
+
+        // The entry points to a program that is gone (portable folder moved, old install): point it here.
+        if (_contextMenu.RegisteredExecutable is { } registered && !File.Exists(registered)) UpdateContextMenu(true);
+        ContextMenuEnabled = _contextMenu.IsRegistered;
+
+        if (Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread() is { } dispatcher)
+        {
+            _saveTimer = dispatcher.CreateTimer();
+            _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _saveTimer.IsRepeating = false;
+            _saveTimer.Tick += (_, _) => SaveSettings();
+        }
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is { } name && SavedProperties.Contains(name))
+            {
+                if (_saveTimer is null) SaveSettings();
+                else { _saveTimer.Stop(); _saveTimer.Start(); }
+            }
+        };
+
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
         UpdateSummary();
+    }
+
+    private void SaveSettings()
+    {
+        var settings = AppSettings.Current;
+        settings.ImageLossy = ImageLossy;
+        settings.ImageQuality = (int)Math.Round(ImageQuality);
+        settings.OutputFormat = SelectedOutputFormat.Format;
+        settings.Effort = SelectedEffort.Effort;
+        settings.StripMetadata = StripMetadata;
+        settings.PdfLossy = PdfLossy;
+        settings.PdfQuality = (int)Math.Round(PdfQuality);
+        settings.VideoQuality = (int)Math.Round(VideoQuality);
+        settings.VideoCodec = SelectedVideoCodec.Codec;
+        settings.KeepOriginal = KeepOriginal;
+        settings.Save();
+    }
+
+    /// <summary>Writes a pending change right away (the window is closing).</summary>
+    public void FlushSettings()
+    {
+        if (_saveTimer is { IsRunning: true })
+        {
+            _saveTimer.Stop();
+            SaveSettings();
+        }
     }
 
     partial void OnSelectedLanguageChanged(LanguageChoice value)
@@ -167,8 +240,29 @@ public sealed partial class MainViewModel : ObservableObject
         AppSettings.Current.Language = value.Language;
         AppSettings.Current.Save();
         L10n.Use(value.Language);
+        // The menu label follows the language, when the entry is this program's.
+        if (_contextMenu.IsRegisteredFor(Environment.ProcessPath!)) UpdateContextMenu(true);
         UpdateSummary();
         LanguageChanged?.Invoke();
+    }
+
+    partial void OnContextMenuEnabledChanged(bool value)
+    {
+        if (value != _contextMenu.IsRegistered) UpdateContextMenu(value);
+    }
+
+    private void UpdateContextMenu(bool enabled)
+    {
+        try
+        {
+            if (enabled) _contextMenu.Register(Environment.ProcessPath!, Strings.ContextMenuLabel);
+            else _contextMenu.Unregister();
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+        {
+            // Registry locked by a policy: the switch shows what is really there.
+        }
+        ContextMenuEnabled = _contextMenu.IsRegistered;
     }
 
     /// <summary>The settings of the section matching the kind of file (images, PDF, video).</summary>

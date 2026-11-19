@@ -105,6 +105,9 @@ public static class MediaFormatInfo
         [".avi"] = MediaFormat.Avi,
     };
 
+    /// <summary>Every extension Smash It recognizes, with the leading dot.</summary>
+    public static IEnumerable<string> KnownExtensions => ByExtension.Keys;
+
     /// <summary>Guess from the extension only. Use <see cref="FormatDetector"/> for the real content.</summary>
     public static MediaFormat FromExtension(string path) =>
         ByExtension.TryGetValue(Path.GetExtension(path), out var format) ? format : MediaFormat.Unknown;

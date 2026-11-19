@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SmashIt.Core.Compression;
+using SmashIt.Core.Formats;
 
 namespace SmashIt.App.Services;
 
@@ -18,6 +20,18 @@ public sealed class AppSettings
     public static AppSettings Current { get; } = Load();
 
     public AppLanguage Language { get; set; } = AppLanguage.Automatic;
+
+    // Compression settings, so a right-click from Explorer compresses the way the window was last set up.
+    public bool ImageLossy { get; set; }
+    public int ImageQuality { get; set; } = 85;
+    public MediaFormat? OutputFormat { get; set; }
+    public CompressionEffort Effort { get; set; } = CompressionEffort.Balanced;
+    public bool StripMetadata { get; set; } = true;
+    public bool PdfLossy { get; set; }
+    public int PdfQuality { get; set; } = 75;
+    public int VideoQuality { get; set; } = 70;
+    public VideoCodec VideoCodec { get; set; } = VideoCodec.H264;
+    public bool KeepOriginal { get; set; } = true;
 
     private static AppSettings Load()
     {

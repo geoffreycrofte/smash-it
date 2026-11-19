@@ -66,6 +66,12 @@ public static class Strings
 
     // Settings: app
     public static string Language => T("Language", "Langue");
+    public static string Explorer => T("Windows Explorer", "Explorateur Windows");
+    public static string ContextMenuToggle => T("Right-click menu entry", "Entrée dans le menu clic droit");
+    public static string ContextMenuLabel => T("Compress with Smash It", "Compresser avec Smash It");
+    public static string ContextMenuNote => T(
+        "“Compress with Smash It” on images, PDFs, videos and folders, with the settings above. On Windows 11, it's under “Show more options”.",
+        "« Compresser avec Smash It » sur les images, PDF, vidéos et dossiers, avec les réglages ci-dessus. Sous Windows 11, il se trouve dans « Afficher plus d'options ».");
 
     // Settings: about
     public static string About => T("About", "À propos");

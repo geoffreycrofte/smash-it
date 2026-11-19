@@ -18,7 +18,8 @@ Windows 10 (1809) or Windows 11, 64-bit. Nothing else to install: the .NET runti
 ship with the app.
 
 - **[Installer](https://github.com/geoffreycrofte/smash-it/releases/latest/download/SmashIt-Setup-x64.exe)**:
-  installs for your account only (no admin rights) and can add the `smashit` command to the PATH.
+  installs for your account only (no admin rights), adds "Compress with Smash It" to the Explorer right-click
+  menu and can add the `smashit` command to the PATH.
 - **[Portable zip](https://github.com/geoffreycrofte/smash-it/releases/latest/download/SmashIt-win-x64.zip)**:
   unzip anywhere and run `SmashIt.exe`. The command line is `cmd\smashit.cmd`.
 
@@ -54,7 +55,7 @@ The builds are not code-signed yet, so Windows SmartScreen may warn on first lau
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext`; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
-| **Integration** | Drag & drop, `smashit` command line | Explorer right-click menu, custom script engines |
+| **Integration** | Drag & drop, Explorer right-click menu, `smashit` command line; settings remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
 
 ### Lossy PNG
@@ -86,6 +87,14 @@ smaller. Videos need the lossy mode.
 Every compressed image gets a compare button (or double-click its row). Both versions are stacked in one view; drag
 the handle, click anywhere, or use ← → (Shift for finer steps) to move the split. The app keeps a temporary copy of
 each original so the preview still works after the original went to the Recycle Bin.
+
+### Explorer right-click menu
+
+Right-click images, PDFs, videos or folders and pick **Compress with Smash It**: the files open in the Smash It
+window and are compressed with the settings you last used there (the app remembers them between launches). Select
+40 files and they all land in the same window. The installer adds the entry (an option you can untick); with the
+portable zip, or to remove it, use **Settings → Windows Explorer**. On Windows 11 the entry is under
+**Show more options**: the new top-level menu only accepts packaged, code-signed apps.
 
 ### Metadata and originals
 

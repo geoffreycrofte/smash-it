@@ -32,9 +32,24 @@ public sealed partial class MainWindow : Window
         // The preview copies belong to the files in the list: keep them when the window is only rebuilt.
         Closed += (_, _) =>
         {
-            if (!_replaced) PreviewCache.Clean(includeCurrent: true);
+            if (_replaced) return;
+            ViewModel.FlushSettings();
+            PreviewCache.Clean(includeCurrent: true);
         };
     }
+
+    /// <summary>Shows the window on top, restored if it was minimized (files arrived from Explorer).</summary>
+    public void BringToFront()
+    {
+        if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter { State: Microsoft.UI.Windowing.OverlappedPresenterState.Minimized } presenter)
+            presenter.Restore();
+        Activate();
+        SetForegroundWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+    }
+
+    [System.Runtime.InteropServices.LibraryImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static partial bool SetForegroundWindow(nint window);
 
     /// <summary>Closes this window after a new one took its place (language change).</summary>
     public void CloseForReplacement()

@@ -49,9 +49,14 @@ en.AddToPath=Add the "smashit" command to the PATH
 fr.AddToPath=Ajouter la commande « smashit » au PATH
 en.CommandLine=Command line:
 fr.CommandLine=Ligne de commande :
+en.ContextMenu=Add "Compress with Smash It" to the Explorer right-click menu
+fr.ContextMenu=Ajouter « Compresser avec Smash It » au menu clic droit de l'Explorateur
+en.Integration=Windows Explorer:
+fr.Integration=Explorateur Windows :
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "contextmenu"; Description: "{cm:ContextMenu}"; GroupDescription: "{cm:Integration}"
 Name: "addtopath"; Description: "{cm:AddToPath}"; GroupDescription: "{cm:CommandLine}"; Flags: unchecked
 
 [InstallDelete]
@@ -66,7 +71,12 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
+; Registers for the user who started setup, even when it runs elevated for all users.
+Filename: "{app}\{#AppExe}"; Parameters: "--register-context-menu"; Tasks: contextmenu; Flags: runhidden waituntilterminated runasoriginaluser
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallRun]
+Filename: "{app}\{#AppExe}"; Parameters: "--unregister-context-menu"; RunOnceId: "UnregisterContextMenu"; Flags: runhidden waituntilterminated
 
 [Code]
 const
