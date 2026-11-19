@@ -4,7 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>$(SmashItTargetFramework)</TargetFramework>
     <RootNamespace>SmashIt.Cli</RootNamespace>
-    <AssemblyName>smashit</AssemblyName>
+    <!-- Not "smashit": it would overwrite the app's SmashIt.exe once both share one folder (file names are
+         case-insensitive). Releases ship a cmd\smashit.cmd shim so the command stays `smashit`. -->
+    <AssemblyName>SmashIt.Cli</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
