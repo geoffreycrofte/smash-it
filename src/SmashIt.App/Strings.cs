@@ -43,6 +43,9 @@ public static class Strings
         "Removes EXIF (camera, date, GPS…), XMP, IPTC and comments. The color profile and orientation are always kept.",
         "Retire EXIF (appareil, date, GPS…), XMP, IPTC et commentaires. Le profil couleur et l'orientation sont toujours conservés.");
 
+    // Settings: preset
+    public static string Preset => T("Preset", "Préréglage");
+
     // Settings: PDF
     public static string Pdf => "PDF";
     public static string PdfImages => T("Document images", "Images du document");

@@ -50,6 +50,20 @@
           <StackPanel Spacing="16" Padding="4,0,0,16">
             <TextBlock Text="{x:Bind app:Strings.Settings}" Style="{StaticResource SubtitleTextBlockStyle}" />
 
+            <!-- Preset: one choice for every kind of file; touching a setting below turns it into "Custom". -->
+            <StackPanel Style="{StaticResource SectionCardStyle}">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE71D;" FontSize="16" />
+                <TextBlock Text="{x:Bind app:Strings.Preset}" Style="{StaticResource SectionHeaderStyle}" />
+              </StackPanel>
+              <ComboBox HorizontalAlignment="Stretch" AutomationProperties.Name="{x:Bind app:Strings.Preset}"
+                        ItemsSource="{x:Bind ViewModel.Presets}"
+                        SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}"
+                        DisplayMemberPath="Label" />
+              <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                         Text="{x:Bind ViewModel.SelectedPreset.Description, Mode=OneWay}" />
+            </StackPanel>
+
             <StackPanel Style="{StaticResource SectionCardStyle}">
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <FontIcon Glyph="&#xEB9F;" FontSize="16" />
@@ -332,6 +346,7 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <!-- Empty list: the credit (the drop hint is already in the middle); otherwise the summary, with a spinner
            while files are being compressed. -->
@@ -357,26 +372,33 @@
         <Run Text="{x:Bind app:Strings.CreditPrefix}" /><Hyperlink NavigateUri="https://geoffreycrofte.com/project/smash-it" UnderlineStyle="None"
                    ToolTipService.ToolTip="geoffreycrofte.com/project/smash-it"><Run Text="Crofte Studio" /></Hyperlink>
       </TextBlock>
+      <!-- The preset, at hand without opening Settings. -->
+      <ComboBox Grid.Column="1" MinWidth="210" VerticalAlignment="Center"
+                ItemsSource="{x:Bind ViewModel.Presets}"
+                SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}"
+                DisplayMemberPath="Label"
+                AutomationProperties.Name="{x:Bind app:Strings.Preset}"
+                ToolTipService.ToolTip="{x:Bind ViewModel.SelectedPreset.Description, Mode=OneWay}" />
       <!-- Icon-only buttons stretch to the height of the labelled ones. -->
-      <ToggleButton Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Stretch"
+      <ToggleButton Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Stretch"
                     IsChecked="{x:Bind ViewModel.IsSettingsOpen, Mode=TwoWay}"
                     ToolTipService.ToolTip="{x:Bind app:Strings.Settings}"
                     AutomationProperties.Name="{x:Bind app:Strings.Settings}">
         <FontIcon Glyph="&#xE713;" FontSize="14" />
       </ToggleButton>
-      <Button Grid.Column="2" Click="OnAddFilesClick" AutomationProperties.Name="{x:Bind app:Strings.Add}">
+      <Button Grid.Column="3" Click="OnAddFilesClick" AutomationProperties.Name="{x:Bind app:Strings.Add}">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <FontIcon Glyph="&#xE710;" FontSize="14" />
           <TextBlock Text="{x:Bind app:Strings.Add}" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="3" Command="{x:Bind ViewModel.ReprocessCommand}" ToolTipService.ToolTip="{x:Bind app:Strings.RecompressTip}">
+      <Button Grid.Column="4" Command="{x:Bind ViewModel.ReprocessCommand}" ToolTipService.ToolTip="{x:Bind app:Strings.RecompressTip}">
         <StackPanel Orientation="Horizontal" Spacing="8">
           <FontIcon Glyph="&#xE72C;" FontSize="14" />
           <TextBlock Text="{x:Bind app:Strings.Recompress}" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="4" Command="{x:Bind ViewModel.ClearCommand}" VerticalAlignment="Stretch"
+      <Button Grid.Column="5" Command="{x:Bind ViewModel.ClearCommand}" VerticalAlignment="Stretch"
               ToolTipService.ToolTip="{x:Bind app:Strings.Clear}" AutomationProperties.Name="{x:Bind app:Strings.Clear}">
         <FontIcon Glyph="&#xE74D;" FontSize="14" />
       </Button>

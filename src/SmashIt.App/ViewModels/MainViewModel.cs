@@ -40,6 +40,40 @@ public sealed record VideoCodecChoice(VideoCodec Codec)
     public override string ToString() => Label;
 }
 
+/// <summary>A preset, or <c>null</c> for "Custom" (settings that match no preset).</summary>
+public sealed record PresetChoice(PresetId? Id)
+{
+    public string Label => Id switch
+    {
+        PresetId.Lossless => L10n.T("Best quality (lossless)", "Qualité maximale (sans perte)"),
+        PresetId.Web => L10n.T("Web", "Web"),
+        PresetId.Email => L10n.T("Email (lightest)", "E-mail (le plus léger)"),
+        PresetId.Archive => L10n.T("Archive (lossless, metadata kept)", "Archive (sans perte, métadonnées gardées)"),
+        _ => L10n.T("Custom", "Personnalisé"),
+    };
+
+    public string Description => Id switch
+    {
+        PresetId.Lossless => L10n.T(
+            "Files get smaller without any visible change. Metadata (camera, GPS…) is removed.",
+            "Les fichiers s'allègent sans aucun changement visible. Les métadonnées (appareil, GPS…) sont retirées."),
+        PresetId.Web => L10n.T(
+            "Much lighter images, PDFs and videos for websites, with a quality that stays sharp on screen.",
+            "Images, PDF et vidéos bien plus légers pour un site web, avec une qualité qui reste nette à l'écran."),
+        PresetId.Email => L10n.T(
+            "The smallest files, to send by email or message. Quality stays good for viewing on screen.",
+            "Les fichiers les plus petits, à envoyer par e-mail ou message. La qualité reste bonne à l'écran."),
+        PresetId.Archive => L10n.T(
+            "Nothing is lost: same quality and every piece of metadata kept, only the storage is optimized.",
+            "Rien n'est perdu : même qualité et toutes les métadonnées gardées, seul le stockage est optimisé."),
+        _ => L10n.T(
+            "Your own settings, below.",
+            "Vos propres réglages, ci-dessous."),
+    };
+
+    public override string ToString() => Label;
+}
+
 /// <summary>A PDF image resolution cap, in pixels per inch; 0 keeps every image as it is.</summary>
 public sealed record PdfResolutionChoice(int Dpi)
 {
@@ -123,6 +157,57 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool IsSettingsOpen { get; set; }
+
+    // Preset: follows the settings below ("Custom" when they match none), and sets them when chosen.
+    public IReadOnlyList<PresetChoice> Presets { get; } =
+        [new(PresetId.Lossless), new(PresetId.Web), new(PresetId.Email), new(PresetId.Archive), new(null)];
+
+    [ObservableProperty]
+    public partial PresetChoice SelectedPreset { get; set; }
+
+    /// <summary>The settings a preset covers: a change to one of them may change the preset shown.</summary>
+    private static readonly HashSet<string> PresetProperties =
+    [
+        nameof(ImageLossy), nameof(ImageQuality), nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality),
+        nameof(SelectedPdfResolution), nameof(VideoQuality),
+    ];
+
+    private bool _applyingPreset;
+
+    partial void OnSelectedPresetChanged(PresetChoice value)
+    {
+        if (_applyingPreset || value?.Id is not { } id) return;
+        var preset = CompressionPresets.All[id];
+        _applyingPreset = true;
+        try
+        {
+            ImageLossy = preset.ImageLossy;
+            ImageQuality = preset.ImageQuality;
+            StripMetadata = preset.StripMetadata;
+            PdfLossy = preset.PdfLossy;
+            PdfQuality = preset.PdfQuality;
+            SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == preset.PdfMaxImageDpi) ?? SelectedPdfResolution;
+            VideoQuality = preset.VideoQuality;
+        }
+        finally
+        {
+            _applyingPreset = false;
+        }
+    }
+
+    /// <summary>Shows the preset the current settings amount to, without applying anything.</summary>
+    private void UpdateSelectedPreset()
+    {
+        if (_applyingPreset || SelectedPdfResolution is null) return;
+        var id = CompressionPresets.Match(new PresetSettings(
+            ImageLossy, (int)Math.Round(ImageQuality), StripMetadata, PdfLossy, (int)Math.Round(PdfQuality),
+            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality)));
+        var choice = Presets.First(p => p.Id == id);
+        if (choice == SelectedPreset) return;
+        _applyingPreset = true;
+        try { SelectedPreset = choice; }
+        finally { _applyingPreset = false; }
+    }
 
     // Images
     [ObservableProperty]
@@ -245,8 +330,10 @@ public sealed partial class MainViewModel : ObservableObject
             _saveTimer.IsRepeating = false;
             _saveTimer.Tick += (_, _) => SaveSettings();
         }
+        UpdateSelectedPreset();
         PropertyChanged += (_, e) =>
         {
+            if (e.PropertyName is { } changed && PresetProperties.Contains(changed)) UpdateSelectedPreset();
             if (e.PropertyName is { } name && SavedProperties.Contains(name))
             {
                 if (_saveTimer is null) SaveSettings();

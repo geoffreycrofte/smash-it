@@ -66,6 +66,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split | Zoom to 100 % |
+| **Presets** | Best quality (lossless, the default), Web, Email (lightest) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
 | **Integration** | Drag & drop, Explorer right-click menu, `smashit` command line; settings remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
 
