@@ -79,6 +79,33 @@ public class VideoCompressorTests
         Assert.NotEmpty(reported);
     }
 
+    [Theory]
+    [InlineData(3840u, 2160u, 1080, 1920u, 1080u)]   // 4K → 1080p
+    [InlineData(2160u, 3840u, 1080, 1080u, 1920u)]   // portrait phone frame: same rule on the short side
+    [InlineData(1920u, 1080u, 720, 1280u, 720u)]
+    [InlineData(1280u, 720u, 1080, 1280u, 720u)]     // already smaller: never scaled up
+    [InlineData(1920u, 1080u, 0, 1920u, 1080u)]      // 0: keep
+    [InlineData(1918u, 1081u, 720, 1276u, 720u)]     // odd sizes come out even (1277.5 → 1277 → 1276)
+    public void The_short_side_is_brought_down_to_the_limit(uint w, uint h, int max, uint expectedW, uint expectedH) =>
+        Assert.Equal((expectedW, expectedH), VideoCompressor.OutputSize(w, h, max));
+
+    [Fact]
+    public async Task A_video_above_the_limit_is_scaled_down_and_gets_smaller()
+    {
+        using var dir = new TempDirectory();
+        var video = await TestVideo.WriteAsync(dir.File("clip.mp4"), width: 1280, height: 720, bitrate: 8_000_000);
+        var full = dir.File("full.mp4");
+        var limited = dir.File("limited.mp4");
+        var compressor = new VideoCompressor();
+
+        await compressor.CompressAsync(new CompressionJob(video, MediaFormat.Mp4, full, MediaFormat.Mp4, Lossy), Ct);
+        await compressor.CompressAsync(new CompressionJob(video, MediaFormat.Mp4, limited, MediaFormat.Mp4, Lossy with { VideoMaxShortSide = 360 }), Ct);
+
+        var properties = await TestVideo.PropertiesAsync(limited);
+        Assert.Equal((640u, 360u), (properties.Width, properties.Height));
+        Assert.True(new FileInfo(limited).Length < new FileInfo(full).Length);
+    }
+
     [Fact]
     public async Task Hevc_output_is_smaller_than_h264()
     {

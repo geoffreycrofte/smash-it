@@ -12,8 +12,10 @@ namespace SmashIt.Core.Compressors;
 /// </summary>
 /// <remarks>
 /// The video bitrate comes from the quality setting, the resolution and the frame rate, and never exceeds
-/// the source bitrate. Resolution and frame rate are kept. Rotated videos (phones) come out upright:
-/// the transcoder applies the rotation flag to the pixels.
+/// the source bitrate. The frame rate is kept; the resolution too, unless
+/// <see cref="CompressionOptions.VideoMaxShortSide"/> brings it down (a 4K phone video to 1080p, say), which
+/// lowers the bitrate with it. Rotated videos (phones) come out upright: the transcoder applies the rotation
+/// flag to the pixels.
 /// </remarks>
 public sealed class VideoCompressor : ICompressor
 {
@@ -49,8 +51,8 @@ public sealed class VideoCompressor : ICompressor
 
         // Media Foundation applies the source rotation itself (portrait phone videos come out upright, with no
         // rotation flag). The profile must therefore describe the frame as stored, before rotation.
-        var width = Even(sourceVideo.Width);
-        var height = Even(sourceVideo.Height);
+        // Scaling the short side works the same for landscape and portrait frames.
+        var (width, height) = OutputSize(sourceVideo.Width, sourceVideo.Height, job.Options.VideoMaxShortSide);
 
         var frameRate = sourceVideo.FrameRate.Denominator > 0 && sourceVideo.FrameRate.Numerator > 0
             ? (sourceVideo.FrameRate.Numerator, sourceVideo.FrameRate.Denominator)
@@ -109,6 +111,18 @@ public sealed class VideoCompressor : ICompressor
     }
 
     private static uint Even(uint value) => Math.Max(2, value & ~1u);
+
+    /// <summary>
+    /// The encoded frame size: the source size, or scaled down so that its short side is
+    /// <paramref name="maxShortSide"/> (never up), with the same proportions. Encoders need even sizes.
+    /// </summary>
+    public static (uint Width, uint Height) OutputSize(uint width, uint height, int maxShortSide)
+    {
+        var shortSide = Math.Min(width, height);
+        if (maxShortSide <= 0 || shortSide <= maxShortSide) return (Even(width), Even(height));
+        var scale = (double)maxShortSide / shortSide;
+        return (Even((uint)Math.Round(width * scale)), Even((uint)Math.Round(height * scale)));
+    }
 
     /// <summary>
     /// The source video bitrate: from the stream, else the container, else file size ÷ duration

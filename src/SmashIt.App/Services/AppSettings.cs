@@ -32,6 +32,8 @@ public sealed class AppSettings
     /// <summary>Lossy PDFs: images are scaled down to this resolution at most; 0 keeps them as they are.</summary>
     public int PdfMaxImageDpi { get; set; } = 150;
     public int VideoQuality { get; set; } = 70;
+    /// <summary>Short side of the picture, in pixels, videos are scaled down to; 0 keeps the resolution.</summary>
+    public int VideoMaxShortSide { get; set; }
     public VideoCodec VideoCodec { get; set; } = VideoCodec.H264;
     public bool KeepOriginal { get; set; } = true;
     public bool SaveInCompressedFolder { get; set; }

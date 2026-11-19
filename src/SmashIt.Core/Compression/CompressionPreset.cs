@@ -23,7 +23,8 @@ public sealed record PresetSettings(
     bool PdfLossy,
     int PdfQuality,
     int PdfMaxImageDpi,
-    int VideoQuality);
+    int VideoQuality,
+    int VideoMaxShortSide = 0);
 
 /// <summary>Ready-made settings: one choice instead of a setting per kind of file.</summary>
 public static class CompressionPresets
@@ -32,10 +33,11 @@ public static class CompressionPresets
     {
         [PresetId.Lossless] = new(ImageLossy: false, ImageQuality: 85, StripMetadata: true,
             PdfLossy: false, PdfQuality: 75, PdfMaxImageDpi: 150, VideoQuality: 70),
+        // Web: 1080p is plenty for a page. Email: 720p keeps a phone video small enough to send.
         [PresetId.Web] = new(ImageLossy: true, ImageQuality: 80, StripMetadata: true,
-            PdfLossy: true, PdfQuality: 75, PdfMaxImageDpi: 150, VideoQuality: 65),
+            PdfLossy: true, PdfQuality: 75, PdfMaxImageDpi: 150, VideoQuality: 65, VideoMaxShortSide: 1080),
         [PresetId.Email] = new(ImageLossy: true, ImageQuality: 70, StripMetadata: true,
-            PdfLossy: true, PdfQuality: 60, PdfMaxImageDpi: 150, VideoQuality: 55),
+            PdfLossy: true, PdfQuality: 60, PdfMaxImageDpi: 150, VideoQuality: 55, VideoMaxShortSide: 720),
         [PresetId.Archive] = new(ImageLossy: false, ImageQuality: 90, StripMetadata: false,
             PdfLossy: false, PdfQuality: 90, PdfMaxImageDpi: 300, VideoQuality: 80),
     };
@@ -53,5 +55,6 @@ public static class CompressionPresets
         preset.StripMetadata == current.StripMetadata &&
         preset.PdfLossy == current.PdfLossy &&
         (!preset.PdfLossy || (preset.PdfQuality == current.PdfQuality && preset.PdfMaxImageDpi == current.PdfMaxImageDpi)) &&
-        preset.VideoQuality == current.VideoQuality;
+        preset.VideoQuality == current.VideoQuality &&
+        preset.VideoMaxShortSide == current.VideoMaxShortSide;
 }
