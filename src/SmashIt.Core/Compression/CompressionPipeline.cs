@@ -117,6 +117,22 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
                     }
                 }
             }
+            else if (!options.StripMetadata && MetadataTransfer.CanWrite(outputFormat) &&
+                     MetadataTransfer.ReadDescriptive(path, inputFormat) is { } descriptive)
+            {
+                // HEIC/AVIF/WebP → JPEG/PNG: Windows decoded the pixels upright and in sRGB; EXIF (date, camera,
+                // GPS…) and XMP follow, with the orientation reset.
+                try
+                {
+                    MetadataTransfer.Write(bestPath, outputFormat,
+                        MetadataTransfer.Select(descriptive, options, orientationBaked: true, outputFormat));
+                    bestSize = new FileInfo(bestPath).Length;
+                }
+                catch (InvalidDataException)
+                {
+                    notes.Add(L10n.T("The metadata could not be written.", "Les métadonnées n'ont pas pu être écrites."));
+                }
+            }
             else if (!options.StripMetadata && !MetadataTransfer.CanPreserve(inputFormat, outputFormat))
             {
                 notes.Add(L10n.T(

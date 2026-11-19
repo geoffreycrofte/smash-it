@@ -30,7 +30,28 @@ public static class MetadataTransfer
     /// </summary>
     public static bool CanPreserve(MediaFormat input, MediaFormat output) =>
         (input == output && input is MediaFormat.Pdf or MediaFormat.Gif or MediaFormat.Svg) ||
-        (CanRead(input) && (CanWrite(output) || output is MediaFormat.WebP or MediaFormat.Avif));
+        ((CanRead(input) || ContainerMetadataIO.CanRead(input)) &&
+         (CanWrite(output) || output is MediaFormat.WebP or MediaFormat.Avif));
+
+    /// <summary>
+    /// EXIF and XMP of a WebP, HEIC or AVIF file, for a result whose pixels Windows already turned upright and
+    /// converted to sRGB: the orientation is reset to 1 and the color profile left out (it no longer applies).
+    /// <c>null</c> for other formats, or when there is nothing to carry over.
+    /// </summary>
+    public static ImageMetadata? ReadDescriptive(string path, MediaFormat format)
+    {
+        if (!ContainerMetadataIO.CanRead(format)) return null;
+        try
+        {
+            var metadata = ContainerMetadataIO.Read(File.ReadAllBytes(path), format);
+            if (metadata is null || (metadata.Exif is null && metadata.Xmp is null)) return null;
+            return metadata with { Icc = null };
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// When converting, pixels are physically rotated and the orientation tag reset to 1, because not every
