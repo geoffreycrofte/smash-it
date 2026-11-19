@@ -47,9 +47,10 @@ public static class Strings
     public static string Pdf => "PDF";
     public static string PdfImages => T("Document images", "Images du document");
     public static string PdfQuality => T("Image quality", "Qualité des images");
+    public static string PdfResolution => T("Maximum image resolution", "Résolution maximale des images");
     public static string PdfNote => T(
-        "Text, fonts, links and forms are never changed. Signed or encrypted PDFs are skipped.",
-        "Texte, polices, liens et formulaires ne sont jamais modifiés. Les PDF signés ou chiffrés sont ignorés.");
+        "Text, fonts, links and forms are never changed. Lossy, images much finer than their size on the page are scaled down: 150 dpi is plenty for a screen, 300 dpi for print. Signed or encrypted PDFs are skipped.",
+        "Texte, polices, liens et formulaires ne sont jamais modifiés. Avec pertes, les images bien plus fines que leur taille sur la page sont réduites : 150 ppp suffisent à l'écran, 300 ppp à l'impression. Les PDF signés ou chiffrés sont ignorés.");
 
     // Settings: video
     public static string Video => T("Video", "Vidéo");

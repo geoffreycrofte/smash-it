@@ -40,6 +40,19 @@ public sealed record VideoCodecChoice(VideoCodec Codec)
     public override string ToString() => Label;
 }
 
+/// <summary>A PDF image resolution cap, in pixels per inch; 0 keeps every image as it is.</summary>
+public sealed record PdfResolutionChoice(int Dpi)
+{
+    public string Label => Dpi switch
+    {
+        0 => L10n.T("Keep the resolution", "Conserver la résolution"),
+        >= 300 => L10n.T($"{Dpi} dpi (print)", $"{Dpi} ppp (impression)"),
+        _ => L10n.T($"{Dpi} dpi (screen)", $"{Dpi} ppp (écran)"),
+    };
+
+    public override string ToString() => Label;
+}
+
 /// <summary>The answer to "where do the compressed files go?".</summary>
 public sealed record OutputLocationAnswer(bool InCompressedFolder, bool CopyAlreadyOptimal, bool DontAskAgain);
 
@@ -134,6 +147,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial double PdfQuality { get; set; } = 75;
 
+    public IReadOnlyList<PdfResolutionChoice> PdfResolutions { get; } = [new(0), new(300), new(150)];
+
+    /// <summary>Lossy only: images far finer than their size on the page are scaled down to this.</summary>
+    [ObservableProperty]
+    public partial PdfResolutionChoice SelectedPdfResolution { get; set; }
+
     // Video (always lossy)
     [ObservableProperty]
     public partial double VideoQuality { get; set; } = 70;
@@ -187,7 +206,7 @@ public sealed partial class MainViewModel : ObservableObject
     private static readonly HashSet<string> SavedProperties =
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
-        nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(VideoQuality),
+        nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
         nameof(SelectedVideoCodec), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
         nameof(AskOutputLocation),
     ];
@@ -206,6 +225,7 @@ public sealed partial class MainViewModel : ObservableObject
         StripMetadata = settings.StripMetadata;
         PdfLossy = settings.PdfLossy;
         PdfQuality = Math.Clamp(settings.PdfQuality, 1, 100);
+        SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == settings.PdfMaxImageDpi) ?? PdfResolutions[^1];
         VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
         SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
         KeepOriginal = settings.KeepOriginal;
@@ -248,6 +268,7 @@ public sealed partial class MainViewModel : ObservableObject
         settings.StripMetadata = StripMetadata;
         settings.PdfLossy = PdfLossy;
         settings.PdfQuality = (int)Math.Round(PdfQuality);
+        settings.PdfMaxImageDpi = SelectedPdfResolution.Dpi;
         settings.VideoQuality = (int)Math.Round(VideoQuality);
         settings.VideoCodec = SelectedVideoCodec.Codec;
         settings.KeepOriginal = KeepOriginal;
@@ -313,6 +334,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Mode = PdfLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
                 Quality = (int)Math.Round(PdfQuality),
+                PdfMaxImageDpi = SelectedPdfResolution.Dpi,
             },
             MediaKind.Video => common with
             {

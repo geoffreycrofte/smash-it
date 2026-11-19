@@ -60,7 +60,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding | |
 | **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4 | ffmpeg for fine tuning (CRF, AV1, VP9) |
-| **PDF** | Images recompressed in place (qpdf + jpegtran), object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | Image downsampling (DPI cap) |
+| **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings, presets |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them (JPEG, PNG, WebP, AVIF outputs) | Other formats |
@@ -102,6 +102,13 @@ writes the new image data back under the same object numbers. In lossy mode, qpd
 at the chosen quality, keeping each one only when it gets smaller. The result must pass `qpdf --check` and keep the
 same number of pages, or the original is left alone. Signed PDFs (any change would invalidate the signature) and
 encrypted PDFs are skipped.
+
+In lossy mode, images much finer than their size on the page are also scaled down, to 150 dpi by default (plenty
+for a screen) or 300 dpi (print), set under **Maximum image resolution**. A scan at 600 dpi typically shrinks by
+80 to 95 %. Smash It reads the page contents to know at what size each image is actually drawn, forms included,
+and only touches an image that is more than 1.5 times finer than the target (Ghostscript's rule). Only plain
+grayscale or RGB JPEG images are resampled; CMYK, masked or indexed images, and images not drawn on a page, stay
+as they are. On the command line: `--pdf-dpi 300`, or `--pdf-dpi 0` to keep every image's resolution.
 
 ### Videos
 
