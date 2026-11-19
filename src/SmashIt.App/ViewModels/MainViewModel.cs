@@ -141,12 +141,15 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
+    [NotifyPropertyChangedFor(nameof(HasFiles))]
     public partial int FileCount { get; set; }
 
     [ObservableProperty]
     public partial string Summary { get; set; } = string.Empty;
 
     public bool IsEmpty => FileCount == 0;
+
+    public bool HasFiles => FileCount > 0;
 
     public MainViewModel()
     {
@@ -290,9 +293,8 @@ public sealed partial class MainViewModel : ObservableObject
         var results = Files.Select(f => f.Result).OfType<CompressionResult>().ToList();
         if (Files.Count == 0)
         {
-            Summary = L10n.T(
-                "Drop images, PDFs or videos here to compress them.",
-                "Déposez des images, des PDF ou des vidéos ici pour les compresser.");
+            // The footer shows the credit instead: the drop hint is already in the middle of the window.
+            Summary = string.Empty;
             return;
         }
 

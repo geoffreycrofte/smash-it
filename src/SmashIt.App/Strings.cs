@@ -67,6 +67,20 @@ public static class Strings
     // Settings: app
     public static string Language => T("Language", "Langue");
 
+    // Settings: about
+    public static string About => T("About", "À propos");
+    public static string AppNameAndVersion
+    {
+        get
+        {
+            var version = typeof(Strings).Assembly.GetName().Version;
+            return version is null ? "Smash It" : $"Smash It {version.Major}.{version.Minor}.{version.Build}";
+        }
+    }
+    public static string FreeSoftware => T("Free software under the GPL-3.0 license. ", "Logiciel libre sous licence GPL-3.0. ");
+    public static string SourceCode => T("Source code", "Code source");
+    public static string OpenSourceProjects => T("Built with these open source projects", "Conçue avec ces projets open source");
+
     // Preview window
     public static string PreviewTitle => T("Before / after", "Avant / après");
     public static string Before => T("Before", "Avant");
