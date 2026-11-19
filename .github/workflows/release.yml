@@ -80,7 +80,17 @@ jobs:
           else {
             $extra = @()
             if ('${{ steps.version.outputs.value }}' -match '-') { $extra += '--prerelease' }
+            # The release text is the version's section of CHANGELOG.md, the same one the app shows.
+            $notes = ./tools/changelog-section.ps1 -Version '${{ steps.version.outputs.value }}'
+            if ($notes) {
+              $notes | Set-Content release-notes.md -Encoding utf8
+              $extra += '--notes-file', 'release-notes.md'
+            }
+            else {
+              Write-Warning "CHANGELOG.md has no '## v${{ steps.version.outputs.value }}' section: the notes list the pull requests instead."
+              $extra += '--generate-notes'
+            }
             gh release create $env:GITHUB_REF_NAME @files `
-              --draft --generate-notes --title "Smash It ${{ steps.version.outputs.value }}" @extra
+              --draft --title "Smash It ${{ steps.version.outputs.value }}" @extra
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
