@@ -16,6 +16,10 @@ How this file works:
 - **Presets.** Pick "Web", "Email" or "Archive" and every setting follows, for images, PDFs and videos alike. The list sits at the bottom of the window, next to the Settings button. Change any setting and the preset becomes "Custom".
 - **Zoom to 100 % in the before/after view.** Press "100 %" (or Z) to see every pixel and judge a lossy compression up close. Press it again to see the whole image.
 
+### Improved
+- **Better with a screen reader.** Each file in the list is read as one sentence ("photo.jpg, 2.3 MB → 1.1 MB, −52 %"), every button has a name, and settings that looked alike now have names that tell them apart.
+- **Enter opens the before/after view** of the selected file, like a double-click.
+
 ## v0.3.0 · November 19, 2026
 
 ### New

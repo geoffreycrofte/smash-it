@@ -118,6 +118,14 @@ public sealed partial class FileItem(string path) : ObservableObject
         _ => Result.Message,
     };
 
+    /// <summary>
+    /// What a screen reader says for the row (the list reads the item's text): "photo.jpg, 2.3 MB → 1.1 MB, −52 %",
+    /// or "photo.jpg, Waiting" while nothing is done yet. Without it, the class name was read.
+    /// </summary>
+    public override string ToString() => Result?.Status is CompressionStatus.Optimized or CompressionStatus.Converted
+        ? $"{Name}, {OriginalSizeText} → {FinalSizeText}, {GainText}"
+        : $"{Name}, {GainText}";
+
     private static long SafeLength(string path)
     {
         try { return new FileInfo(path).Length; }

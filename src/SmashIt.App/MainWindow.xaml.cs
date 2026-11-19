@@ -78,6 +78,20 @@ public sealed partial class MainWindow : Window
         if ((e.OriginalSource as FrameworkElement)?.DataContext is FileItem item) OpenPreview(item);
     }
 
+    /// <summary>Enter on a row opens its before/after view, like a double-click (seen before the list, which keeps Enter).</summary>
+    private void OnFileListKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Enter || sender is not ListView list) return;
+        // The key comes from the focused row (or something inside it): find its container, then its file.
+        var element = e.OriginalSource as DependencyObject;
+        while (element is not null and not ListViewItem) element = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(element);
+        if ((element is ListViewItem row ? list.ItemFromContainer(row) : list.SelectedItem) is FileItem { CanPreview: true } item)
+        {
+            OpenPreview(item);
+            e.Handled = true;
+        }
+    }
+
     private static void OpenPreview(FileItem item)
     {
         if (!item.CanPreview) return;

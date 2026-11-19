@@ -43,6 +43,14 @@ public static class Strings
         "Removes EXIF (camera, date, GPS…), XMP, IPTC and comments. The color profile and orientation are always kept.",
         "Retire EXIF (appareil, date, GPS…), XMP, IPTC et commentaires. Le profil couleur et l'orientation sont toujours conservés.");
 
+    // Names read by screen readers where the visible label alone is ambiguous.
+    public static string ImageQualityName => T("Image quality", "Qualité des images");
+    public static string PdfQualityName => T("PDF image quality", "Qualité des images des PDF");
+    public static string VideoQualityName => T("Video quality", "Qualité des vidéos");
+    public static string FileList => T("Files", "Fichiers");
+    public static string BeforeImageName => T("Original image", "Image d'origine");
+    public static string AfterImageName => T("Compressed image", "Image compressée");
+
     // Settings: preset
     public static string Preset => T("Preset", "Préréglage");
 
