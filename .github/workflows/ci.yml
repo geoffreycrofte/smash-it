@@ -1,0 +1,36 @@
+name: CI
+
+# Builds and tests every pull request and every push to main, on the same Windows runner the Release workflow
+# uses: a test that only passes on a developer's machine (codecs from the Store, tools in tools\bin) shows up here
+# instead of failing the release after the tag. Warnings are errors.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Fetch bundled tools
+        shell: pwsh
+        run: ./tools/fetch-tools.ps1
+
+      - name: Build
+        run: dotnet build SmashIt.slnx -c Release -warnaserror
+
+      - name: Test
+        run: dotnet test --solution SmashIt.slnx -c Release --no-build

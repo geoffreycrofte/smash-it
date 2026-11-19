@@ -14,6 +14,22 @@ public class ContainerMetadataTests
     // "Make" = "ABC" lets us check the EXIF that arrives is the one we wrote, not a minimal one.
     private static readonly byte[] Exif = TestImages.Exif(1);
 
+    /// <summary>
+    /// Skips the test when Windows can't decode this file: WebP and AVIF need Store extensions (WebP Image
+    /// Extension, AV1 Video Extension) that some machines, GitHub's Windows Server runners among them, don't have.
+    /// </summary>
+    private static async Task RequireWindowsDecoder(string path)
+    {
+        try
+        {
+            await TestImages.SizeAsync(path);
+        }
+        catch (Exception)
+        {
+            Assert.Skip($"Windows can't decode {Path.GetExtension(path)} here (Store image extension missing).");
+        }
+    }
+
     private static string Tool(string name) =>
         ExternalTool.Find(name) ?? throw Xunit.Sdk.SkipException.ForSkip($"{name} absent : lancez tools\\fetch-tools.ps1.");
 
@@ -69,6 +85,7 @@ public class ContainerMetadataTests
         }, Ct);
         var plain = await File.ReadAllBytesAsync(result.OutputPath!, Ct);
 
+        await RequireWindowsDecoder(result.OutputPath!);
         var withMetadata = ContainerMetadataIO.WriteWebP(plain, Exif, TestImages.Xmp);
         await File.WriteAllBytesAsync(dir.File("with.webp"), withMetadata, Ct);
 
@@ -122,6 +139,7 @@ public class ContainerMetadataTests
     {
         using var dir = new TempDirectory();
         var webp = await WebPWithMetadataAsync(dir);
+        await RequireWindowsDecoder(webp);
 
         var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(webp, KeepMetadata with
         {
@@ -140,6 +158,7 @@ public class ContainerMetadataTests
     {
         using var dir = new TempDirectory();
         var webp = await WebPWithMetadataAsync(dir);
+        await RequireWindowsDecoder(webp);
 
         var result = await new CompressionPipeline([new CwebpCompressor()]).ProcessAsync(webp, KeepMetadata with
         {
@@ -159,6 +178,7 @@ public class ContainerMetadataTests
     {
         using var dir = new TempDirectory();
         var webp = await WebPWithMetadataAsync(dir);
+        await RequireWindowsDecoder(webp);
 
         var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(webp, KeepMetadata with
         {
@@ -175,6 +195,7 @@ public class ContainerMetadataTests
         Tool("avifenc.exe");
         using var dir = new TempDirectory();
         var webp = await WebPWithMetadataAsync(dir);
+        await RequireWindowsDecoder(webp);
         var png = dir.File("source.png"); // made along with the WebP
         var options = KeepMetadata with { Mode = CompressionMode.Lossy, Quality = 60, TargetFormat = MediaFormat.Avif };
 
@@ -195,14 +216,7 @@ public class ContainerMetadataTests
     {
         using var dir = new TempDirectory();
         var avif = await AvifWithMetadataAsync(dir);
-        try
-        {
-            await TestImages.SizeAsync(avif); // decodes with Windows
-        }
-        catch (Exception)
-        {
-            Assert.Skip("Windows can't decode AVIF here (AV1 Video Extension missing).");
-        }
+        await RequireWindowsDecoder(avif);
 
         var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(avif, KeepMetadata with
         {
