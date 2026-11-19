@@ -10,7 +10,7 @@ How this file works:
 - "## Next version" is never shown: rename it to "## vX.Y.Z" when you tag the release.
 -->
 
-## Next version
+## v0.2.0 · November 19, 2026
 
 ### New
 - **Right-click to compress.** Select images, PDFs, videos or whole folders in File Explorer and choose
