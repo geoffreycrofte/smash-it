@@ -36,6 +36,12 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         var isRequestedConversion = isConversion && options.TargetFormat == outputFormat;
         var available = _compressors.Where(c => c.IsAvailable).ToList();
         var candidates = available.Where(c => c.CanHandle(inputFormat, outputFormat, options)).ToList();
+
+        // An image larger than the size limit goes only to the engines that can scale it down; the others would
+        // hand back a full-size file. Optimizers then polish the scaled result as usual.
+        var resizeScale = await ResizeScaleAsync(path, inputFormat, options, cancellationToken).ConfigureAwait(false);
+        if (resizeScale is not null) candidates = candidates.Where(c => c.CanResize).ToList();
+
         if (candidates.Count == 0)
         {
             if (MediaFormatInfo.KindOf(inputFormat) == MediaKind.Video && options.Mode == CompressionMode.Lossless)
@@ -64,6 +70,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
                 var job = new CompressionJob(path, inputFormat, Path.Combine(workDir, compressor.Id + extension), outputFormat, options)
                 {
                     Progress = candidates.Count == 1 ? progress : null,
+                    ResizeScale = resizeScale,
                 };
                 var size = await TryRunAsync(compressor, job, errors, cancellationToken).ConfigureAwait(false);
                 if (size > 0 && (best is null || size < best.Value.Size))
@@ -212,6 +219,28 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
         {
             try { Directory.Delete(workDir, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
+    }
+
+    /// <summary>
+    /// The scale that brings the image's long side down to <see cref="CompressionOptions.ImageMaxSide"/>, or
+    /// <c>null</c>: not an image, lossless mode, no limit, already small enough, or a size Windows can't read
+    /// (SVG has no pixels to scale).
+    /// </summary>
+    private static async Task<double?> ResizeScaleAsync(
+        string path, MediaFormat format, CompressionOptions options, CancellationToken cancellationToken)
+    {
+        if (options.ImageMaxSide <= 0 || options.Mode != CompressionMode.Lossy) return null;
+        if (MediaFormatInfo.KindOf(format) != MediaKind.Image || format == MediaFormat.Svg) return null;
+        var size = await Imaging.WicCodec.ReadSizeAsync(path, cancellationToken).ConfigureAwait(false);
+        return ScaleFor(size, options.ImageMaxSide);
+    }
+
+    /// <summary>The scale (0–1) bringing the long side of <paramref name="size"/> down to <paramref name="maxSide"/>.</summary>
+    public static double? ScaleFor((uint Width, uint Height)? size, int maxSide)
+    {
+        if (size is not { } s || maxSide <= 0) return null;
+        var longSide = Math.Max(s.Width, s.Height);
+        return longSide > maxSide ? (double)maxSide / longSide : null;
     }
 
     /// <summary>Runs one compressor; returns the output size, or 0 when it failed (the error is collected).</summary>

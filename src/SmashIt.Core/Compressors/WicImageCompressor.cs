@@ -39,6 +39,8 @@ public sealed class WicImageCompressor : ICompressor
 
     public string DisplayName => "Windows Imaging Component";
 
+    public bool CanResize => true;
+
     public static bool CanRead(MediaFormat format) => Readable.Contains(format);
 
     public bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options)
@@ -68,7 +70,8 @@ public sealed class WicImageCompressor : ICompressor
             applyOrientation: !keepPixels || MetadataTransfer.BakesOrientation(job.InputFormat, job.OutputFormat),
             convertToSrgb: !keepPixels,
             alphaMode,
-            cancellationToken);
+            cancellationToken,
+            job.ResizeScale);
 
         if (image.FrameCount > 1)
             throw new NotSupportedException(L10n.T(
