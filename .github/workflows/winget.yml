@@ -1,0 +1,52 @@
+name: winget
+
+# When a release is published (not a pre-release), opens a pull request on microsoft/winget-pkgs that moves
+# GeoffreyCrofte.SmashIt to the new version, with the installer's URL and checksum.
+#
+# Needs a WINGET_TOKEN secret: a classic GitHub token of the account that submits (public_repo scope).
+# wingetcreate forks winget-pkgs into that account and opens the pull request from there.
+# Without the secret, or before the package's first version is in winget-pkgs (submitted by hand from
+# winget/manifests), the job explains what's missing and stops without failing.
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to submit, e.g. v0.5.0
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: windows-latest
+    steps:
+      - name: Submit to winget-pkgs
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          $id = 'GeoffreyCrofte.SmashIt'
+          if (-not $env:WINGET_TOKEN) {
+            Write-Warning "No WINGET_TOKEN secret: $env:TAG isn't submitted to winget."
+            exit 0
+          }
+          gh api repos/microsoft/winget-pkgs/contents/manifests/g/GeoffreyCrofte/SmashIt --silent 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "$id isn't in winget-pkgs yet: submit its first version by hand (winget/manifests)."
+            exit 0
+          }
+
+          $version = $env:TAG.TrimStart('v')
+          $url = "https://github.com/${{ github.repository }}/releases/download/$env:TAG/SmashIt-Setup-x64.exe"
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          # The same installer serves both scopes: winget adds /CURRENTUSER or /ALLUSERS from the manifest.
+          ./wingetcreate.exe update $id --version $version `
+            --urls "$url|x64|user" "$url|x64|machine" `
+            --release-notes-url "https://github.com/${{ github.repository }}/releases/tag/$env:TAG" `
+            --submit --token $env:WINGET_TOKEN
+          exit $LASTEXITCODE
