@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration "installer": the Inno Setup installer, built from the signed app files.
+  To check on the first signing request: Inno Setup pads the setup's version strings with spaces
+  ("Smash It    …", "0.4.1    …"). If SignPath compares them exactly, the restriction fails there.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="SmashIt-Setup-x64.exe" product-name="Smash It" product-version="${version}">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

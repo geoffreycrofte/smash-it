@@ -10,5 +10,7 @@
     <Product>Smash It</Product>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <Version>0.4.1</Version>
+    <!-- Product version "0.4.1", not "0.4.1+<commit>": code signing checks it against the release version. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 </Project>
