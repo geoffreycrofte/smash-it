@@ -24,8 +24,13 @@ public sealed partial class MainWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        AppWindow.Resize(new SizeInt32(1040, 720));
-        CenterOnScreen();
+        if (SavedBounds() is { } bounds) AppWindow.MoveAndResize(bounds);
+        else
+        {
+            AppWindow.Resize(new SizeInt32(1040, 720));
+            CenterOnScreen();
+        }
+        AppWindow.Changed += OnAppWindowChanged;
         AppIcon.Apply(AppWindow, TitleBarIcon);
         ViewModel.AskWhereToSave = AskWhereToSaveAsync;
         Root.LosingFocus += OnRootLosingFocus;
@@ -37,9 +42,59 @@ public sealed partial class MainWindow : Window
         {
             if (_replaced) return;
             ViewModel.FlushSettings();
+            AppSettings.Current.Save(); // the window placement, kept in memory while the window moves
             PreviewCache.Clean(includeCurrent: true);
         };
     }
+
+    /// <summary>Shows the window for the first time, maximized if it was when the app last closed.</summary>
+    public void Show()
+    {
+        if (AppSettings.Current.Window is { Maximized: true } && AppWindow.Presenter is OverlappedPresenter presenter)
+            presenter.Maximize();
+        Activate();
+    }
+
+    /// <summary>
+    /// The size and position the window had last, kept on the screen it was on. Null when there is none, or
+    /// that screen is gone (a laptop away from its external monitor): the window then opens in the middle.
+    /// </summary>
+    private static RectInt32? SavedBounds()
+    {
+        if (AppSettings.Current.Window is not { Width: >= 320, Height: >= 240 } saved) return null;
+        var rect = new RectInt32(saved.X, saved.Y, saved.Width, saved.Height);
+        if (DisplayArea.GetFromRect(rect, DisplayAreaFallback.None) is not { } display) return null;
+        return FitInto(rect, display.WorkArea);
+    }
+
+    /// <summary>Shrinks the rectangle to the work area if needed, then moves it fully inside.</summary>
+    private static RectInt32 FitInto(RectInt32 rect, RectInt32 area)
+    {
+        var width = Math.Min(rect.Width, area.Width);
+        var height = Math.Min(rect.Height, area.Height);
+        return new RectInt32(
+            Math.Clamp(rect.X, area.X, area.X + area.Width - width),
+            Math.Clamp(rect.Y, area.Y, area.Y + area.Height - height),
+            width, height);
+    }
+
+    /// <summary>Remembers where the window is, in memory: it's written to disk when the app closes.</summary>
+    private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
+    {
+        if (!args.DidPositionChange && !args.DidSizeChange && !args.DidPresenterChange) return;
+        if (sender.Presenter is not OverlappedPresenter { State: var state } || !sender.IsVisible) return;
+        var settings = AppSettings.Current;
+        settings.Window = state switch
+        {
+            // The normal bounds, to come back to when the user restores the window next time.
+            OverlappedPresenterState.Restored => CurrentPlacement(sender),
+            OverlappedPresenterState.Maximized => (settings.Window ?? CurrentPlacement(sender)) with { Maximized = true },
+            _ => settings.Window, // minimized: keep the last placement
+        };
+    }
+
+    private static WindowPlacement CurrentPlacement(AppWindow window) =>
+        new(window.Position.X, window.Position.Y, window.Size.Width, window.Size.Height, Maximized: false);
 
     /// <summary>Shows the window on top, restored if it was minimized (files arrived from Explorer).</summary>
     public void BringToFront()

@@ -13,6 +13,9 @@ Traduction française de CHANGELOG.md, montrée dans « Voir les nouveautés » 
 ### Nouveautés
 - **Des photos plus légères.** Avec pertes, choisissez une taille maximale (3840, 2560, 1920 ou 1280 pixels sur le grand côté) et les images plus grandes y sont réduites, jamais agrandies. Une grande photo à 2560 px pèse souvent moitié moins, à 1920 px quatre fois moins, et reste nette sur n'importe quel écran. Le préréglage Web utilise 2560 px, E-mail 1920 px.
 
+### Améliorations
+- **La fenêtre s'ouvre là où vous l'avez laissée**, à la même taille, agrandie si elle l'était. Si cet écran n'est plus branché, elle s'ouvre au milieu de l'écran principal.
+
 ## v0.4.1 · 20 novembre 2026
 
 Cette version apporte aussi tout le contenu de la v0.4.0 (préréglages, vidéos de téléphone plus légères, métadonnées des photos d'iPhone conservées, zoom à 100 %…), dont le téléchargement n'était pas disponible.

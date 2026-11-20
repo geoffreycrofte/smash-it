@@ -71,7 +71,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split, fitted or at 100 % | |
 | **Presets** | Best quality (lossless, the default), Web (images 2560 px, videos 1080p), Email (lightest: 1920 px, 720p) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
-| **Integration** | Drag & drop (or **Add files** in the empty window), Explorer right-click menu, `smashit` command line; settings remembered between launches | Custom script engines |
+| **Integration** | Drag & drop (or **Add files** in the empty window), Explorer right-click menu, `smashit` command line; settings, window size and position remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
 
 ### Image size

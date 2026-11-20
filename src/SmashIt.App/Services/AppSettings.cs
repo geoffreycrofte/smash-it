@@ -42,6 +42,10 @@ public sealed class AppSettings
     public bool CopyAlreadyOptimal { get; set; }
     public bool AskOutputLocation { get; set; } = true;
 
+    // Window
+    /// <summary>Where the main window was last, in screen pixels; null opens it in the middle of the screen.</summary>
+    public WindowPlacement? Window { get; set; }
+
     // Updates
     public bool CheckForUpdates { get; set; } = true;
     /// <summary>A version the user chose to skip: not offered again at startup (newer ones are).</summary>
@@ -76,3 +80,6 @@ public sealed class AppSettings
         }
     }
 }
+
+/// <summary>The main window's size and position when not maximized, and whether it was maximized.</summary>
+public sealed record WindowPlacement(int X, int Y, int Width, int Height, bool Maximized);
