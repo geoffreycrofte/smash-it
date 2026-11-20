@@ -42,6 +42,9 @@ public class CompressionPresetTests
         Assert.Null(CompressionPresets.Match(CompressionPresets.All[PresetId.Web] with { ImageQuality = 81 }));
         Assert.Null(CompressionPresets.Match(CompressionPresets.All[PresetId.Web] with { PdfMaxImageDpi = 300 }));
         Assert.Null(CompressionPresets.Match(CompressionPresets.All[PresetId.Web] with { VideoMaxShortSide = 720 }));
+        Assert.Null(CompressionPresets.Match(CompressionPresets.All[PresetId.Web] with { ImageMaxSide = 0 }));
+        // Lossless images: the size limit has no effect, so it doesn't matter.
+        Assert.Equal(PresetId.Lossless, CompressionPresets.Match(CompressionPresets.All[PresetId.Lossless] with { ImageMaxSide = 1280 }));
         Assert.Null(CompressionPresets.Match(CompressionPresets.All[PresetId.Archive] with { StripMetadata = true, VideoQuality = 50 }));
     }
 }

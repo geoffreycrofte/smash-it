@@ -22,7 +22,8 @@ internal static class IntermediatePng
             applyOrientation: true,
             convertToSrgb: metadata is null,
             BitmapAlphaMode.Straight,
-            cancellationToken);
+            cancellationToken,
+            job.ResizeScale);
 
         if (image.FrameCount > 1)
             throw new NotSupportedException(L10n.T(

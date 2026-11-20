@@ -24,6 +24,8 @@ public sealed class AppSettings
     // Compression settings, so a right-click from Explorer compresses the way the window was last set up.
     public bool ImageLossy { get; set; }
     public int ImageQuality { get; set; } = 85;
+    /// <summary>Lossy images: long side, in pixels, they are scaled down to; 0 keeps the size.</summary>
+    public int ImageMaxSide { get; set; }
     public MediaFormat? OutputFormat { get; set; }
     public CompressionEffort Effort { get; set; } = CompressionEffort.Balanced;
     public bool StripMetadata { get; set; } = true;

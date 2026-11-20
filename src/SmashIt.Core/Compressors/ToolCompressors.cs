@@ -19,6 +19,8 @@ public abstract class ToolCompressor(string executable) : ICompressor
 
     public virtual bool IsOptimizer => false;
 
+    public virtual bool CanResize => false;
+
     public abstract bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options);
 
     public abstract Task CompressAsync(CompressionJob job, CancellationToken cancellationToken);
@@ -116,6 +118,8 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
 
     public override string DisplayName => "pngquant";
 
+    public override bool CanResize => true;
+
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
         output == MediaFormat.Png && options.Mode == CompressionMode.Lossy && WicImageCompressor.CanRead(input);
 
@@ -143,6 +147,17 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
                     throw new NotSupportedException(L10n.T(
                         "Animated PNGs aren't supported yet.",
                         "Les PNG animés ne sont pas encore pris en charge."));
+
+                if (job.ResizeScale is not null)
+                {
+                    // Scaled down as stored (no rotation, no color conversion): the pipeline writes the source's
+                    // orientation and color profile back, as for an unscaled PNG.
+                    var scaled = await WicCodec.DecodeAsync(job.InputPath, applyOrientation: false, convertToSrgb: false,
+                        Windows.Graphics.Imaging.BitmapAlphaMode.Straight, cancellationToken, job.ResizeScale);
+                    await WicCodec.EncodeAsync(source, Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, null, scaled,
+                        Windows.Graphics.Imaging.BitmapAlphaMode.Straight, cancellationToken);
+                    png = await File.ReadAllBytesAsync(source, cancellationToken);
+                }
             }
             else
             {
@@ -200,6 +215,8 @@ public sealed class GifsicleCompressor() : ToolCompressor("gifsicle.exe")
 
     public override string DisplayName => "gifsicle";
 
+    public override bool CanResize => true;
+
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
         input == MediaFormat.Gif && output == MediaFormat.Gif;
 
@@ -223,6 +240,8 @@ public sealed class GifsicleCompressor() : ToolCompressor("gifsicle.exe")
             args.Add($"--lossy={Lossiness(options.Quality)}");
         // Comments, frame names and extra extensions (XMP…); the loop count is not an extension and stays.
         if (options.StripMetadata) args.AddRange(["--no-comments", "--no-names", "--no-extensions"]);
+        // Every frame and its position scale together.
+        if (job.ResizeScale is { } scale) args.Add($"--scale={scale.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture)}");
         args.AddRange(["--output", job.OutputPath, job.InputPath]);
         return RunAsync(args, cancellationToken);
     }
@@ -234,6 +253,8 @@ public sealed class CwebpCompressor() : ToolCompressor("cwebp.exe")
     public override string Id => "cwebp";
 
     public override string DisplayName => "cwebp";
+
+    public override bool CanResize => true; // through the intermediate PNG
 
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
         output == MediaFormat.WebP && WicImageCompressor.CanRead(input);
@@ -292,6 +313,8 @@ public sealed class AvifencCompressor() : ToolCompressor("avifenc.exe")
     public override string Id => "avifenc";
 
     public override string DisplayName => "avifenc";
+
+    public override bool CanResize => true; // through the intermediate PNG
 
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
         output == MediaFormat.Avif && WicImageCompressor.CanRead(input);

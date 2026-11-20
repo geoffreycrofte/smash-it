@@ -11,6 +11,11 @@ How this file works:
 - CHANGELOG.fr.md holds the French translation, section by section, shown when the app is in French.
 -->
 
+## Next version
+
+### New
+- **Lighter photos.** In lossy mode, pick a maximum size (3840, 2560, 1920 or 1280 pixels on the long side) and larger images are scaled down to it, never enlarged. A large photo at 2560 px is often half as heavy, at 1920 px a quarter, and still sharp on any screen. The Web preset uses 2560 px, Email 1920 px.
+
 ## v0.4.1 · November 20, 2026
 
 This version also brings everything from v0.4.0 (presets, lighter phone videos, metadata kept from iPhone photos, 100 % zoom…), whose download wasn't available.

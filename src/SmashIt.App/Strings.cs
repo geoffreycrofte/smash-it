@@ -37,6 +37,11 @@ public static class Strings
     public static string Lossy => T("Lossy", "Avec pertes");
     public static string Quality => T("Quality", "Qualité");
     public static string OutputFormat => T("Output format", "Format de sortie");
+    public static string ImageSize => T("Maximum size", "Taille maximale");
+    public static string ImageSizeName => T("Maximum image size", "Taille maximale des images");
+    public static string ImageSizeTip => T(
+        "Lossy only: larger images are scaled down to this length on their long side, never enlarged.",
+        "Avec pertes uniquement : les images plus grandes sont réduites à cette longueur sur leur grand côté, jamais agrandies.");
     public static string Effort => T("Effort", "Effort");
     public static string EffortTip => T("More effort: smaller files, slower compression.", "Plus d'effort : fichiers plus petits, compression plus lente.");
     public static string StripMetadata => T("Remove metadata", "Supprimer les métadonnées");
