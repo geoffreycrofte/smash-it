@@ -30,7 +30,7 @@ public partial class App : Application
             var wait = SplashMinimum - splash.Elapsed;
             if (wait > TimeSpan.Zero) await Task.Delay(wait);
         }
-        window.Activate();
+        window.Show();
 
         // Explorer starts the app once per selected file, a few milliseconds apart: the files are gathered
         // until the launches stop, so 40 selected photos make one batch (and one question), not 40.
@@ -84,11 +84,10 @@ public partial class App : Application
     private void RebuildMainWindow()
     {
         if (_window is not { } old || _viewModel is null) return;
+        // The new window opens where the old one is: its placement is tracked in the settings as it moves.
         var replacement = new MainWindow(_viewModel);
-        replacement.AppWindow.MoveAndResize(new Windows.Graphics.RectInt32(
-            old.AppWindow.Position.X, old.AppWindow.Position.Y, old.AppWindow.Size.Width, old.AppWindow.Size.Height));
         _window = replacement;
-        replacement.Activate();
+        replacement.Show();
         old.CloseForReplacement();
     }
 }

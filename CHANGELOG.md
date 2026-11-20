@@ -11,6 +11,11 @@ How this file works:
 - CHANGELOG.fr.md holds the French translation, section by section, shown when the app is in French.
 -->
 
+## Next version
+
+### Improved
+- **The window opens where you left it**, at the same size, maximized if it was. If that screen is no longer connected, it opens in the middle of the main one.
+
 ## v0.4.1 · November 20, 2026
 
 This version also brings everything from v0.4.0 (presets, lighter phone videos, metadata kept from iPhone photos, 100 % zoom…), whose download wasn't available.

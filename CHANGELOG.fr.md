@@ -8,6 +8,11 @@ Traduction française de CHANGELOG.md, montrée dans « Voir les nouveautés » 
 - Une version absente de ce fichier s'affiche en anglais : rien ne casse si la traduction a du retard.
 -->
 
+## Next version
+
+### Améliorations
+- **La fenêtre s'ouvre là où vous l'avez laissée**, à la même taille, agrandie si elle l'était. Si cet écran n'est plus branché, elle s'ouvre au milieu de l'écran principal.
+
 ## v0.4.1 · 20 novembre 2026
 
 Cette version apporte aussi tout le contenu de la v0.4.0 (préréglages, vidéos de téléphone plus légères, métadonnées des photos d'iPhone conservées, zoom à 100 %…), dont le téléchargement n'était pas disponible.
