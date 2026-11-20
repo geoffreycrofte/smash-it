@@ -9,7 +9,7 @@ PublisherSupportUrl: https://github.com/geoffreycrofte/smash-it/issues
 Author: Geoffrey Crofte
 PackageName: Smash It
 PackageUrl: https://github.com/geoffreycrofte/smash-it
-License: GPL-3.0
+License: GPL-3.0-or-later
 LicenseUrl: https://github.com/geoffreycrofte/smash-it/blob/main/LICENSE
 ShortDescription: Make images, videos and PDFs smaller, in the spirit of ImageOptim.
 Description: |-

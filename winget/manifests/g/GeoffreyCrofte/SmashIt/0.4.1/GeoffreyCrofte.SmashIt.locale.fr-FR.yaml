@@ -5,7 +5,7 @@ PackageVersion: 0.4.1
 PackageLocale: fr-FR
 Publisher: Geoffrey Crofte
 PackageName: Smash It
-License: GPL-3.0
+License: GPL-3.0-or-later
 ShortDescription: Allège vos images, vidéos et PDF, dans l'esprit d'ImageOptim.
 Description: |-
   Déposez des fichiers ou des dossiers sur la fenêtre : Smash It essaie chaque moteur capable de les traiter,
