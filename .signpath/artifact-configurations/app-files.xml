@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration "app-files": Smash It's own binaries, signed before they are packaged.
+  The release workflow uploads exactly these five files (a GitHub artifact, zipped).
+  The bundled tools (oxipng, pngquant, qpdf…) are upstream programs: they ship as their authors publish them.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file-set product-name="Smash It" product-version="${version}">
+      <include path="SmashIt.exe" />
+      <include path="SmashIt.dll" />
+      <include path="SmashIt.Cli.exe" />
+      <include path="SmashIt.Cli.dll" />
+      <include path="SmashIt.Core.dll" />
+      <for-each>
+        <authenticode-sign />
+      </for-each>
+    </pe-file-set>
+  </zip-file>
+</artifact-configuration>

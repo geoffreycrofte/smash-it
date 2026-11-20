@@ -213,6 +213,13 @@
             <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.ImageQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
                     IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
                     Value="{x:Bind ViewModel.ImageQuality, Mode=TwoWay}" />
+            <ComboBox Header="{x:Bind app:Strings.ImageSize}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="{x:Bind app:Strings.ImageSizeName}"
+                      IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.ImageSizes}"
+                      SelectedItem="{x:Bind ViewModel.SelectedImageSize, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      ToolTipService.ToolTip="{x:Bind app:Strings.ImageSizeTip}" />
             <ComboBox Header="{x:Bind app:Strings.OutputFormat}" HorizontalAlignment="Stretch"
                       ItemsSource="{x:Bind ViewModel.OutputFormats}"
                       SelectedItem="{x:Bind ViewModel.SelectedOutputFormat, Mode=TwoWay}"

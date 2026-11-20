@@ -12,6 +12,12 @@ public sealed record CompressionJob(
 {
     /// <summary>Progress from 0 to 100, reported by long-running engines (video).</summary>
     public IProgress<double>? Progress { get; init; }
+
+    /// <summary>
+    /// Images larger than <see cref="CompressionOptions.ImageMaxSide"/>: the scale (0–1) to apply to both
+    /// dimensions. Only given to engines whose <see cref="ICompressor.CanResize"/> is true.
+    /// </summary>
+    public double? ResizeScale { get; init; }
 }
 
 /// <summary>
@@ -39,6 +45,12 @@ public interface ICompressor
     /// e.g. jpegtran after a lossy JPEG encode.
     /// </summary>
     bool IsOptimizer => false;
+
+    /// <summary>
+    /// True when the engine applies <see cref="CompressionJob.ResizeScale"/>. An image that must be scaled down is
+    /// only given to these engines; the others (pure optimizers) then polish the result.
+    /// </summary>
+    bool CanResize => false;
 
     bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options);
 

@@ -52,6 +52,10 @@ for (var i = 0; i < args.Length; i++)
             options = options with { PdfMaxImageDpi = dpi };
             i++;
             break;
+        case "--max-size" when i + 1 < args.Length && int.TryParse(args[i + 1].TrimEnd('x', 'p', 'X', 'P'), out var longSide) && longSide >= 0:
+            options = options with { ImageMaxSide = longSide };
+            i++;
+            break;
         case "--video-max" when i + 1 < args.Length && int.TryParse(args[i + 1].TrimEnd('p', 'P'), out var shortSide) && shortSide >= 0:
             options = options with { VideoMaxShortSide = shortSide };
             i++;
@@ -168,6 +172,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
       --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
       --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
+      --max-size <n>       Lossy images: bring the long side down to n pixels, e.g. 2560 (default: keep)
       --keep               Keeps the original, writes "name-compressed.ext" next to it
       --folder             Keeps the original, writes the result into a "compressed" folder next to it
       --copy-all           Like --folder, and also copies the files that are already optimal
@@ -188,6 +193,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --codec <codec>      Vidéo : h264 (par défaut) ou hevc ; nécessite --lossy ou -q
       --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
       --video-max <n>      Vidéos : ramène le petit côté à n pixels, ex. 1080 ou 720 (par défaut : inchangé)
+      --max-size <n>       Images avec pertes : ramène le grand côté à n pixels, ex. 2560 (par défaut : inchangé)
       --keep               Garde l'original, écrit « nom-compressed.ext » à côté
       --folder             Garde l'original, écrit le résultat dans un dossier « compressed » à côté
       --copy-all           Comme --folder, et y copie aussi les fichiers déjà optimaux

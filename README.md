@@ -13,7 +13,7 @@ the result is saved next to each file as `name-compressed.ext`, or in a `compres
 > Status: early development (v0.4). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md) ([en français](CHANGELOG.fr.md)). Using a keyboard or a screen reader:
-[ACCESSIBILITY.md](ACCESSIBILITY.md).
+[ACCESSIBILITY.md](ACCESSIBILITY.md). How releases are built and signed: [CODE_SIGNING.md](CODE_SIGNING.md).
 
 ## Download
 
@@ -62,7 +62,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 
 | | Today | Planned |
 |---|---|---|
-| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding | |
+| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
 | **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4; optional 1080p or 720p cap | ffmpeg for fine tuning (CRF, AV1, VP9) |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings |
@@ -70,9 +70,18 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them: JPEG, PNG, WebP and AVIF results, from JPEG, PNG, WebP, HEIC and AVIF sources | HEIC results |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split, fitted or at 100 % | |
-| **Presets** | Best quality (lossless, the default), Web, Email (lightest) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
+| **Presets** | Best quality (lossless, the default), Web (images 2560 px, videos 1080p), Email (lightest: 1920 px, 720p) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
 | **Integration** | Drag & drop (or **Add files** in the empty window), Explorer right-click menu, `smashit` command line; settings, window size and position remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
+
+### Image size
+
+In lossy mode, **Maximum size** scales larger images down so their long side is 3840, 2560, 1920 or 1280 pixels,
+never up. A 5000 px photo typically loses half its weight at 2560 px and three quarters at 1920 px, and stays
+sharp on any screen. The
+image is resized once, while it is decoded (Fant filter), then encoded by the engine you chose: JPEG, PNG through
+pngquant, WebP, AVIF, animated GIF (every frame). The Web preset uses 2560 px, Email 1920 px; on the command line,
+`--max-size 2560`. Lossless mode and SVG never change the size.
 
 ### Lossy PNG
 

@@ -96,5 +96,11 @@ public sealed record CompressionOptions
     /// </summary>
     public int VideoMaxShortSide { get; init; }
 
+    /// <summary>
+    /// Lossy images: the long side is brought down to this many pixels at most (2560, 1920…), keeping the
+    /// proportions. 0 keeps the size. Never applied in lossless mode, which never changes pixels.
+    /// </summary>
+    public int ImageMaxSide { get; init; }
+
     public static CompressionOptions Default { get; } = new();
 }

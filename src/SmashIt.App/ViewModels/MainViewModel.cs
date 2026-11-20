@@ -58,11 +58,11 @@ public sealed record PresetChoice(PresetId? Id)
             "Files get smaller without any visible change. Metadata (camera, GPS…) is removed.",
             "Les fichiers s'allègent sans aucun changement visible. Les métadonnées (appareil, GPS…) sont retirées."),
         PresetId.Web => L10n.T(
-            "Much lighter images, PDFs and videos for websites, with a quality that stays sharp on screen.",
-            "Images, PDF et vidéos bien plus légers pour un site web, avec une qualité qui reste nette à l'écran."),
+            "Much lighter images, PDFs and videos for websites, sharp on screen. Large photos are brought down to 2560 px, videos to 1080p.",
+            "Images, PDF et vidéos bien plus légers pour un site web, nets à l'écran. Les grandes photos sont ramenées à 2560 px, les vidéos à 1080p."),
         PresetId.Email => L10n.T(
-            "The smallest files, to send by email or message. Quality stays good for viewing on screen.",
-            "Les fichiers les plus petits, à envoyer par e-mail ou message. La qualité reste bonne à l'écran."),
+            "The smallest files, to send by email or message, good for viewing on screen. Photos are brought down to 1920 px, videos to 720p.",
+            "Les fichiers les plus petits, à envoyer par e-mail ou message, bons à l'écran. Les photos sont ramenées à 1920 px, les vidéos à 720p."),
         PresetId.Archive => L10n.T(
             "Nothing is lost: same quality and every piece of metadata kept, only the storage is optimized.",
             "Rien n'est perdu : même qualité et toutes les métadonnées gardées, seul le stockage est optimisé."),
@@ -75,6 +75,16 @@ public sealed record PresetChoice(PresetId? Id)
 }
 
 /// <summary>A PDF image resolution cap, in pixels per inch; 0 keeps every image as it is.</summary>
+/// <summary>An image size cap, as the long side in pixels; 0 keeps the size.</summary>
+public sealed record ImageSizeChoice(int LongSide)
+{
+    public string Label => LongSide == 0
+        ? L10n.T("Keep the size", "Conserver la taille")
+        : $"{LongSide} px max";
+
+    public override string ToString() => Label;
+}
+
 /// <summary>A video resolution cap, as the short side of the picture in pixels; 0 keeps the resolution.</summary>
 public sealed record VideoResolutionChoice(int ShortSide)
 {
@@ -183,7 +193,7 @@ public sealed partial class MainViewModel : ObservableObject
     private static readonly HashSet<string> PresetProperties =
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality),
-        nameof(SelectedPdfResolution), nameof(VideoQuality), nameof(SelectedVideoResolution),
+        nameof(SelectedPdfResolution), nameof(VideoQuality), nameof(SelectedVideoResolution), nameof(SelectedImageSize),
     ];
 
     private bool _applyingPreset;
@@ -197,6 +207,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             ImageLossy = preset.ImageLossy;
             ImageQuality = preset.ImageQuality;
+            SelectedImageSize = ImageSizes.FirstOrDefault(s => s.LongSide == preset.ImageMaxSide) ?? ImageSizes[0];
             StripMetadata = preset.StripMetadata;
             PdfLossy = preset.PdfLossy;
             PdfQuality = preset.PdfQuality;
@@ -213,10 +224,10 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Shows the preset the current settings amount to, without applying anything.</summary>
     private void UpdateSelectedPreset()
     {
-        if (_applyingPreset || SelectedPdfResolution is null || SelectedVideoResolution is null) return;
+        if (_applyingPreset || SelectedPdfResolution is null || SelectedVideoResolution is null || SelectedImageSize is null) return;
         var id = CompressionPresets.Match(new PresetSettings(
             ImageLossy, (int)Math.Round(ImageQuality), StripMetadata, PdfLossy, (int)Math.Round(PdfQuality),
-            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality), SelectedVideoResolution.ShortSide));
+            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality), SelectedVideoResolution.ShortSide, SelectedImageSize.LongSide));
         var choice = Presets.First(p => p.Id == id);
         if (choice == SelectedPreset) return;
         _applyingPreset = true;
@@ -230,6 +241,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     public partial double ImageQuality { get; set; } = 85;
+
+    public IReadOnlyList<ImageSizeChoice> ImageSizes { get; } = [new(0), new(3840), new(2560), new(1920), new(1280)];
+
+    /// <summary>Lossy only: images larger than this (long side) are scaled down to it.</summary>
+    [ObservableProperty]
+    public partial ImageSizeChoice SelectedImageSize { get; set; }
 
     [ObservableProperty]
     public partial OutputFormatChoice SelectedOutputFormat { get; set; }
@@ -311,7 +328,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Properties saved in <see cref="AppSettings"/> when they change.</summary>
     private static readonly HashSet<string> SavedProperties =
     [
-        nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedOutputFormat), nameof(SelectedEffort),
+        nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedImageSize), nameof(SelectedOutputFormat), nameof(SelectedEffort),
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
         nameof(SelectedVideoCodec), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
         nameof(AskOutputLocation),
@@ -326,6 +343,7 @@ public sealed partial class MainViewModel : ObservableObject
         var settings = AppSettings.Current;
         ImageLossy = settings.ImageLossy;
         ImageQuality = Math.Clamp(settings.ImageQuality, 1, 100);
+        SelectedImageSize = ImageSizes.FirstOrDefault(s => s.LongSide == settings.ImageMaxSide) ?? ImageSizes[0];
         SelectedOutputFormat = OutputFormats.FirstOrDefault(f => f.Format == settings.OutputFormat) ?? OutputFormats[0];
         SelectedEffort = Efforts.FirstOrDefault(e => e.Effort == settings.Effort) ?? Efforts[1];
         StripMetadata = settings.StripMetadata;
@@ -372,6 +390,7 @@ public sealed partial class MainViewModel : ObservableObject
         var settings = AppSettings.Current;
         settings.ImageLossy = ImageLossy;
         settings.ImageQuality = (int)Math.Round(ImageQuality);
+        settings.ImageMaxSide = SelectedImageSize.LongSide;
         settings.OutputFormat = SelectedOutputFormat.Format;
         settings.Effort = SelectedEffort.Effort;
         settings.StripMetadata = StripMetadata;
@@ -457,6 +476,7 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Mode = ImageLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
                 Quality = (int)Math.Round(ImageQuality),
+                ImageMaxSide = SelectedImageSize.LongSide,
                 Effort = SelectedEffort.Effort,
                 TargetFormat = SelectedOutputFormat.Format,
                 StripMetadata = StripMetadata,

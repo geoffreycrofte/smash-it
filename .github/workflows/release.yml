@@ -16,6 +16,10 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    env:
+      # Code signing starts once the SIGNPATH_ORGANIZATION_ID variable and SIGNPATH_API_TOKEN secret exist,
+      # for tagged releases only (a manual run stays unsigned and needs no approval).
+      SIGN: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && github.ref_type == 'tag' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,9 +57,89 @@ jobs:
       - name: Test
         run: dotnet test --solution SmashIt.slnx -c Release
 
+      # Unsigned build: manual runs, and tags while code signing isn't set up.
       - name: Build installer and zip
+        if: env.SIGN != 'true'
         shell: pwsh
         run: ./tools/publish.ps1 -Version ${{ steps.version.outputs.value }}
+
+      # Signed build (SignPath Foundation, see CODE_SIGNING.md): Smash It's own files are signed first, then
+      # packaged, then the installer is signed. Each signing request waits for its approval on SignPath.
+      - name: Publish the app
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: ./tools/publish.ps1 -Version ${{ steps.version.outputs.value }} -Step Stage
+
+      - name: Upload the app files to sign
+        if: env.SIGN == 'true'
+        id: unsigned-app
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-app-files
+          path: |
+            artifacts/publish/SmashIt/SmashIt.exe
+            artifacts/publish/SmashIt/SmashIt.dll
+            artifacts/publish/SmashIt/SmashIt.Cli.exe
+            artifacts/publish/SmashIt/SmashIt.Cli.dll
+            artifacts/publish/SmashIt/SmashIt.Core.dll
+          if-no-files-found: error
+
+      - name: Sign the app files
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: smash-it
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: app-files
+          github-artifact-id: ${{ steps.unsigned-app.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200 # approve on SignPath within 2 hours
+          output-artifact-directory: artifacts/publish/SmashIt
+          parameters: |
+            version: "${{ steps.version.outputs.value }}"
+
+      - name: Build installer and zip from the signed files
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: ./tools/publish.ps1 -Version ${{ steps.version.outputs.value }} -Step Package
+
+      - name: Upload the installer to sign
+        if: env.SIGN == 'true'
+        id: unsigned-installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer
+          path: artifacts/SmashIt-Setup-x64.exe
+          if-no-files-found: error
+
+      - name: Sign the installer
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: smash-it
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200 # approve on SignPath within 2 hours
+          output-artifact-directory: artifacts
+          parameters: |
+            version: "${{ steps.version.outputs.value }}"
+
+      - name: Checksums of the signed files
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: |
+          foreach ($file in 'artifacts/publish/SmashIt/SmashIt.exe', 'artifacts/SmashIt-Setup-x64.exe') {
+            $signature = Get-AuthenticodeSignature $file
+            if ($signature.Status -ne 'Valid') { throw "$file : signature $($signature.Status)." }
+            Write-Host "$file signed by $($signature.SignerCertificate.Subject)"
+          }
+          ./tools/publish.ps1 -Version ${{ steps.version.outputs.value }} -Step Checksums
 
       - name: Upload build
         uses: actions/upload-artifact@v4

@@ -17,34 +17,69 @@ internal static class WicCodec
     /// <summary>Decodes the first frame as BGRA8.</summary>
     /// <param name="applyOrientation">Rotate/flip pixels according to the EXIF orientation.</param>
     /// <param name="convertToSrgb">Convert colors from the embedded profile to sRGB.</param>
+    /// <param name="scale">Scales both dimensions down (0–1) with area averaging; <c>null</c> keeps the size.</param>
     public static async Task<DecodedImage> DecodeAsync(
         string path,
         bool applyOrientation,
         bool convertToSrgb,
         BitmapAlphaMode alphaMode,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        double? scale = null)
     {
         await using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         using var stream = file.AsRandomAccessStream();
         var decoder = await BitmapDecoder.CreateAsync(stream).AsTask(cancellationToken);
 
+        // WIC scales the stored frame, then rotates it: the scaled size is that of the stored frame.
+        var (width, height) = ScaledSize(decoder.PixelWidth, decoder.PixelHeight, scale);
+        var transform = new BitmapTransform();
+        if (scale is not null)
+        {
+            transform.ScaledWidth = width;
+            transform.ScaledHeight = height;
+            transform.InterpolationMode = BitmapInterpolationMode.Fant; // no aliasing when shrinking
+        }
+
         var pixelData = await decoder.GetPixelDataAsync(
                 BitmapPixelFormat.Bgra8,
                 alphaMode,
-                new BitmapTransform(),
+                transform,
                 applyOrientation ? ExifOrientationMode.RespectExifOrientation : ExifOrientationMode.IgnoreExifOrientation,
                 convertToSrgb ? ColorManagementMode.ColorManageToSRgb : ColorManagementMode.DoNotColorManage)
             .AsTask(cancellationToken);
 
+        // A 90° orientation swaps the dimensions of what comes out.
+        var swapped = applyOrientation && decoder.OrientedPixelWidth != decoder.PixelWidth;
         return new DecodedImage(
             pixelData.DetachPixelData(),
-            applyOrientation ? decoder.OrientedPixelWidth : decoder.PixelWidth,
-            applyOrientation ? decoder.OrientedPixelHeight : decoder.PixelHeight,
+            swapped ? height : width,
+            swapped ? width : height,
             decoder.DpiX,
             decoder.DpiY,
             decoder.BitmapPixelFormat,
             decoder.FrameCount);
     }
+
+    /// <summary>The pixel size of an image, or <c>null</c> when Windows can't read it.</summary>
+    public static async Task<(uint Width, uint Height)?> ReadSizeAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var stream = file.AsRandomAccessStream();
+            var decoder = await BitmapDecoder.CreateAsync(stream).AsTask(cancellationToken);
+            return (decoder.PixelWidth, decoder.PixelHeight);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    public static (uint Width, uint Height) ScaledSize(uint width, uint height, double? scale) =>
+        scale is { } s
+            ? ((uint)Math.Max(1, Math.Round(width * s)), (uint)Math.Max(1, Math.Round(height * s)))
+            : (width, height);
 
     public static async Task EncodeAsync(
         string path,
