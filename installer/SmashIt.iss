@@ -19,6 +19,9 @@ AppPublisherURL=https://geoffreycrofte.com/project/smash-it
 AppSupportURL=https://github.com/geoffreycrofte/smash-it/issues
 AppUpdatesURL=https://github.com/geoffreycrofte/smash-it/releases
 VersionInfoVersion={#NumericVersion}
+; Product name and version as the app's files carry them: code signing checks both.
+VersionInfoProductName={#AppName}
+VersionInfoProductTextVersion={#AppVersion}
 ; Per-user install by default (no admin prompt, goes to %LOCALAPPDATA%\Programs); the dialog offers all users.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog

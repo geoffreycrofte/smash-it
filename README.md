@@ -13,7 +13,7 @@ the result is saved next to each file as `name-compressed.ext`, or in a `compres
 > Status: early development (v0.4). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md) ([en français](CHANGELOG.fr.md)). Using a keyboard or a screen reader:
-[ACCESSIBILITY.md](ACCESSIBILITY.md).
+[ACCESSIBILITY.md](ACCESSIBILITY.md). How releases are built and signed: [CODE_SIGNING.md](CODE_SIGNING.md).
 
 ## Download
 
