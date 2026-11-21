@@ -97,9 +97,10 @@ for (var i = 0; i < args.Length; i++)
             {
                 "h264" or "h.264" or "avc" => VideoCodec.H264,
                 "hevc" or "h265" or "h.265" => VideoCodec.Hevc,
+                "av1" => VideoCodec.Av1,
                 _ => null,
             };
-            if (codec is null) return Fail(L10n.T($"Unknown codec: {args[i]} (h264, hevc)", $"Codec inconnu : {args[i]} (h264, hevc)"));
+            if (codec is null) return Fail(L10n.T($"Unknown codec: {args[i]} (h264, hevc, av1)", $"Codec inconnu : {args[i]} (h264, hevc, av1)"));
             options = options with { VideoCodec = codec.Value };
             break;
         case "--keep-metadata":
@@ -201,7 +202,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -q, --quality <n>    Quality 1–100 (turns on lossy mode)
       -t, --to <format>    Converts to jpg, png, webp, avif, heic, tif, jxr, bmp
       -e, --effort <n>     fast, balanced (default) or max
-      --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
+      --codec <codec>      Video: h264 (default), hevc or av1 (smallest, slower); needs --lossy or -q
       --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
       --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
       --max-size <n>       Lossy images: bring the long side down to n pixels, e.g. 2560 (default: keep)
@@ -227,7 +228,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -q, --quality <n>    Qualité 1–100 (active le mode avec pertes)
       -t, --to <format>    Convertit vers jpg, png, webp, avif, heic, tif, jxr, bmp
       -e, --effort <n>     fast, balanced (par défaut) ou max
-      --codec <codec>      Vidéo : h264 (par défaut) ou hevc ; nécessite --lossy ou -q
+      --codec <codec>      Vidéo : h264 (par défaut), hevc ou av1 (le plus léger, plus lent) ; nécessite --lossy ou -q
       --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
       --video-max <n>      Vidéos : ramène le petit côté à n pixels, ex. 1080 ou 720 (par défaut : inchangé)
       --max-size <n>       Images avec pertes : ramène le grand côté à n pixels, ex. 2560 (par défaut : inchangé)

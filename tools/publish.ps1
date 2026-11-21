@@ -60,7 +60,7 @@ if ($Step -in 'All', 'Stage') {
     # 1. Bundled tools: a release without them would silently fall back to WIC only.
     & (Join-Path $PSScriptRoot 'fetch-tools.ps1')
     $toolsBin = Join-Path $PSScriptRoot 'bin'
-    $required = 'oxipng.exe', 'pngquant.exe', 'gifsicle.exe', 'oxvg.exe', 'jpegtran.exe', 'cwebp.exe', 'avifenc.exe', 'qpdf.exe'
+    $required = 'oxipng.exe', 'pngquant.exe', 'gifsicle.exe', 'oxvg.exe', 'jpegtran.exe', 'cwebp.exe', 'avifenc.exe', 'qpdf.exe', 'ffmpeg.exe'
     $missing = $required | Where-Object { -not (Test-Path (Join-Path $toolsBin $_)) }
     if ($missing) { throw "Outils manquants pour une release : $($missing -join ', ')." }
 

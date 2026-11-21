@@ -27,7 +27,8 @@ public sealed class VideoCompressor : ICompressor
     public string DisplayName => "Media Foundation";
 
     public bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
-        Readable.Contains(input) && output == MediaFormat.Mp4 && options.Mode == CompressionMode.Lossy;
+        Readable.Contains(input) && output == MediaFormat.Mp4 && options.Mode == CompressionMode.Lossy
+        && options.VideoCodec != VideoCodec.Av1; // AV1 is ffmpeg's: never both engines on one video
 
     /// <summary>
     /// Bits per pixel per frame for H.264: 0.015 at quality 1, about 0.11 at 85, 0.15 at 100

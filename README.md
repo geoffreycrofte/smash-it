@@ -63,7 +63,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | | Today | Planned |
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
-| **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4; optional 1080p or 720p cap | ffmpeg for fine tuning (CRF, AV1, VP9) |
+| **Videos** | MP4 with AAC sound: H.264 or HEVC through Media Foundation (GPU encoder when available), or AV1 through ffmpeg (SVT-AV1, constant quality); MOV/MKV/AVI become MP4; optional 1080p or 720p cap | |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum); fine tuning per format (color detail, JPEG encoding, palette size, dithering, Zopfli) | |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
@@ -147,6 +147,21 @@ never up: a 4K phone video at 1080p is typically 3 to 4 times lighter. The Web p
 the command line, `--video-max 1080`. Portrait phone videos
 come out upright. Windows can only write MP4, so MOV/MKV/AVI files become `.mp4`, and only when that makes them
 smaller. Videos need the lossy mode.
+
+**AV1** is the third codec choice (`--codec av1`): the smallest files, encoded by ffmpeg with SVT-AV1 on the
+processor. It works at constant quality: the quality setting picks how good the picture must be (quality 70 is tuned
+for differences that are hard to see, VMAF about 93) and the size follows the content, where the Windows encoder
+targets a bitrate. On two 10-second 1080p test clips at quality 70:
+
+| Clip | H.264 (Windows) | AV1 (ffmpeg) |
+|---|---|---|
+| Camera footage | 6.2 MB, VMAF 93.9, 2 s | **4.0 MB (−36 %)**, VMAF 92.6, 10 s |
+| Animation | 6.0 MB, VMAF 84.5, 2 s | **3.9 MB (−36 %)**, VMAF 93.6, 11 s |
+
+AV1 takes a few times longer (about real time for 1080p on a 6-core processor) and plays in current browsers, on
+recent phones, and on Windows with the free AV1 Video Extension. Encoding is in 10 bits, which avoids banding in
+skies and gradients. Unlike the Windows encoder, ffmpeg keeps the dates and location of a video when you choose to
+keep metadata, and removes them otherwise.
 
 ### Before/after preview
 

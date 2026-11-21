@@ -66,9 +66,12 @@ public sealed record MaxColorsChoice(int Colors)
 
 public sealed record VideoCodecChoice(VideoCodec Codec)
 {
-    public string Label => Codec == VideoCodec.Hevc
-        ? L10n.T("HEVC / H.265 (smaller)", "HEVC / H.265 (plus léger)")
-        : L10n.T("H.264 (plays everywhere)", "H.264 (compatible partout)");
+    public string Label => Codec switch
+    {
+        VideoCodec.Hevc => L10n.T("HEVC / H.265 (smaller)", "HEVC / H.265 (plus léger)"),
+        VideoCodec.Av1 => L10n.T("AV1 (smallest, slower)", "AV1 (le plus léger, plus lent)"),
+        _ => L10n.T("H.264 (plays everywhere)", "H.264 (compatible partout)"),
+    };
 
     public override string ToString() => Label;
 }
@@ -197,6 +200,7 @@ public sealed partial class MainViewModel : ObservableObject
     [
         new(VideoCodec.H264),
         new(VideoCodec.Hevc),
+        new(VideoCodec.Av1),
     ];
 
     public IReadOnlyList<LanguageChoice> Languages { get; } =

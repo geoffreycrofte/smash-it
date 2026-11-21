@@ -18,5 +18,6 @@ public static class SmashItEngine
         new AvifencCompressor(),
         new PdfCompressor(),
         new VideoCompressor(),
+        new FfmpegVideoCompressor(),
     ]);
 }
