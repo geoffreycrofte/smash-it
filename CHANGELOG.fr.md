@@ -8,10 +8,10 @@ Traduction française de CHANGELOG.md, montrée dans « Voir les nouveautés » 
 - Une version absente de ce fichier s'affiche en anglais : rien ne casse si la traduction a du retard.
 -->
 
-## Next version
+## v0.5.0 · 21 novembre 2026
 
 ### Nouveautés
-- **Des vidéos AV1, environ un tiers plus légères.** Choisissez AV1 comme codec vidéo : les vidéos sortent environ 36 % plus petites qu'en H.264 à qualité visible égale, parfois même plus belles. L'encodage prend plusieurs fois plus de temps, et la lecture fonctionne dans les navigateurs actuels, sur les téléphones récents et sous Windows avec l'extension gratuite « AV1 Video Extension ». H.264 reste le choix par défaut, pour les vidéos qui doivent être lues partout.
+- **Des vidéos AV1, environ un tiers plus légères.** Choisissez AV1 comme codec vidéo : les vidéos sortent environ 36 % plus petites qu'en H.264 à qualité visible égale, parfois même plus belles. L'encodage prend plusieurs fois plus de temps, et la lecture fonctionne dans les navigateurs actuels, sur les téléphones récents et sous Windows avec l'extension gratuite « AV1 Video Extension ». H.264 reste le choix par défaut, pour les vidéos qui doivent être lues partout. L'encodeur AV1 (FFmpeg) alourdit le téléchargement d'environ 40 Mo.
 - **Des photos plus légères.** Avec pertes, choisissez une taille maximale (3840, 2560, 1920 ou 1280 pixels sur le grand côté) et les images plus grandes y sont réduites, jamais agrandies. Une grande photo à 2560 px pèse souvent moitié moins, à 1920 px quatre fois moins, et reste nette sur n'importe quel écran. Le préréglage Web utilise 2560 px, E-mail 1920 px.
 - **Réglages fins.** Sous Images dans les réglages, pour qui veut plus de contrôle : le détail des couleurs en JPEG et AVIF, le JPEG progressif ou classique, un nombre maximum de couleurs en PNG et GIF, le tramage activé ou non, et Zopfli pour des PNG au plus petit. Sans tramage, une capture d'écran avec pertes peut devenir plusieurs fois plus légère.
 
