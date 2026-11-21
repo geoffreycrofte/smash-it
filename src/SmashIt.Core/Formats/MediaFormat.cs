@@ -19,6 +19,12 @@ public enum MediaFormat
     // Documents
     Pdf,
 
+    /// <summary>PowerPoint (.pptx, and the .ppsx, .potx and macro variants): a ZIP of XML parts and media.</summary>
+    Pptx,
+
+    /// <summary>Keynote (.key): a ZIP of Index archives and the media in Data/.</summary>
+    Keynote,
+
     // Videos
     Mp4,
     Mov,
@@ -63,7 +69,7 @@ public static class MediaFormatInfo
         MediaFormat.Jpeg or MediaFormat.Png or MediaFormat.Gif or MediaFormat.Bmp or MediaFormat.Tiff
             or MediaFormat.WebP or MediaFormat.Heif or MediaFormat.Avif or MediaFormat.JpegXr
             or MediaFormat.Svg => MediaKind.Image,
-        MediaFormat.Pdf => MediaKind.Document,
+        MediaFormat.Pdf or MediaFormat.Pptx or MediaFormat.Keynote => MediaKind.Document,
         MediaFormat.Mp4 or MediaFormat.Mov or MediaFormat.Mkv or MediaFormat.WebM
             or MediaFormat.Avi => MediaKind.Video,
         MediaFormat.Mp3 or MediaFormat.M4a or MediaFormat.Aac or MediaFormat.Wav or MediaFormat.Flac
@@ -89,6 +95,8 @@ public static class MediaFormatInfo
         MediaFormat.JpegXr => ".jxr",
         MediaFormat.Svg => ".svg",
         MediaFormat.Pdf => ".pdf",
+        MediaFormat.Pptx => ".pptx",
+        MediaFormat.Keynote => ".key",
         MediaFormat.Mp4 => ".mp4",
         MediaFormat.Mov => ".mov",
         MediaFormat.Mkv => ".mkv",
@@ -139,6 +147,9 @@ public static class MediaFormatInfo
         [".jxr"] = MediaFormat.JpegXr, [".wdp"] = MediaFormat.JpegXr, [".hdp"] = MediaFormat.JpegXr,
         [".svg"] = MediaFormat.Svg,
         [".pdf"] = MediaFormat.Pdf,
+        [".pptx"] = MediaFormat.Pptx, [".pptm"] = MediaFormat.Pptx, [".ppsx"] = MediaFormat.Pptx, [".ppsm"] = MediaFormat.Pptx,
+        [".potx"] = MediaFormat.Pptx, [".potm"] = MediaFormat.Pptx,
+        [".key"] = MediaFormat.Keynote,
         [".mp4"] = MediaFormat.Mp4, [".m4v"] = MediaFormat.Mp4,
         [".mov"] = MediaFormat.Mov,
         [".mkv"] = MediaFormat.Mkv,

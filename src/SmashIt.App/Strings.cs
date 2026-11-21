@@ -14,10 +14,10 @@ public static class Strings
     public static string ColumnOptimized => T("Optimized", "Optimisé");
     public static string ColumnGain => T("Saved", "Gain");
     public static string Compare => T("Compare before / after", "Comparer avant / après");
-    public static string EmptyTitle => T("Drop your images, PDFs, videos and sounds here", "Déposez vos images, PDF, vidéos et sons ici");
+    public static string EmptyTitle => T("Drop your images, PDFs, presentations, videos and sounds here", "Déposez vos images, PDF, présentations, vidéos et sons ici");
     public static string EmptyDetails => T(
-        "Files or folders. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI, MP3, M4A, WAV, FLAC, Ogg, Opus.",
-        "Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI, MP3, M4A, WAV, FLAC, Ogg, Opus.");
+        "Files or folders. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, PowerPoint, Keynote, MP4, MOV, MKV, AVI, MP3, M4A, WAV, FLAC, Ogg, Opus.",
+        "Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, PowerPoint, Keynote, MP4, MOV, MKV, AVI, MP3, M4A, WAV, FLAC, Ogg, Opus.");
     public static string DropCaption => T("Compress", "Compresser");
 
     // Main window: footer
@@ -83,7 +83,7 @@ public static class Strings
 
     // Names read by screen readers where the visible label alone is ambiguous.
     public static string ImageQualityName => T("Image quality", "Qualité des images");
-    public static string PdfQualityName => T("PDF image quality", "Qualité des images des PDF");
+    public static string PdfQualityName => T("Document image quality", "Qualité des images des documents");
     public static string VideoQualityName => T("Video quality", "Qualité des vidéos");
     public static string FileList => T("Files", "Fichiers");
     public static string BeforeImageName => T("Original image", "Image d'origine");
@@ -93,13 +93,13 @@ public static class Strings
     public static string Preset => T("Preset", "Préréglage");
 
     // Settings: PDF
-    public static string Pdf => "PDF";
+    public static string Pdf => T("Documents (PDF, PowerPoint, Keynote)", "Documents (PDF, PowerPoint, Keynote)");
     public static string PdfImages => T("Document images", "Images du document");
     public static string PdfQuality => T("Image quality", "Qualité des images");
     public static string PdfResolution => T("Maximum image resolution", "Résolution maximale des images");
     public static string PdfNote => T(
-        "Text, fonts, links and forms are never changed. Lossy, images much finer than their size on the page are scaled down: 150 dpi is plenty for a screen, 300 dpi for print. Signed or encrypted PDFs are skipped.",
-        "Texte, polices, liens et formulaires ne sont jamais modifiés. Avec pertes, les images bien plus fines que leur taille sur la page sont réduites : 150 ppp suffisent à l'écran, 300 ppp à l'impression. Les PDF signés ou chiffrés sont ignorés.");
+        "Text, fonts, links, forms and slides are never changed: only the pictures inside (and the videos and sounds of a PowerPoint) are compressed. Lossy, pictures much finer than their size on the page or slide are scaled down: 150 dpi is plenty for a screen, 300 dpi for print. Keynote pictures keep their size. Signed or encrypted PDFs are skipped.",
+        "Texte, polices, liens, formulaires et diapositives ne sont jamais modifiés : seules les images qu'ils contiennent (et les vidéos et sons d'un PowerPoint) sont compressées. Avec pertes, les images bien plus fines que leur taille sur la page ou la diapositive sont réduites : 150 ppp suffisent à l'écran, 300 ppp à l'impression. Les images Keynote gardent leur taille. Les PDF signés ou chiffrés sont ignorés.");
 
     // Settings: sound
     public static string Audio => T("Sound", "Son");
@@ -157,8 +157,8 @@ public static class Strings
     public static string ContextMenuToggle => T("Right-click menu entry", "Entrée dans le menu clic droit");
     public static string ContextMenuLabel => T("Compress with Smash It", "Compresser avec Smash It");
     public static string ContextMenuNote => T(
-        "“Compress with Smash It” on images, PDFs, videos, sounds and folders, with the settings above. On Windows 11, it's under “Show more options”.",
-        "« Compresser avec Smash It » sur les images, PDF, vidéos, sons et dossiers, avec les réglages ci-dessus. Sous Windows 11, il se trouve dans « Afficher plus d'options ».");
+        "“Compress with Smash It” on images, PDFs, presentations, videos, sounds and folders, with the settings above. On Windows 11, it's under “Show more options”.",
+        "« Compresser avec Smash It » sur les images, PDF, présentations, vidéos, sons et dossiers, avec les réglages ci-dessus. Sous Windows 11, il se trouve dans « Afficher plus d'options ».");
 
     // Settings: about
     public static string About => T("About", "À propos");

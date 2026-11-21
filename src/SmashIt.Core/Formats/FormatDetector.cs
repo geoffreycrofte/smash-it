@@ -22,6 +22,10 @@ public static class FormatDetector
         {
             MediaFormat.Mp4 when byExtension == MediaFormat.M4a => MediaFormat.M4a,
             MediaFormat.Mp3 when buffer.StartsWith("ID3"u8) && byExtension is MediaFormat.Aac or MediaFormat.Flac => byExtension,
+            // A ZIP: PowerPoint and Keynote files are ZIPs, told apart by their extension (a .key that isn't a ZIP,
+            // a private key say, stays unknown).
+            MediaFormat.Unknown when buffer[..read].StartsWith("PK\x03\x04"u8) && byExtension is MediaFormat.Pptx or MediaFormat.Keynote
+                => byExtension,
             _ => format,
         };
     }
