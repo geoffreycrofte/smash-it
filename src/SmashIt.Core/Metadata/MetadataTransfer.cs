@@ -30,6 +30,8 @@ public static class MetadataTransfer
     /// </summary>
     public static bool CanPreserve(MediaFormat input, MediaFormat output) =>
         (input == output && input is MediaFormat.Pdf or MediaFormat.Gif or MediaFormat.Svg) ||
+        // ffmpeg copies the tags of sound files (and their cover art, except into Ogg).
+        (MediaFormatInfo.KindOf(input) == MediaKind.Audio && MediaFormatInfo.KindOf(output) == MediaKind.Audio) ||
         ((CanRead(input) || ContainerMetadataIO.CanRead(input)) &&
          (CanWrite(output) || output is MediaFormat.WebP or MediaFormat.Avif));
 

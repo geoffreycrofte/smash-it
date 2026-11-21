@@ -41,6 +41,11 @@ public sealed class AppSettings
     /// <summary>Short side of the picture, in pixels, videos are scaled down to; 0 keeps the resolution.</summary>
     public int VideoMaxShortSide { get; set; }
     public VideoCodec VideoCodec { get; set; } = VideoCodec.H264;
+    public bool AudioLossy { get; set; }
+    public int AudioQuality { get; set; } = 70;
+    public AudioContent AudioContent { get; set; } = AudioContent.Music;
+    /// <summary>Lossy sound: the format every file is written in; null keeps each file's.</summary>
+    public MediaFormat? AudioFormat { get; set; }
     public bool KeepOriginal { get; set; } = true;
     public bool SaveInCompressedFolder { get; set; }
     public bool CopyAlreadyOptimal { get; set; }

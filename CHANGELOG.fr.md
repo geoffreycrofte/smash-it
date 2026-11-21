@@ -12,6 +12,10 @@ Traduction française de CHANGELOG.md, montrée dans « Voir les nouveautés » 
 
 ### Nouveautés
 - **Les GIF animés deviennent des vidéos, souvent plus de 10 fois plus légères.** Avec pertes, choisissez MP4 ou WebM sous « GIF animés » dans les réglages Images. Dans nos tests, un GIF tiré d'un clip est passé de 4,85 Mo à 364 Ko, un enregistrement d'écran de 1,23 Mo à 22 Ko, chaque image gardant sa durée. La vidéo ne remplace le GIF que si elle est plus petite ; les GIF avec des zones transparentes et les GIF fixes restent des GIF. Sur une page web, affichez-la avec une balise vidéo au lieu d'une image.
+- **Les fichiers son.** MP3, M4A, WAV, AIFF, FLAC, Ogg et Opus, dans les nouveaux réglages Son. Sans perte, un WAV devient un FLAC environ deux fois plus léger sans perdre un échantillon, et les autres fichiers perdent leurs tags et leur pochette si vous supprimez les métadonnées. Avec pertes, choisissez Musique ou Voix : dans nos tests, une minute de musique en qualité CD est passée de 10,09 Mo à 763 Ko en Opus, et un chapitre de livre audio a perdu la moitié de son poids en MP3, les trois quarts en Opus. Gardez le format de chaque fichier, ou passez tout en MP3, AAC ou Opus. Les préréglages Web et E-mail couvrent désormais le son.
+
+### Corrections
+- Les vidéos AV1 gardent désormais leur date et leur lieu quand « Supprimer les métadonnées » est décoché ; l'app les retirait toujours.
 
 ## v0.5.0 · 21 novembre 2026
 

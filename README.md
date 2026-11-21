@@ -4,13 +4,13 @@
 
 # Smash It
 
-A native Windows app to make images, videos and PDFs smaller — in the spirit of ImageOptim on macOS.
+A native Windows app to make images, videos, sounds and PDFs smaller — in the spirit of ImageOptim on macOS.
 
 Drop files or folders on the window: Smash It tries every engine that can handle them, keeps the smallest
 result, and only keeps it when it actually got smaller. By default the app is lossless and keeps your originals:
 the result is saved next to each file as `name-compressed.ext`, or in a `compressed` folder if you prefer.
 
-> Status: early development (v0.4). Images, PDFs and videos work today; the "Planned" column below lists what's coming.
+> Status: early development (v0.5). Images, PDFs, videos and sounds work today; the "Planned" column below lists what's coming.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md) ([en français](CHANGELOG.fr.md)). Using a keyboard or a screen reader:
 [ACCESSIBILITY.md](ACCESSIBILITY.md). How releases are built and signed: [CODE_SIGNING.md](CODE_SIGNING.md).
@@ -63,6 +63,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | | Today | Planned |
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle), or animated GIF to MP4/WebM video (ffmpeg); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
+| **Sound** | MP3, M4A/AAC, WAV, AIFF, FLAC, Ogg, Opus through ffmpeg: lossless (WAV/AIFF to FLAC, tags and cover art removed) or lossy, as music (stereo) or voice (mono, a third of the bitrate), keeping each format or converting to MP3, AAC or Opus | |
 | **Videos** | MP4 with AAC sound: H.264 or HEVC through Media Foundation (GPU encoder when available), or AV1 through ffmpeg (SVT-AV1, constant quality); MOV/MKV/AVI become MP4; optional 1080p or 720p cap | |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum); fine tuning per format (color detail, JPEG encoding, palette size, dithering, Zopfli) | |
@@ -70,7 +71,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them: JPEG, PNG, WebP and AVIF results, from JPEG, PNG, WebP, HEIC and AVIF sources | HEIC results |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
 | **Preview** | Before/after comparison for every compressed image, with a draggable split, fitted or at 100 % | |
-| **Presets** | Best quality (lossless, the default), Web (images 2560 px, videos 1080p), Email (lightest: 1920 px, 720p) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
+| **Presets** | Best quality (lossless, the default), Web (images 2560 px, videos 1080p, lossy sound at 70), Email (lightest: 1920 px, 720p, sound at 50) and Archive (lossless, metadata kept), in the bottom bar and in Settings; "Custom" as soon as a setting is changed | |
 | **Integration** | Drag & drop (or **Add files** in the empty window), Explorer right-click menu, `smashit` command line; settings, window size and position remembered between launches | Custom script engines |
 | **Languages** | English and French: French when Windows is in French, English otherwise, or chosen in Settings | |
 
@@ -181,6 +182,33 @@ AV1 takes a few times longer (about real time for 1080p on a 6-core processor) a
 recent phones, and on Windows with the free AV1 Video Extension. Encoding is in 10 bits, which avoids banding in
 skies and gradients. Unlike the Windows encoder, ffmpeg keeps the dates and location of a video when you choose to
 keep metadata, and removes them otherwise.
+
+### Sound
+
+MP3, M4A (AAC), raw AAC, WAV, AIFF, FLAC, Ogg and Opus files are compressed with ffmpeg, under **Sound** in the
+settings.
+
+- **Lossless** (the default) never touches the sound of a lossy file. WAV and AIFF become FLAC: about half the size,
+  every sample kept. FLAC files are re-encoded at FLAC's strongest setting. MP3, M4A, Ogg and Opus files only lose
+  their tags and cover art, when metadata is removed.
+- **Lossy** encodes at a bitrate set by the quality slider and the **Content**. Music stays stereo: about 96 kbit/s in
+  Opus, 160 kbit/s in AAC, LAME V2 (about 190 kbit/s) in MP3 at quality 70. **Voice** (podcasts, voice memos,
+  audiobooks) becomes mono, at about a third of that. The **Output format** keeps each file's own format by default
+  (WAV, AIFF and FLAC then become FLAC), or writes everything as MP3, AAC (M4A) or Opus.
+- A lossy file already at or below that bitrate in the same format is copied, not re-encoded, which would only lose
+  quality. Converted to another format, it never gets more bits than it had.
+
+On a 60-second rock excerpt (CD quality) and a 60-second audiobook chapter (128 kbit/s mono MP3), at quality 70:
+
+| File | FLAC (lossless) | MP3 | AAC (M4A) | Opus |
+|---|---|---|---|---|
+| Music, WAV 10.09 MB | 5.22 MB (−48 %) | 1.42 MB (−86 %) | 1.18 MB (−88 %) | **763 KB (−93 %)** |
+| Voice, MP3 939 KB, as Voice | — | 469 KB (−50 %) | 487 KB (−48 %) | **244 KB (−74 %)** |
+
+The bitrates follow the codec authors' recommendations; no listening test or perceptual score was run on them.
+How these were measured: [docs/benchmarks.md](docs/benchmarks.md#sound). With metadata kept, tags follow, and
+cover art too, except into Ogg and Opus. Floating-point WAV files stay as they are in lossless mode: FLAC would round
+their samples.
 
 ### Before/after preview
 
@@ -304,9 +332,10 @@ smashit [options] <files or folders…>
   --lossless           Lossless (default)
   --lossy              Lossy
   -q, --quality <n>    Quality 1–100 (turns on lossy mode)
-  -t, --to <format>    Converts to jpg, png, webp, avif, heic, tif, jxr, bmp
+  -t, --to <format>    Converts images to jpg, png, webp, avif, heic, tif, jxr, bmp; sounds to mp3, m4a, ogg, opus
   -e, --effort <n>     fast, balanced (default) or max
   --codec <codec>      Video: h264 (default), hevc or av1 (smallest, slower); needs --lossy or -q
+  --voice              Lossy sound: speech (mono, a third of the bitrate); --music is the default
   --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
   --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
   --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)

@@ -60,6 +60,16 @@ public enum AnimatedGifOutput
     WebM,
 }
 
+/// <summary>What a sound file holds, which decides how it is encoded in lossy mode.</summary>
+public enum AudioContent
+{
+    /// <summary>Stereo, full bandwidth.</summary>
+    Music,
+
+    /// <summary>Speech (podcast, voice memo, audiobook): mono, a fraction of the bitrate music needs.</summary>
+    Voice,
+}
+
 public sealed record CompressionOptions
 {
     public CompressionMode Mode { get; init; } = CompressionMode.Lossless;
@@ -129,6 +139,9 @@ public sealed record CompressionOptions
     /// transparent areas (which a video can't show) stay GIFs.
     /// </summary>
     public AnimatedGifOutput AnimatedGifs { get; init; } = AnimatedGifOutput.Gif;
+
+    /// <summary>Lossy sound: music keeps stereo and full bandwidth; voice is mono at a much lower bitrate.</summary>
+    public AudioContent AudioContent { get; init; } = AudioContent.Music;
 
     public static CompressionOptions Default { get; } = new();
 }
