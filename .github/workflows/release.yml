@@ -21,9 +21,9 @@ jobs:
       # for tagged releases only (a manual run stays unsigned and needs no approval).
       SIGN: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && github.ref_type == 'tag' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
@@ -73,7 +73,7 @@ jobs:
       - name: Upload the app files to sign
         if: env.SIGN == 'true'
         id: unsigned-app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unsigned-app-files
           path: |
@@ -108,7 +108,7 @@ jobs:
       - name: Upload the installer to sign
         if: env.SIGN == 'true'
         id: unsigned-installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unsigned-installer
           path: artifacts/SmashIt-Setup-x64.exe
@@ -142,7 +142,7 @@ jobs:
           ./tools/publish.ps1 -Version ${{ steps.version.outputs.value }} -Step Checksums
 
       - name: Upload build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SmashIt-${{ steps.version.outputs.value }}
           path: |
