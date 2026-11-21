@@ -1,27 +1,29 @@
 # Code signing policy
 
-> **Status:** Smash It has applied to the SignPath Foundation's free code signing program for open source
-> projects. Until it is accepted, releases are not signed and Windows SmartScreen may warn before the installer
-> runs. This page will say when signed releases start.
+> **Status:** Smash It's releases are **not code-signed** for now. Windows SmartScreen may show "Windows protected
+> your PC" before the installer runs: click **More info**, then **Run anyway**. To check that a download is the one
+> this repository built, compare its SHA-256 with `SHA256SUMS.txt`, attached to every release.
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
-[SignPath Foundation](https://signpath.org).
+The release workflow is ready to sign through the [SignPath Foundation](https://signpath.org)'s free program for
+open source projects, which requires a project with a wider following than Smash It has today. This page describes
+how signing will work once it starts.
 
-## What gets signed
+## What will be signed
 
 - Smash It's own programs and libraries: `SmashIt.exe`, `SmashIt.dll`, `SmashIt.Cli.exe`, `SmashIt.Cli.dll` and
   `SmashIt.Core.dll`.
-- The installer, `SmashIt-Setup-x64.exe`. The portable zip contains the same signed files.
+- The installer, `SmashIt-Setup-x64.exe`. The portable zip will contain the same signed files.
 
 The bundled tools (oxipng, pngquant, gifsicle, oxvg, jpegtran, cwebp, avifenc, qpdf) are other open source
-projects. They are included as their authors publish them, and are never signed with this certificate. See
+projects. They are included as their authors publish them, and will never be signed with this certificate. See
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
-## How a release is signed
+## How a release is built
 
 Every release is built from this repository's source code by the
-[Release workflow](.github/workflows/release.yml), on GitHub-hosted runners. The workflow sends Smash It's own
-files, then the installer, to SignPath. Each signing request must be approved by hand before anything is signed.
+[Release workflow](.github/workflows/release.yml), on GitHub-hosted runners. Once signing is enabled, the workflow
+will send Smash It's own files, then the installer, to SignPath, and each signing request will have to be approved
+by hand.
 
 ## Team roles
 
