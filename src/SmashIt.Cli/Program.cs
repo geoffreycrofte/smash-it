@@ -103,6 +103,16 @@ for (var i = 0; i < args.Length; i++)
             if (codec is null) return Fail(L10n.T($"Unknown codec: {args[i]} (h264, hevc, av1)", $"Codec inconnu : {args[i]} (h264, hevc, av1)"));
             options = options with { VideoCodec = codec.Value };
             break;
+        case "--encoder" when i + 1 < args.Length:
+            VideoEncoder? encoder = args[++i].ToLowerInvariant() switch
+            {
+                "ffmpeg" => VideoEncoder.Ffmpeg,
+                "windows" or "mf" => VideoEncoder.Windows,
+                _ => null,
+            };
+            if (encoder is null) return Fail(L10n.T($"Unknown encoder: {args[i]} (ffmpeg, windows)", $"Encodeur inconnu : {args[i]} (ffmpeg, windows)"));
+            options = options with { VideoEncoder = encoder.Value };
+            break;
         case "--gif" when i + 1 < args.Length:
             AnimatedGifOutput? gifOutput = args[++i].ToLowerInvariant() switch
             {
@@ -220,6 +230,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -t, --to <format>    Converts images to jpg, png, webp, avif, heic, tif, jxr, bmp; sounds to mp3, m4a, ogg, opus
       -e, --effort <n>     fast, balanced (default) or max
       --codec <codec>      Video: h264 (default), hevc or av1 (smallest, slower); needs --lossy or -q
+      --encoder <e>        H.264 and HEVC: ffmpeg (steady quality, default) or windows (fast, graphics card)
       --voice              Lossy sound: speech (mono, a third of the bitrate); --music is the default
       --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
       --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
@@ -248,6 +259,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       -t, --to <format>    Convertit les images vers jpg, png, webp, avif, heic, tif, jxr, bmp ; les sons vers mp3, m4a, ogg, opus
       -e, --effort <n>     fast, balanced (par défaut) ou max
       --codec <codec>      Vidéo : h264 (par défaut), hevc ou av1 (le plus léger, plus lent) ; nécessite --lossy ou -q
+      --encoder <e>        H.264 et HEVC : ffmpeg (qualité régulière, par défaut) ou windows (rapide, carte graphique)
       --voice              Son avec pertes : de la parole (mono, un tiers du débit) ; --music par défaut
       --gif <sortie>       GIF animés avec pertes : gif (par défaut), vidéo mp4 ou webm, souvent plus de 10 fois plus légère
       --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)

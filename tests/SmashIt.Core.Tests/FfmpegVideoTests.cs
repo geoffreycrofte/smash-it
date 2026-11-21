@@ -31,14 +31,65 @@ public class FfmpegVideoTests
     public void Quality_maps_to_a_crf(int quality, int crf) => Assert.Equal(crf, FfmpegVideoCompressor.Crf(quality));
 
     [Fact]
-    public void Only_av1_goes_to_ffmpeg_and_av1_never_to_media_foundation()
+    public void Exactly_one_engine_encodes_each_video()
     {
         var mf = new VideoCompressor();
         var ffmpeg = new FfmpegVideoCompressor();
-        Assert.True(ffmpeg.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, Av1));
-        Assert.False(mf.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, Av1));
-        Assert.False(ffmpeg.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, Av1 with { VideoCodec = VideoCodec.H264 }));
+        var windows = Av1 with { VideoEncoder = VideoEncoder.Windows };
+        foreach (var codec in Enum.GetValues<VideoCodec>())
+        foreach (var options in new[] { Av1 with { VideoCodec = codec }, windows with { VideoCodec = codec } })
+        {
+            var engines = new ICompressor[] { mf, ffmpeg }.Count(e => e.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, options));
+            Assert.Equal(1, engines);
+        }
+
+        // ffmpeg is the default for every codec; the Windows encoder only takes H.264 and HEVC when chosen.
+        Assert.True(ffmpeg.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, Av1 with { VideoCodec = VideoCodec.H264 }));
+        Assert.True(ffmpeg.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, windows));
+        Assert.True(mf.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, windows with { VideoCodec = VideoCodec.Hevc }));
         Assert.False(ffmpeg.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, Av1 with { Mode = CompressionMode.Lossless }));
+    }
+
+    [Theory]
+    [InlineData(100, 16, 18)]
+    [InlineData(70, 23, 24)]
+    [InlineData(40, 30, 30)]
+    public void Quality_maps_to_x264_and_x265_crf(int quality, int h264, int hevc)
+    {
+        Assert.Equal(h264, FfmpegVideoCompressor.H264Crf(quality));
+        Assert.Equal(hevc, FfmpegVideoCompressor.HevcCrf(quality));
+    }
+
+    [Fact]
+    public void H264_and_hevc_command_lines_use_x264_and_x265()
+    {
+        var aac = new FfmpegVideoCompressor.SourceInfo(TimeSpan.FromSeconds(10), "aac", 128_000);
+        var h264 = FfmpegVideoCompressor.Arguments(
+            new CompressionJob("in.mov", MediaFormat.Mov, "out.mp4", MediaFormat.Mp4, Av1 with { VideoCodec = VideoCodec.H264 }), aac);
+        var hevc = FfmpegVideoCompressor.Arguments(
+            new CompressionJob("in.mov", MediaFormat.Mov, "out.mp4", MediaFormat.Mp4,
+                Av1 with { VideoCodec = VideoCodec.Hevc, Effort = CompressionEffort.Maximum }), aac);
+
+        Assert.Equal(["-c:v", "libx264", "-preset", "medium", "-crf", "23", "-pix_fmt", "yuv420p"], h264.Skip(h264.IndexOf("-c:v")).Take(8));
+        Assert.Equal(["-c:v", "libx265", "-preset", "slow", "-crf", "24", "-pix_fmt", "yuv420p", "-tag:v", "hvc1"],
+            hevc.Skip(hevc.IndexOf("-c:v")).Take(10));
+    }
+
+    [Theory]
+    [InlineData(VideoCodec.H264, "h264")]
+    [InlineData(VideoCodec.Hevc, "hevc")]
+    public async Task H264_and_hevc_go_through_ffmpeg_by_default(VideoCodec codec, string name)
+    {
+        var ffmpeg = Require();
+        using var dir = new TempDirectory();
+        var video = await TestVideo.WriteAsync(dir.File("clip.mp4"), 640, 360, seconds: 2);
+
+        var result = await SmashItEngine.CreateDefaultPipeline().ProcessAsync(video, Av1 with { VideoCodec = codec }, Ct);
+
+        Assert.True(result.Status is CompressionStatus.Optimized or CompressionStatus.AlreadyOptimal, result.Message);
+        Assert.Equal("ffmpeg", result.CompressorId);
+        if (result.Status == CompressionStatus.Optimized)
+            Assert.Equal((name, 640, 360), await DescribeAsync(result.OutputPath!));
     }
 
     [Fact]

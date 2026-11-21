@@ -46,6 +46,43 @@ for 40 % more time, which is why Balanced effort uses preset 7.
 
 **Settings chosen:** quality 70 → CRF 34; Fast effort → preset 10, Balanced → 7, Maximum → 6; 10-bit output.
 
+## H.264 and HEVC
+
+*Measured on 2026-11-21, for the version after v0.5.0.*
+
+**Question:** should H.264 and HEVC go through ffmpeg (x264, x265) rather than the Windows encoder, and at which CRF
+and preset.
+
+**Files and method:** the two clips of the [AV1 section](#av1-video), scored with VMAF the same way. Times include
+decoding the source. The Windows encoder rows come from the AV1 measurements (Smash It at quality 70).
+
+```sh
+ffmpeg -i clip.mp4 -c:v libx264 -preset medium -crf 23 -c:a copy out.mp4
+ffmpeg -i clip.mp4 -c:v libx265 -preset medium -crf 24 -tag:v hvc1 -c:a copy out.mp4
+```
+
+**Results:**
+
+| Encoder | Camera footage | Animation |
+|---|---|---|
+| Windows H.264, quality 70 | 6.2 MB, VMAF 93.9, 2 s | 6.0 MB, **VMAF 84.5**, 2 s |
+| x264 `medium` CRF 22 | 7.7 MB, VMAF 93.6, 8.7 s | 8.3 MB, VMAF 94.0, 8.0 s |
+| x264 `medium` CRF 23 | 6.8 MB, VMAF 92.5, 8.0 s | 7.1 MB, VMAF 93.3, 8.3 s |
+| x264 `medium` CRF 25 | 5.4 MB, VMAF 89.7, 7.1 s | 5.2 MB, VMAF 91.6, 7.8 s |
+| x264 `slow` CRF 23 | 6.4 MB, VMAF 92.3, 11.8 s | 7.1 MB, VMAF 93.5, 11.3 s |
+| Windows HEVC, quality 70 | 3.7 MB, VMAF 90.3 | 3.6 MB, **VMAF 81.9** |
+| x265 `medium` CRF 24 | 4.1 MB, VMAF 92.5, 15.3 s | 5.8 MB, VMAF 93.7, 11.2 s |
+| x265 `medium` CRF 26 | 3.2 MB, VMAF 89.8, 13.1 s | 4.2 MB, VMAF 92.1, 10.9 s |
+
+**What it shows:** x264 is not smaller than the Windows encoder; on the camera clip, the Windows encoder even gives
+a slightly better score for its size, 4 to 6 times faster. But it targets a bitrate, and the detailed animation
+falls to VMAF 84.5 (82 in HEVC), where blur shows. At constant quality, x264 and x265 stay around 93 on both clips.
+`slow` saves 0 to 5 % over `medium` for 40 % more time.
+
+**Settings chosen:** ffmpeg is the default engine for H.264 and HEVC, the Windows encoder an option for speed (a
+choice the user made on these numbers). x264 CRF 16 / 23 / 30 at quality 100 / 70 / 40; x265 CRF 18 / 24 / 30;
+presets `veryfast` / `medium` / `slow` by effort; 8-bit output, which every player reads.
+
 ## Animated GIF to video
 
 *Measured on 2026-11-21, for the version after v0.5.0.*
