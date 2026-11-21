@@ -388,6 +388,8 @@
               <TextBlock><Hyperlink NavigateUri="https://chromium.googlesource.com/webm/libwebp">libwebp</Hyperlink><Run Text=" · BSD-3-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
               <TextBlock><Hyperlink NavigateUri="https://github.com/AOMediaCodec/libavif">libavif</Hyperlink><Run Text=" · BSD-2-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
               <TextBlock><Hyperlink NavigateUri="https://github.com/qpdf/qpdf">qpdf</Hyperlink><Run Text=" · Apache-2.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://ffmpeg.org">FFmpeg</Hyperlink><Run Text=" · GPL-3.0" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
+              <TextBlock><Hyperlink NavigateUri="https://gitlab.com/AOMediaCodec/SVT-AV1">SVT-AV1</Hyperlink><Run Text=" · BSD-3-Clause" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
               <TextBlock><Hyperlink NavigateUri="https://github.com/dotnet/runtime">.NET</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
               <TextBlock><Hyperlink NavigateUri="https://github.com/CommunityToolkit/dotnet">CommunityToolkit.Mvvm</Hyperlink><Run Text=" · MIT" Foreground="{ThemeResource TextFillColorTertiaryBrush}" /></TextBlock>
             </StackPanel>

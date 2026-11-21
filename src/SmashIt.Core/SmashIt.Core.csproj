@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <Target Name="WarnMissingTools" BeforeTargets="Build" Condition="!Exists('$(SmashItToolsDir)oxipng.exe')">
-    <Warning Text="Outils tiers absents (oxipng, pngquant, gifsicle, oxvg, jpegtran, cwebp, avifenc, qpdf) : lancez tools\fetch-tools.ps1. Seul le moteur Windows (WIC) sera disponible." />
+    <Warning Text="Outils tiers absents (oxipng, pngquant, gifsicle, oxvg, jpegtran, cwebp, avifenc, qpdf, ffmpeg) : lancez tools\fetch-tools.ps1. Seul le moteur Windows (WIC) sera disponible." />
   </Target>
 
   <ItemGroup>

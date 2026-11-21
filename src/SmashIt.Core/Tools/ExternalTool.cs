@@ -40,8 +40,12 @@ public static class ExternalTool
                 $"{Path.GetFileName(executable)} a échoué (code {result.ExitCode}){(tail.Length > 0 ? " : " + tail : ".")}"));
     }
 
-    /// <summary>Runs a tool and returns its exit code and output, whatever the exit code.</summary>
-    public static async Task<ToolResult> RunRawAsync(string executable, IEnumerable<string> arguments, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs a tool and returns its exit code and output, whatever the exit code. With <paramref name="onOutputLine"/>,
+    /// standard output is handed over line by line as the tool writes it (progress), instead of being returned.
+    /// </summary>
+    public static async Task<ToolResult> RunRawAsync(
+        string executable, IEnumerable<string> arguments, CancellationToken cancellationToken, Action<string>? onOutputLine = null)
     {
         var startInfo = new ProcessStartInfo(executable)
         {
@@ -59,7 +63,9 @@ public static class ExternalTool
         try { process.PriorityClass = ProcessPriorityClass.BelowNormal; }
         catch (InvalidOperationException) { } // already exited
 
-        var stdout = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        var stdout = onOutputLine is null
+            ? process.StandardOutput.ReadToEndAsync(CancellationToken.None)
+            : ReadLinesAsync(process.StandardOutput, onOutputLine);
         var stderr = process.StandardError.ReadToEndAsync(CancellationToken.None);
         try
         {
@@ -72,6 +78,12 @@ public static class ExternalTool
         }
 
         return new ToolResult(process.ExitCode, await stdout.ConfigureAwait(false), await stderr.ConfigureAwait(false));
+    }
+
+    private static async Task<string> ReadLinesAsync(StreamReader reader, Action<string> onLine)
+    {
+        while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line) onLine(line);
+        return "";
     }
 }
 

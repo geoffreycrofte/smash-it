@@ -6,16 +6,21 @@ name: Build tools
 #
 #   git tag tools-oxvg-0.0.9 && git push origin tools-oxvg-0.0.9
 #
+# ffmpeg is not compiled here but mirrored: BtbN's builds (github.com/BtbN/FFmpeg-Builds) are the reference for
+# Windows, but their dated builds are deleted after a while. The ffmpeg job re-publishes one pinned build, with the
+# sources it was made from (GPL): git tag tools-ffmpeg-9.0.2 && git push origin tools-ffmpeg-9.0.2
+#
 # These releases are pre-releases and never "latest": the app's download links and update check ignore them.
 on:
   push:
-    tags: ['tools-oxvg-*']
+    tags: ['tools-oxvg-*', 'tools-ffmpeg-*']
 
 permissions:
   contents: write
 
 jobs:
   oxvg:
+    if: startsWith(github.ref_name, 'tools-oxvg-')
     runs-on: windows-latest
     steps:
       - name: Version
@@ -74,4 +79,66 @@ jobs:
           # No checkout of this repository here: name it for gh.
           gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
             --title "Build tool: oxvg $version (Windows x64)" --notes-file notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ffmpeg:
+    if: startsWith(github.ref_name, 'tools-ffmpeg-')
+    runs-on: windows-latest
+    env:
+      # One pinned BtbN build: static, GPL, Windows x64. Change all four together.
+      BUILD_URL: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-21-12-37/ffmpeg-n9.0.2-61-gd59078794d-win64-gpl-9.0.zip
+      BUILD_SHA256: af402c660610929e7bb795013372aef22da756f10b3c0c785aa62fabd328e237
+      FFMPEG_COMMIT: d59078794d
+      BTBN_COMMIT: 7f2a6b1050d302144de8366afa37a75e46f326aa
+    steps:
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^tools-ffmpeg-', ''
+          if ($version -notmatch '^\d+\.\d+(\.\d+)?$') { throw "Unexpected tag $env:GITHUB_REF_NAME" }
+          if ($env:BUILD_URL -notmatch "ffmpeg-n$([regex]::Escape($version))-") { throw "The tag says $version, the pinned build doesn't." }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Download and check
+        shell: pwsh
+        run: |
+          Invoke-WebRequest $env:BUILD_URL -OutFile build.zip
+          $hash = (Get-FileHash build.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:BUILD_SHA256) { throw "SHA-256 mismatch: $hash" }
+          Expand-Archive build.zip -DestinationPath build
+          $exe = Get-ChildItem build -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          $encoders = & $exe.FullName -hide_banner -encoders
+          foreach ($name in 'libsvtav1', 'libx264', 'libx265', 'aac') {
+            if (-not ($encoders | Select-String " $name ")) { throw "Encoder $name missing." }
+          }
+
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ steps.version.outputs.value }}'
+          New-Item -ItemType Directory dist | Out-Null
+          $exe = Get-ChildItem build -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          Copy-Item $exe.FullName "dist/ffmpeg-$version-win64-gpl.exe"
+          Copy-Item (Get-ChildItem build -Recurse -Filter LICENSE.txt | Select-Object -First 1).FullName dist/ffmpeg-LICENSE.txt
+          # Corresponding source: FFmpeg at the build's commit, and the build scripts that pin every library it links.
+          Invoke-WebRequest "https://github.com/FFmpeg/FFmpeg/archive/$env:FFMPEG_COMMIT.tar.gz" -OutFile "dist/ffmpeg-source-$env:FFMPEG_COMMIT.tar.gz"
+          Invoke-WebRequest "https://github.com/BtbN/FFmpeg-Builds/archive/$env:BTBN_COMMIT.tar.gz" -OutFile "dist/ffmpeg-build-scripts-$($env:BTBN_COMMIT.Substring(0, 10)).tar.gz"
+          $hash = (Get-FileHash "dist/ffmpeg-$version-win64-gpl.exe" -Algorithm SHA256).Hash.ToLowerInvariant()
+          @"
+          ffmpeg $version (GPL), Windows x64, static: the build ``$(Split-Path $env:BUILD_URL -Leaf)`` from
+          [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds), mirrored unchanged because dated builds are
+          deleted there after a while. ffmpeg.exe is taken as is from the archive (SHA-256 ``$env:BUILD_SHA256``).
+
+          SHA-256 of the exe: ``$hash``
+
+          Source: FFmpeg at commit ``$env:FFMPEG_COMMIT`` and the BtbN build scripts at ``$env:BTBN_COMMIT``, which
+          pin the source of every library (x264, x265, SVT-AV1…), are attached.
+
+          Used by tools/fetch-tools.ps1. Not a Smash It release.
+          "@ | Set-Content notes.md -Encoding utf8
+          gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
+            --title "Build tool: ffmpeg $version (Windows x64)" --notes-file notes.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

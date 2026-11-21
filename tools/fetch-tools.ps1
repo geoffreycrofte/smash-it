@@ -93,6 +93,17 @@ $tools = @(
         # qpdf's library and the Visual C++ runtime it ships with (app-local redistributable).
         Dlls    = @('qpdf*.dll', 'msvcp140*.dll', 'vcruntime140*.dll', 'concrt140.dll')
         License = @{ 'license.rst.txt' = 'qpdf.txt' }
+    },
+    @{
+        # BtbN's static GPL build (x264, x265, SVT-AV1…), mirrored unchanged by this repository's "Build tools"
+        # workflow with its sources, because BtbN deletes dated builds after a while. Encodes AV1 videos.
+        Name       = 'ffmpeg 9.0.2'
+        Url        = 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-ffmpeg-9.0.2/ffmpeg-9.0.2-win64-gpl.exe'
+        Sha256     = 'bd2a2260fe651c7b0975b86e58c4519f9884a2b6756c909c8a5becf4de074342'
+        Files      = @('ffmpeg.exe')
+        Executable = $true
+        LicenseUrl = @{ 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-ffmpeg-9.0.2/ffmpeg-LICENSE.txt' = 'ffmpeg.txt' }
+        License    = @{}
     }
 )
 
