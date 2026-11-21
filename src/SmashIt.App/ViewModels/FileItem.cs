@@ -42,6 +42,7 @@ public sealed partial class FileItem(string path) : ObservableObject
         MediaKind.Image => "",    // Photo
         MediaKind.Document => "", // PDF
         MediaKind.Video => "",    // Video
+        MediaKind.Audio => "", // Audio
         _ => "",                  // Page
     };
 

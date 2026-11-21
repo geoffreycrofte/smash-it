@@ -14,10 +14,10 @@ public static class Strings
     public static string ColumnOptimized => T("Optimized", "Optimisé");
     public static string ColumnGain => T("Saved", "Gain");
     public static string Compare => T("Compare before / after", "Comparer avant / après");
-    public static string EmptyTitle => T("Drop your images, PDFs and videos here", "Déposez vos images, PDF et vidéos ici");
+    public static string EmptyTitle => T("Drop your images, PDFs, videos and sounds here", "Déposez vos images, PDF, vidéos et sons ici");
     public static string EmptyDetails => T(
-        "Files or folders. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI.",
-        "Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI.");
+        "Files or folders. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI, MP3, M4A, WAV, FLAC, Ogg, Opus.",
+        "Fichiers ou dossiers. JPEG, PNG, WebP, AVIF, HEIC, TIFF, GIF, SVG, PDF, MP4, MOV, MKV, AVI, MP3, M4A, WAV, FLAC, Ogg, Opus.");
     public static string DropCaption => T("Compress", "Compresser");
 
     // Main window: footer
@@ -101,6 +101,19 @@ public static class Strings
         "Text, fonts, links and forms are never changed. Lossy, images much finer than their size on the page are scaled down: 150 dpi is plenty for a screen, 300 dpi for print. Signed or encrypted PDFs are skipped.",
         "Texte, polices, liens et formulaires ne sont jamais modifiés. Avec pertes, les images bien plus fines que leur taille sur la page sont réduites : 150 ppp suffisent à l'écran, 300 ppp à l'impression. Les PDF signés ou chiffrés sont ignorés.");
 
+    // Settings: sound
+    public static string Audio => T("Sound", "Son");
+    public static string AudioCompressionName => T("Sound compression", "Compression du son");
+    public static string AudioQualityName => T("Sound quality", "Qualité du son");
+    public static string AudioContent => T("Content", "Contenu");
+    public static string AudioContentTip => T(
+        "Voice: speech comes out in mono at about a third of the bitrate music needs, just as clear.",
+        "Voix : la parole sort en mono, à environ un tiers du débit qu'il faut à la musique, tout aussi claire.");
+    public static string AudioFormatName => T("Sound output format", "Format de sortie des sons");
+    public static string AudioNote => T(
+        "Lossless, WAV and AIFF become FLAC, about half the size with every sample kept; MP3, M4A, Ogg and Opus only lose their tags and cover art when metadata is removed (setting under Images). Lossy, music becomes about 96 kbit/s in Opus, 160 in AAC, LAME V2 in MP3. A file already that light in its format is never re-encoded.",
+        "Sans perte, les WAV et AIFF deviennent des FLAC, environ deux fois plus légers, sans perdre un échantillon ; les MP3, M4A, Ogg et Opus ne perdent que leurs tags et leur pochette quand les métadonnées sont supprimées (réglage dans Images). Avec pertes, la musique passe à environ 96 kbit/s en Opus, 160 en AAC, LAME V2 en MP3. Un fichier déjà aussi léger dans son format n'est jamais réencodé.");
+
     // Settings: video
     public static string Video => T("Video", "Vidéo");
     public static string Codec => T("Codec", "Codec");
@@ -139,8 +152,8 @@ public static class Strings
     public static string ContextMenuToggle => T("Right-click menu entry", "Entrée dans le menu clic droit");
     public static string ContextMenuLabel => T("Compress with Smash It", "Compresser avec Smash It");
     public static string ContextMenuNote => T(
-        "“Compress with Smash It” on images, PDFs, videos and folders, with the settings above. On Windows 11, it's under “Show more options”.",
-        "« Compresser avec Smash It » sur les images, PDF, vidéos et dossiers, avec les réglages ci-dessus. Sous Windows 11, il se trouve dans « Afficher plus d'options ».");
+        "“Compress with Smash It” on images, PDFs, videos, sounds and folders, with the settings above. On Windows 11, it's under “Show more options”.",
+        "« Compresser avec Smash It » sur les images, PDF, vidéos, sons et dossiers, avec les réglages ci-dessus. Sous Windows 11, il se trouve dans « Afficher plus d'options ».");
 
     // Settings: about
     public static string About => T("About", "À propos");

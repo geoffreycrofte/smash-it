@@ -88,6 +88,56 @@ also does, but made the animation clip 59 % larger. WebM keeps each frame's dura
 **Settings chosen:** x264 CRF from 16 (quality 100) to 23 (70) and 30 (40), preset `veryfast` / `slow` /
 `veryslow` by effort, constant frame rate; VP9 CRF from 24 to 34 and 44, `cpu-used` 4 / 2 / 1.
 
+## Sound
+
+*Measured on 2026-11-21, for the version after v0.5.0.*
+
+**Question:** what each codec saves on music and on speech, and which bitrates to use.
+
+**Files:**
+
+- **Music:** a 60-second excerpt (from 1:00) of a CD-quality rock song in FLAC, 44.1 kHz stereo. It is "Cold Feet" by John Russell, from the album
+  [Dirt Nap](https://archive.org/details/pandacd-3978-dirt-nap) on Internet Archive (CC BY-NC-ND 3.0, used only for
+  measuring), decoded to WAV.
+- **Voice:** a 60-second excerpt (from 1:00), copied without re-encoding, of the LibriVox audiobook chapter
+  [William Again, chapter 1](https://archive.org/details/williamagain_1902_librivox) (public domain). It is a 128 kbit/s
+  mono MP3: the kind of file podcasts and audiobooks come as.
+- **Synthetic voice:** 31 seconds of English speech from the Windows speech synthesizer (`System.Speech`), saved as a
+  44.1 kHz mono WAV.
+
+**Tools:** ffmpeg n9.0.2 (LAME, libopus, libvorbis, ffmpeg's own AAC and FLAC encoders), through the Smash It command
+line.
+
+```sh
+smashit --lossless --keep music.wav voice.mp3            # FLAC; tags only for the MP3
+smashit -q 70 -t opus --keep music.wav                   # music, Opus
+smashit -q 70 --voice -t m4a --keep voice.mp3            # speech, AAC
+```
+
+**Results at quality 70** (the music as Music, the speech as Voice):
+
+| File | FLAC | MP3 | AAC (M4A) | Opus |
+|---|---|---|---|---|
+| Music, WAV 10.09 MB | 5.22 MB (−48 %) | 1.42 MB (−86 %), V2 | 1.18 MB (−88 %), 160 kbit/s | **763 KB (−93 %)**, 96 kbit/s |
+| Voice, MP3 939 KB | — | 469 KB (−50 %), 64 kbit/s | 487 KB (−48 %), 64 kbit/s | **244 KB (−74 %)**, 32 kbit/s |
+| Synthetic voice, WAV 2.65 MB | 797 KB (−71 %) | 247 KB (−91 %) | 235 KB (−91 %) | **118 KB (−96 %)** |
+
+Each file takes well under a second. FLAC at its strongest setting (Maximum effort, level 12) saves another 4 % on
+the music (5.02 MB). The 128 kbit/s mono MP3, treated as music, is copied rather than re-encoded: mono music at
+quality 70 needs about 114 kbit/s, too close to what it already has to be worth a generation of loss. In lossless
+mode it only loses its tags (about 100 bytes here).
+
+Bitrate sweeps on the music (Opus 64/96/128 kbit/s: 510/763/1025 KB; AAC 128/160/192 kbit/s; LAME V0/V2/V4/V5:
+1.89/1.42/1.14/0.96 MB) and the speech (Opus 16/24/32/48 kbit/s) gave the sizes the bitrates predict.
+
+**Quality:** not measured. ffmpeg has no perceptual score for sound like VMAF for video, and no listening test was
+run. The bitrates follow the codec authors' recommendations: Opus at 96 kbit/s for stereo music and 32 kbit/s for
+speech, LAME V2 for music. Quality 70 sits on those points, and the slider moves around them.
+
+**Settings chosen:** music at quality 100 / 70 / 40: Opus 160 / 96 / 64 kbit/s, AAC 256 / 160 / 112 kbit/s, MP3 V0 /
+V2 / V5, Vorbis q8 / q5 / q3. Voice (mono): Opus 48 / 32 / 24 kbit/s, AAC and MP3 96 / 64 / 48 kbit/s. Mono music
+gets 60 % of the stereo bitrate.
+
 ## Earlier measurements
 
 These figures appear in the README; their test files and commands weren't recorded at the time. They will be

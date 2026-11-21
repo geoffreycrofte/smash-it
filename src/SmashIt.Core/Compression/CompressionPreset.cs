@@ -15,7 +15,7 @@ public enum PresetId
     Archive,
 }
 
-/// <summary>The settings a preset sets, for each kind of file. Video is always lossy.</summary>
+/// <summary>The settings a preset sets, for each kind of file. Video is always lossy; sound is lossless unless set.</summary>
 public sealed record PresetSettings(
     bool ImageLossy,
     int ImageQuality,
@@ -25,7 +25,9 @@ public sealed record PresetSettings(
     int PdfMaxImageDpi,
     int VideoQuality,
     int VideoMaxShortSide = 0,
-    int ImageMaxSide = 0);
+    int ImageMaxSide = 0,
+    bool AudioLossy = false,
+    int AudioQuality = 70);
 
 /// <summary>Ready-made settings: one choice instead of a setting per kind of file.</summary>
 public static class CompressionPresets
@@ -37,9 +39,11 @@ public static class CompressionPresets
         // Web: 1080p videos and 2560 px images are plenty for a page, even on a large screen. Email: 720p and
         // 1920 px keep phone videos and photos small enough to send.
         [PresetId.Web] = new(ImageLossy: true, ImageQuality: 80, StripMetadata: true,
-            PdfLossy: true, PdfQuality: 75, PdfMaxImageDpi: 150, VideoQuality: 65, VideoMaxShortSide: 1080, ImageMaxSide: 2560),
+            PdfLossy: true, PdfQuality: 75, PdfMaxImageDpi: 150, VideoQuality: 65, VideoMaxShortSide: 1080, ImageMaxSide: 2560,
+            AudioLossy: true, AudioQuality: 70),
         [PresetId.Email] = new(ImageLossy: true, ImageQuality: 70, StripMetadata: true,
-            PdfLossy: true, PdfQuality: 60, PdfMaxImageDpi: 150, VideoQuality: 55, VideoMaxShortSide: 720, ImageMaxSide: 1920),
+            PdfLossy: true, PdfQuality: 60, PdfMaxImageDpi: 150, VideoQuality: 55, VideoMaxShortSide: 720, ImageMaxSide: 1920,
+            AudioLossy: true, AudioQuality: 50),
         [PresetId.Archive] = new(ImageLossy: false, ImageQuality: 90, StripMetadata: false,
             PdfLossy: false, PdfQuality: 90, PdfMaxImageDpi: 300, VideoQuality: 80),
     };
@@ -58,5 +62,7 @@ public static class CompressionPresets
         preset.PdfLossy == current.PdfLossy &&
         (!preset.PdfLossy || (preset.PdfQuality == current.PdfQuality && preset.PdfMaxImageDpi == current.PdfMaxImageDpi)) &&
         preset.VideoQuality == current.VideoQuality &&
-        preset.VideoMaxShortSide == current.VideoMaxShortSide;
+        preset.VideoMaxShortSide == current.VideoMaxShortSide &&
+        preset.AudioLossy == current.AudioLossy &&
+        (!preset.AudioLossy || preset.AudioQuality == current.AudioQuality);
 }

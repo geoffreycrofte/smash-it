@@ -314,6 +314,33 @@
 
           <StackPanel Style="{StaticResource SectionCardStyle}">
             <StackPanel Orientation="Horizontal" Spacing="8">
+              <FontIcon Glyph="&#xE8D6;" FontSize="16" />
+              <TextBlock Text="{x:Bind app:Strings.Audio}" Style="{StaticResource SectionHeaderStyle}" />
+            </StackPanel>
+            <ToggleSwitch Header="{x:Bind app:Strings.Compression}" AutomationProperties.Name="{x:Bind app:Strings.AudioCompressionName}"
+                          OffContent="{x:Bind app:Strings.Lossless}" OnContent="{x:Bind app:Strings.Lossy}"
+                          IsOn="{x:Bind ViewModel.AudioLossy, Mode=TwoWay}" />
+            <Slider Header="{x:Bind app:Strings.Quality}" AutomationProperties.Name="{x:Bind app:Strings.AudioQualityName}" Minimum="1" Maximum="100" StepFrequency="1" TickFrequency="10" TickPlacement="Outside"
+                    IsEnabled="{x:Bind ViewModel.AudioLossy, Mode=OneWay}"
+                    Value="{x:Bind ViewModel.AudioQuality, Mode=TwoWay}" />
+            <ComboBox Header="{x:Bind app:Strings.AudioContent}" HorizontalAlignment="Stretch"
+                      IsEnabled="{x:Bind ViewModel.AudioLossy, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.AudioContents}"
+                      SelectedItem="{x:Bind ViewModel.SelectedAudioContent, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      ToolTipService.ToolTip="{x:Bind app:Strings.AudioContentTip}" />
+            <ComboBox Header="{x:Bind app:Strings.OutputFormat}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="{x:Bind app:Strings.AudioFormatName}"
+                      IsEnabled="{x:Bind ViewModel.AudioLossy, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.AudioFormats}"
+                      SelectedItem="{x:Bind ViewModel.SelectedAudioFormat, Mode=TwoWay}"
+                      DisplayMemberPath="Label" />
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                       Text="{x:Bind app:Strings.AudioNote}" />
+          </StackPanel>
+
+          <StackPanel Style="{StaticResource SectionCardStyle}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
               <FontIcon Glyph="&#xE8B7;" FontSize="16" />
               <TextBlock Text="{x:Bind app:Strings.AllFiles}" Style="{StaticResource SectionHeaderStyle}" />
             </StackPanel>

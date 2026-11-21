@@ -20,5 +20,6 @@ public static class SmashItEngine
         new VideoCompressor(),
         new FfmpegVideoCompressor(),
         new FfmpegGifVideoCompressor(),
+        new FfmpegAudioCompressor(),
     ]);
 }

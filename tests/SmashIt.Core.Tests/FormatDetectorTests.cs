@@ -12,6 +12,9 @@ public class FormatDetectorTests
     [InlineData(new byte[] { 0x4D, 0x4D, 0x00, 0x2A, 0, 8 }, MediaFormat.Tiff)]
     [InlineData(new byte[] { 0x49, 0x49, 0xBC, 0x01 }, MediaFormat.JpegXr)]
     [InlineData(new byte[] { 0x1A, 0x45, 0xDF, 0xA3, 0x9F }, MediaFormat.Mkv)]
+    [InlineData(new byte[] { 0xFF, 0xFB, 0x90, 0x64 }, MediaFormat.Mp3)] // MPEG-1 layer III frame
+    [InlineData(new byte[] { 0xFF, 0xF1, 0x50, 0x80 }, MediaFormat.Aac)] // ADTS
+    [InlineData(new byte[] { 0xFF, 0xFE, 0x3C, 0x00 }, MediaFormat.Unknown)] // UTF-16 text, not a sound frame
     [InlineData(new byte[] { 0x00, 0x01, 0x02 }, MediaFormat.Unknown)]
     [InlineData(new byte[0], MediaFormat.Unknown)]
     public void Detects_binary_signatures(byte[] header, MediaFormat expected) =>
@@ -26,6 +29,13 @@ public class FormatDetectorTests
     [InlineData("<?xml version=\"1.0\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\"/>", MediaFormat.Svg)]
     [InlineData("  <svg viewBox=\"0 0 1 1\"></svg>", MediaFormat.Svg)]
     [InlineData("<?xml version=\"1.0\"?><html/>", MediaFormat.Unknown)]
+    [InlineData("RIFF\0\0\0\0WAVEfmt ", MediaFormat.Wav)]
+    [InlineData("FORM\0\0\0\0AIFFCOMM", MediaFormat.Aiff)]
+    [InlineData("FORM\0\0\0\0AIFCFVER", MediaFormat.Aiff)]
+    [InlineData("fLaC\0\0\0\x22", MediaFormat.Flac)]
+    [InlineData("OggS\0\x02\0\0\0\0\0\0\0\0OpusHead", MediaFormat.Opus)]
+    [InlineData("OggS\0\x02\0\0\0\0\0\0\0\0\x01vorbis", MediaFormat.Ogg)]
+    [InlineData("ID3\x03\0\0\0\0\0\0", MediaFormat.Mp3)]
     public void Detects_ascii_signatures(string header, MediaFormat expected) =>
         Assert.Equal(expected, FormatDetector.Detect(Encoding.Latin1.GetBytes(header)));
 
@@ -36,6 +46,7 @@ public class FormatDetectorTests
     [InlineData("mif1", new[] { "avif", "mif1" }, MediaFormat.Avif)]
     [InlineData("isom", new[] { "isom", "iso2", "avc1", "mp41" }, MediaFormat.Mp4)]
     [InlineData("qt  ", new[] { "qt  " }, MediaFormat.Mov)]
+    [InlineData("M4A ", new[] { "M4A ", "mp42", "isom" }, MediaFormat.M4a)]
     public void Tells_iso_bmff_files_apart_by_brand(string major, string[] compatible, MediaFormat expected) =>
         Assert.Equal(expected, FormatDetector.Detect(Ftyp(major, compatible)));
 

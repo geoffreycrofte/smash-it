@@ -114,6 +114,12 @@ for (var i = 0; i < args.Length; i++)
             if (gifOutput is null) return Fail(L10n.T($"Unknown GIF output: {args[i]} (gif, mp4, webm)", $"Sortie GIF inconnue : {args[i]} (gif, mp4, webm)"));
             options = options with { AnimatedGifs = gifOutput.Value };
             break;
+        case "--voice":
+            options = options with { AudioContent = AudioContent.Voice };
+            break;
+        case "--music":
+            options = options with { AudioContent = AudioContent.Music };
+            break;
         case "--keep-metadata":
             options = options with { StripMetadata = false };
             break;
@@ -204,16 +210,17 @@ static int Fail(string message)
 }
 
 static void PrintHelp() => Console.WriteLine(L10n.T("""
-    Smash It — image, PDF and video compression
+    Smash It — image, PDF, video and sound compression
 
     Usage: smashit [options] <files or folders…>
 
       --lossless           Lossless (default)
       --lossy              Lossy
       -q, --quality <n>    Quality 1–100 (turns on lossy mode)
-      -t, --to <format>    Converts to jpg, png, webp, avif, heic, tif, jxr, bmp
+      -t, --to <format>    Converts images to jpg, png, webp, avif, heic, tif, jxr, bmp; sounds to mp3, m4a, ogg, opus
       -e, --effort <n>     fast, balanced (default) or max
       --codec <codec>      Video: h264 (default), hevc or av1 (smallest, slower); needs --lossy or -q
+      --voice              Lossy sound: speech (mono, a third of the bitrate); --music is the default
       --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
       --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
       --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
@@ -231,16 +238,17 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --strip-metadata     Removes them (default; color profile and orientation are kept)
       -h, --help           Shows this help
     """, """
-    Smash It — compression d'images, de PDF et de vidéos
+    Smash It — compression d'images, de PDF, de vidéos et de sons
 
     Usage : smashit [options] <fichiers ou dossiers…>
 
       --lossless           Sans perte (par défaut)
       --lossy              Avec pertes
       -q, --quality <n>    Qualité 1–100 (active le mode avec pertes)
-      -t, --to <format>    Convertit vers jpg, png, webp, avif, heic, tif, jxr, bmp
+      -t, --to <format>    Convertit les images vers jpg, png, webp, avif, heic, tif, jxr, bmp ; les sons vers mp3, m4a, ogg, opus
       -e, --effort <n>     fast, balanced (par défaut) ou max
       --codec <codec>      Vidéo : h264 (par défaut), hevc ou av1 (le plus léger, plus lent) ; nécessite --lossy ou -q
+      --voice              Son avec pertes : de la parole (mono, un tiers du débit) ; --music par défaut
       --gif <sortie>       GIF animés avec pertes : gif (par défaut), vidéo mp4 ou webm, souvent plus de 10 fois plus légère
       --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
       --video-max <n>      Vidéos : ramène le petit côté à n pixels, ex. 1080 ou 720 (par défaut : inchangé)

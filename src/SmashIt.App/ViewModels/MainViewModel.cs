@@ -64,6 +64,30 @@ public sealed record MaxColorsChoice(int Colors)
     public override string ToString() => Label;
 }
 
+/// <summary>What sound files hold: music or speech.</summary>
+public sealed record AudioContentChoice(AudioContent Content)
+{
+    public string Label => Content == AudioContent.Voice
+        ? L10n.T("Voice (podcast, memo, audiobook)", "Voix (podcast, mémo, livre audio)")
+        : L10n.T("Music", "Musique");
+
+    public override string ToString() => Label;
+}
+
+/// <summary>The format lossy sound is written in; <c>null</c> keeps each file's own.</summary>
+public sealed record AudioFormatChoice(MediaFormat? Format)
+{
+    public string Label => Format switch
+    {
+        MediaFormat.Mp3 => L10n.T("MP3 (plays everywhere)", "MP3 (compatible partout)"),
+        MediaFormat.M4a => L10n.T("AAC / M4A (Apple, phones)", "AAC / M4A (Apple, téléphones)"),
+        MediaFormat.Opus => L10n.T("Opus (lightest)", "Opus (le plus léger)"),
+        _ => L10n.T("Keep the format", "Conserver le format"),
+    };
+
+    public override string ToString() => Label;
+}
+
 /// <summary>What animated GIFs become in lossy mode.</summary>
 public sealed record AnimatedGifChoice(AnimatedGifOutput Output)
 {
@@ -107,8 +131,8 @@ public sealed record PresetChoice(PresetId? Id)
             "Files get smaller without any visible change. Metadata (camera, GPS…) is removed.",
             "Les fichiers s'allègent sans aucun changement visible. Les métadonnées (appareil, GPS…) sont retirées."),
         PresetId.Web => L10n.T(
-            "Much lighter images, PDFs and videos for websites, sharp on screen. Large photos are brought down to 2560 px, videos to 1080p.",
-            "Images, PDF et vidéos bien plus légers pour un site web, nets à l'écran. Les grandes photos sont ramenées à 2560 px, les vidéos à 1080p."),
+            "Much lighter images, PDFs, videos and sounds for websites, sharp on screen. Large photos are brought down to 2560 px, videos to 1080p.",
+            "Images, PDF, vidéos et sons bien plus légers pour un site web, nets à l'écran. Les grandes photos sont ramenées à 2560 px, les vidéos à 1080p."),
         PresetId.Email => L10n.T(
             "The smallest files, to send by email or message, good for viewing on screen. Photos are brought down to 1920 px, videos to 720p.",
             "Les fichiers les plus petits, à envoyer par e-mail ou message, bons à l'écran. Les photos sont ramenées à 1920 px, les vidéos à 720p."),
@@ -244,6 +268,7 @@ public sealed partial class MainViewModel : ObservableObject
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality),
         nameof(SelectedPdfResolution), nameof(VideoQuality), nameof(SelectedVideoResolution), nameof(SelectedImageSize),
+        nameof(AudioLossy), nameof(AudioQuality),
     ];
 
     private bool _applyingPreset;
@@ -264,6 +289,8 @@ public sealed partial class MainViewModel : ObservableObject
             SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == preset.PdfMaxImageDpi) ?? SelectedPdfResolution;
             VideoQuality = preset.VideoQuality;
             SelectedVideoResolution = VideoResolutions.FirstOrDefault(r => r.ShortSide == preset.VideoMaxShortSide) ?? VideoResolutions[0];
+            AudioLossy = preset.AudioLossy;
+            AudioQuality = preset.AudioQuality;
         }
         finally
         {
@@ -277,7 +304,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (_applyingPreset || SelectedPdfResolution is null || SelectedVideoResolution is null || SelectedImageSize is null) return;
         var id = CompressionPresets.Match(new PresetSettings(
             ImageLossy, (int)Math.Round(ImageQuality), StripMetadata, PdfLossy, (int)Math.Round(PdfQuality),
-            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality), SelectedVideoResolution.ShortSide, SelectedImageSize.LongSide));
+            SelectedPdfResolution.Dpi, (int)Math.Round(VideoQuality), SelectedVideoResolution.ShortSide, SelectedImageSize.LongSide,
+            AudioLossy, (int)Math.Round(AudioQuality)));
         var choice = Presets.First(p => p.Id == id);
         if (choice == SelectedPreset) return;
         _applyingPreset = true;
@@ -373,6 +401,25 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial VideoResolutionChoice SelectedVideoResolution { get; set; }
 
+    // Sound
+    [ObservableProperty]
+    public partial bool AudioLossy { get; set; }
+
+    [ObservableProperty]
+    public partial double AudioQuality { get; set; } = 70;
+
+    public IReadOnlyList<AudioContentChoice> AudioContents { get; } = [new(AudioContent.Music), new(AudioContent.Voice)];
+
+    [ObservableProperty]
+    public partial AudioContentChoice SelectedAudioContent { get; set; }
+
+    public IReadOnlyList<AudioFormatChoice> AudioFormats { get; } =
+        [new(null), new(MediaFormat.Mp3), new(MediaFormat.M4a), new(MediaFormat.Opus)];
+
+    /// <summary>Lossy only: the format every sound file is written in; <c>null</c> keeps each file's.</summary>
+    [ObservableProperty]
+    public partial AudioFormatChoice SelectedAudioFormat { get; set; }
+
     // All files
     // On by default: nothing is replaced until the user asks for it.
     [ObservableProperty]
@@ -422,7 +469,8 @@ public sealed partial class MainViewModel : ObservableObject
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
         nameof(SelectedVideoCodec), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
         nameof(AskOutputLocation), nameof(SelectedColorDetail), nameof(SelectedJpegEncoding), nameof(SelectedMaxColors),
-        nameof(Dithering), nameof(Zopfli), nameof(SelectedAnimatedGif),
+        nameof(Dithering), nameof(Zopfli), nameof(SelectedAnimatedGif), nameof(AudioLossy), nameof(AudioQuality),
+        nameof(SelectedAudioContent), nameof(SelectedAudioFormat),
     ];
 
     // Sliders change many times per second: the file is written once they settle.
@@ -451,6 +499,10 @@ public sealed partial class MainViewModel : ObservableObject
         VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
         SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
         SelectedVideoResolution = VideoResolutions.FirstOrDefault(r => r.ShortSide == settings.VideoMaxShortSide) ?? VideoResolutions[0];
+        AudioLossy = settings.AudioLossy;
+        AudioQuality = Math.Clamp(settings.AudioQuality, 1, 100);
+        SelectedAudioContent = AudioContents.FirstOrDefault(c => c.Content == settings.AudioContent) ?? AudioContents[0];
+        SelectedAudioFormat = AudioFormats.FirstOrDefault(f => f.Format == settings.AudioFormat) ?? AudioFormats[0];
         KeepOriginal = settings.KeepOriginal;
         OutputLocationIndex = settings.SaveInCompressedFolder ? 1 : 0;
         CopyAlreadyOptimal = settings.CopyAlreadyOptimal;
@@ -500,6 +552,10 @@ public sealed partial class MainViewModel : ObservableObject
         settings.VideoQuality = (int)Math.Round(VideoQuality);
         settings.VideoCodec = SelectedVideoCodec.Codec;
         settings.VideoMaxShortSide = SelectedVideoResolution.ShortSide;
+        settings.AudioLossy = AudioLossy;
+        settings.AudioQuality = (int)Math.Round(AudioQuality);
+        settings.AudioContent = SelectedAudioContent.Content;
+        settings.AudioFormat = SelectedAudioFormat.Format;
         settings.KeepOriginal = KeepOriginal;
         settings.SaveInCompressedFolder = OutputLocationIndex == 1;
         settings.CopyAlreadyOptimal = CopyAlreadyOptimal;
@@ -548,7 +604,7 @@ public sealed partial class MainViewModel : ObservableObject
         ContextMenuEnabled = _contextMenu.IsRegistered;
     }
 
-    /// <summary>The settings of the section matching the kind of file (images, PDF, video).</summary>
+    /// <summary>The settings of the section matching the kind of file (images, PDF, video, sound).</summary>
     private CompressionOptions OptionsFor(MediaKind kind)
     {
         var common = new CompressionOptions
@@ -556,6 +612,7 @@ public sealed partial class MainViewModel : ObservableObject
             OriginalHandling = KeepOriginal ? OriginalHandling.KeepAlongside : OriginalHandling.RecycleBin,
             KeptOriginalFolder = KeepOriginal && OutputLocationIndex == 1 ? CompressionOptions.CompressedFolderName : null,
             CopyAlreadyOptimal = CopyAlreadyOptimal,
+            StripMetadata = StripMetadata,
         };
         return kind switch
         {
@@ -572,6 +629,14 @@ public sealed partial class MainViewModel : ObservableObject
                 VideoCodec = SelectedVideoCodec.Codec,
                 VideoMaxShortSide = SelectedVideoResolution.ShortSide,
             },
+            MediaKind.Audio => common with
+            {
+                Mode = AudioLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
+                Quality = (int)Math.Round(AudioQuality),
+                AudioContent = SelectedAudioContent.Content,
+                // Lossless mode never changes a lossy format.
+                TargetFormat = AudioLossy ? SelectedAudioFormat.Format : null,
+            },
             _ => common with
             {
                 Mode = ImageLossy ? CompressionMode.Lossy : CompressionMode.Lossless,
@@ -580,7 +645,6 @@ public sealed partial class MainViewModel : ObservableObject
                 Effort = SelectedEffort.Effort,
                 TargetFormat = SelectedOutputFormat.Format,
                 AnimatedGifs = SelectedAnimatedGif.Output,
-                StripMetadata = StripMetadata,
                 Tuning = Tuning,
             },
         };
