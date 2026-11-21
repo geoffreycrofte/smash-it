@@ -15,6 +15,7 @@ How this file works:
 
 ### New
 - **Lighter photos.** In lossy mode, pick a maximum size (3840, 2560, 1920 or 1280 pixels on the long side) and larger images are scaled down to it, never enlarged. A large photo at 2560 px is often half as heavy, at 1920 px a quarter, and still sharp on any screen. The Web preset uses 2560 px, Email 1920 px.
+- **Fine tuning.** Under Images in Settings, for those who want more control: color detail for JPEG and AVIF, progressive or baseline JPEG, a maximum number of colors for PNG and GIF, dithering on or off, and Zopfli for the smallest PNGs. Without dithering, a lossy screenshot can get several times smaller.
 
 ### Improved
 - **The window opens where you left it**, at the same size, maximized if it was. If that screen is no longer connected, it opens in the middle of the main one.

@@ -232,6 +232,38 @@
             <CheckBox Content="{x:Bind app:Strings.StripMetadata}"
                       IsChecked="{x:Bind ViewModel.StripMetadata, Mode=TwoWay}"
                       ToolTipService.ToolTip="{x:Bind app:Strings.StripMetadataTip}" />
+            <Expander Header="{x:Bind app:Strings.FineTuning}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+              <StackPanel Spacing="12">
+                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
+                           Text="{x:Bind app:Strings.FineTuningNote}" />
+                <ComboBox Header="{x:Bind app:Strings.ColorDetail}" HorizontalAlignment="Stretch"
+                          AutomationProperties.Name="{x:Bind app:Strings.ColorDetailName}"
+                          IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
+                          ItemsSource="{x:Bind ViewModel.ColorDetails}"
+                          SelectedItem="{x:Bind ViewModel.SelectedColorDetail, Mode=TwoWay}"
+                          DisplayMemberPath="Label"
+                          ToolTipService.ToolTip="{x:Bind app:Strings.ColorDetailTip}" />
+                <ComboBox Header="{x:Bind app:Strings.JpegEncoding}" HorizontalAlignment="Stretch"
+                          ItemsSource="{x:Bind ViewModel.JpegEncodings}"
+                          SelectedItem="{x:Bind ViewModel.SelectedJpegEncoding, Mode=TwoWay}"
+                          DisplayMemberPath="Label"
+                          ToolTipService.ToolTip="{x:Bind app:Strings.JpegEncodingTip}" />
+                <ComboBox Header="{x:Bind app:Strings.MaxColors}" HorizontalAlignment="Stretch"
+                          AutomationProperties.Name="{x:Bind app:Strings.MaxColorsName}"
+                          IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
+                          ItemsSource="{x:Bind ViewModel.MaxColorsChoices}"
+                          SelectedItem="{x:Bind ViewModel.SelectedMaxColors, Mode=TwoWay}"
+                          DisplayMemberPath="Label"
+                          ToolTipService.ToolTip="{x:Bind app:Strings.MaxColorsTip}" />
+                <CheckBox Content="{x:Bind app:Strings.Dithering}"
+                          IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
+                          IsChecked="{x:Bind ViewModel.Dithering, Mode=TwoWay}"
+                          ToolTipService.ToolTip="{x:Bind app:Strings.DitheringTip}" />
+                <CheckBox Content="{x:Bind app:Strings.Zopfli}"
+                          IsChecked="{x:Bind ViewModel.Zopfli, Mode=TwoWay}"
+                          ToolTipService.ToolTip="{x:Bind app:Strings.ZopfliTip}" />
+              </StackPanel>
+            </Expander>
           </StackPanel>
 
           <StackPanel Style="{StaticResource SectionCardStyle}">

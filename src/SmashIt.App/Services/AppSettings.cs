@@ -29,6 +29,8 @@ public sealed class AppSettings
     public MediaFormat? OutputFormat { get; set; }
     public CompressionEffort Effort { get; set; } = CompressionEffort.Balanced;
     public bool StripMetadata { get; set; } = true;
+    /// <summary>Image fine tuning (color detail, JPEG encoding, palette, dithering, Zopfli); presets leave it alone.</summary>
+    public ImageTuning? Tuning { get; set; }
     public bool PdfLossy { get; set; }
     public int PdfQuality { get; set; } = 75;
     /// <summary>Lossy PDFs: images are scaled down to this resolution at most; 0 keeps them as they are.</summary>

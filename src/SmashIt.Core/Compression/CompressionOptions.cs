@@ -102,5 +102,8 @@ public sealed record CompressionOptions
     /// </summary>
     public int ImageMaxSide { get; init; }
 
+    /// <summary>Per-engine image settings (color detail, JPEG encoding, palette, dithering, Zopfli).</summary>
+    public ImageTuning Tuning { get; init; } = ImageTuning.Default;
+
     public static CompressionOptions Default { get; } = new();
 }

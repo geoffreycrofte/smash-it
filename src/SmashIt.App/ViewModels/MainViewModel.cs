@@ -31,6 +31,39 @@ public sealed record EffortChoice(CompressionEffort Effort)
     public override string ToString() => Label;
 }
 
+public sealed record ColorDetailChoice(ColorDetail Detail)
+{
+    public string Label => Detail switch
+    {
+        ColorDetail.Full => L10n.T("Full (4:4:4)", "Complet (4:4:4)"),
+        ColorDetail.Reduced => L10n.T("Reduced (4:2:0)", "Réduit (4:2:0)"),
+        _ => L10n.T("Automatic", "Automatique"),
+    };
+
+    public override string ToString() => Label;
+}
+
+public sealed record JpegEncodingChoice(JpegEncoding Encoding)
+{
+    public string Label => Encoding switch
+    {
+        JpegEncoding.Progressive => L10n.T("Progressive", "Progressif"),
+        JpegEncoding.Baseline => L10n.T("Baseline", "Classique (baseline)"),
+        _ => L10n.T("Automatic (the smaller one)", "Automatique (le plus petit)"),
+    };
+
+    public override string ToString() => Label;
+}
+
+public sealed record MaxColorsChoice(int Colors)
+{
+    public string Label => Colors == 0
+        ? L10n.T("Automatic (up to 256)", "Automatique (jusqu'à 256)")
+        : L10n.T($"{Colors} colors", $"{Colors} couleurs");
+
+    public override string ToString() => Label;
+}
+
 public sealed record VideoCodecChoice(VideoCodec Codec)
 {
     public string Label => Codec == VideoCodec.Hevc
@@ -257,6 +290,39 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool StripMetadata { get; set; } = true;
 
+    // Images, fine tuning: kept apart from the presets.
+    public IReadOnlyList<ColorDetailChoice> ColorDetails { get; } =
+        [new(ColorDetail.Automatic), new(ColorDetail.Full), new(ColorDetail.Reduced)];
+
+    [ObservableProperty]
+    public partial ColorDetailChoice SelectedColorDetail { get; set; }
+
+    public IReadOnlyList<JpegEncodingChoice> JpegEncodings { get; } =
+        [new(JpegEncoding.Automatic), new(JpegEncoding.Progressive), new(JpegEncoding.Baseline)];
+
+    [ObservableProperty]
+    public partial JpegEncodingChoice SelectedJpegEncoding { get; set; }
+
+    public IReadOnlyList<MaxColorsChoice> MaxColorsChoices { get; } = [new(0), new(128), new(64), new(32), new(16)];
+
+    [ObservableProperty]
+    public partial MaxColorsChoice SelectedMaxColors { get; set; }
+
+    [ObservableProperty]
+    public partial bool Dithering { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool Zopfli { get; set; }
+
+    private ImageTuning Tuning => new()
+    {
+        ColorDetail = SelectedColorDetail.Detail,
+        JpegEncoding = SelectedJpegEncoding.Encoding,
+        MaxColors = SelectedMaxColors.Colors,
+        Dithering = Dithering,
+        Zopfli = Zopfli,
+    };
+
     // PDF
     [ObservableProperty]
     public partial bool PdfLossy { get; set; }
@@ -331,7 +397,8 @@ public sealed partial class MainViewModel : ObservableObject
         nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedImageSize), nameof(SelectedOutputFormat), nameof(SelectedEffort),
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
         nameof(SelectedVideoCodec), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
-        nameof(AskOutputLocation),
+        nameof(AskOutputLocation), nameof(SelectedColorDetail), nameof(SelectedJpegEncoding), nameof(SelectedMaxColors),
+        nameof(Dithering), nameof(Zopfli),
     ];
 
     // Sliders change many times per second: the file is written once they settle.
@@ -347,6 +414,12 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedOutputFormat = OutputFormats.FirstOrDefault(f => f.Format == settings.OutputFormat) ?? OutputFormats[0];
         SelectedEffort = Efforts.FirstOrDefault(e => e.Effort == settings.Effort) ?? Efforts[1];
         StripMetadata = settings.StripMetadata;
+        var tuning = settings.Tuning ?? ImageTuning.Default;
+        SelectedColorDetail = ColorDetails.FirstOrDefault(c => c.Detail == tuning.ColorDetail) ?? ColorDetails[0];
+        SelectedJpegEncoding = JpegEncodings.FirstOrDefault(e => e.Encoding == tuning.JpegEncoding) ?? JpegEncodings[0];
+        SelectedMaxColors = MaxColorsChoices.FirstOrDefault(c => c.Colors == tuning.MaxColors) ?? MaxColorsChoices[0];
+        Dithering = tuning.Dithering;
+        Zopfli = tuning.Zopfli;
         PdfLossy = settings.PdfLossy;
         PdfQuality = Math.Clamp(settings.PdfQuality, 1, 100);
         SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == settings.PdfMaxImageDpi) ?? PdfResolutions[^1];
@@ -394,6 +467,7 @@ public sealed partial class MainViewModel : ObservableObject
         settings.OutputFormat = SelectedOutputFormat.Format;
         settings.Effort = SelectedEffort.Effort;
         settings.StripMetadata = StripMetadata;
+        settings.Tuning = Tuning;
         settings.PdfLossy = PdfLossy;
         settings.PdfQuality = (int)Math.Round(PdfQuality);
         settings.PdfMaxImageDpi = SelectedPdfResolution.Dpi;
@@ -480,6 +554,7 @@ public sealed partial class MainViewModel : ObservableObject
                 Effort = SelectedEffort.Effort,
                 TargetFormat = SelectedOutputFormat.Format,
                 StripMetadata = StripMetadata,
+                Tuning = Tuning,
             },
         };
     }

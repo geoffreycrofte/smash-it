@@ -56,6 +56,38 @@ for (var i = 0; i < args.Length; i++)
             options = options with { ImageMaxSide = longSide };
             i++;
             break;
+        case "--color-detail" when i + 1 < args.Length:
+            ColorDetail? detail = args[++i].ToLowerInvariant() switch
+            {
+                "auto" => ColorDetail.Automatic,
+                "full" or "444" or "4:4:4" => ColorDetail.Full,
+                "reduced" or "420" or "4:2:0" => ColorDetail.Reduced,
+                _ => null,
+            };
+            if (detail is null) return Fail(L10n.T($"Unknown color detail: {args[i]} (auto, full, reduced)", $"Détail des couleurs inconnu : {args[i]} (auto, full, reduced)"));
+            options = options with { Tuning = options.Tuning with { ColorDetail = detail.Value } };
+            break;
+        case "--jpeg" when i + 1 < args.Length:
+            JpegEncoding? encoding = args[++i].ToLowerInvariant() switch
+            {
+                "auto" => JpegEncoding.Automatic,
+                "progressive" => JpegEncoding.Progressive,
+                "baseline" => JpegEncoding.Baseline,
+                _ => null,
+            };
+            if (encoding is null) return Fail(L10n.T($"Unknown JPEG encoding: {args[i]} (auto, progressive, baseline)", $"Encodage JPEG inconnu : {args[i]} (auto, progressive, baseline)"));
+            options = options with { Tuning = options.Tuning with { JpegEncoding = encoding.Value } };
+            break;
+        case "--colors" when i + 1 < args.Length && int.TryParse(args[i + 1], out var colors) && colors is 0 or (>= 2 and <= 256):
+            options = options with { Tuning = options.Tuning with { MaxColors = colors } };
+            i++;
+            break;
+        case "--no-dither":
+            options = options with { Tuning = options.Tuning with { Dithering = false } };
+            break;
+        case "--zopfli":
+            options = options with { Tuning = options.Tuning with { Zopfli = true } };
+            break;
         case "--video-max" when i + 1 < args.Length && int.TryParse(args[i + 1].TrimEnd('p', 'P'), out var shortSide) && shortSide >= 0:
             options = options with { VideoMaxShortSide = shortSide };
             i++;
@@ -173,6 +205,11 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
       --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
       --max-size <n>       Lossy images: bring the long side down to n pixels, e.g. 2560 (default: keep)
+      --color-detail <d>   Lossy JPEG and AVIF: auto (default), full (4:4:4) or reduced (4:2:0)
+      --jpeg <e>           JPEG encoding: auto (the smaller one, default), progressive or baseline
+      --colors <n>         Lossy PNG and GIF: at most n colors, 2–256 (default: up to 256)
+      --no-dither          Lossy PNG: no dithering, much smaller for screenshots and flat images
+      --zopfli             PNG: Zopfli compression, a few % smaller, dozens of times slower
       --keep               Keeps the original, writes "name-compressed.ext" next to it
       --folder             Keeps the original, writes the result into a "compressed" folder next to it
       --copy-all           Like --folder, and also copies the files that are already optimal
@@ -194,6 +231,11 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
       --video-max <n>      Vidéos : ramène le petit côté à n pixels, ex. 1080 ou 720 (par défaut : inchangé)
       --max-size <n>       Images avec pertes : ramène le grand côté à n pixels, ex. 2560 (par défaut : inchangé)
+      --color-detail <d>   JPEG et AVIF avec pertes : auto (par défaut), full (4:4:4) ou reduced (4:2:0)
+      --jpeg <e>           Encodage JPEG : auto (le plus petit, par défaut), progressive ou baseline
+      --colors <n>         PNG et GIF avec pertes : n couleurs au plus, 2–256 (par défaut : jusqu'à 256)
+      --no-dither          PNG avec pertes : sans tramage, bien plus petit pour les captures et les aplats
+      --zopfli             PNG : compression Zopfli, quelques % plus petit, des dizaines de fois plus lent
       --keep               Garde l'original, écrit « nom-compressed.ext » à côté
       --folder             Garde l'original, écrit le résultat dans un dossier « compressed » à côté
       --copy-all           Comme --folder, et y copie aussi les fichiers déjà optimaux

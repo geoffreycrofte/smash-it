@@ -108,7 +108,13 @@ public sealed class WicImageCompressor : ICompressor
             case MediaFormat.Jpeg:
                 set["ImageQuality"] = new BitmapTypedValue(quality, PropertyType.Single);
                 // WICJpegYCrCbSubsamplingOption: 1 = 4:2:0 (smaller), 3 = 4:4:4 (sharper colors).
-                set["JpegYCrCbSubsampling"] = new BitmapTypedValue((byte)(quality < 0.9f ? 1 : 3), PropertyType.UInt8);
+                var full = options.Tuning.ColorDetail switch
+                {
+                    ColorDetail.Full => true,
+                    ColorDetail.Reduced => false,
+                    _ => quality >= 0.9f,
+                };
+                set["JpegYCrCbSubsampling"] = new BitmapTypedValue((byte)(full ? 3 : 1), PropertyType.UInt8);
                 break;
             case MediaFormat.Heif:
                 set["ImageQuality"] = new BitmapTypedValue(quality, PropertyType.Single);
