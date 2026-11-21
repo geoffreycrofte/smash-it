@@ -10,10 +10,13 @@ name: Build tools
 # Windows, but their dated builds are deleted after a while. The ffmpeg job re-publishes one pinned build, with the
 # sources it was made from (GPL): git tag tools-ffmpeg-9.0.2 && git push origin tools-ffmpeg-9.0.2
 #
+# pngquant is mirrored too: pngquant.org only publishes an unversioned zip and sometimes times out in CI.
+#   git tag tools-pngquant-2.17.0 && git push origin tools-pngquant-2.17.0
+#
 # These releases are pre-releases and never "latest": the app's download links and update check ignore them.
 on:
   push:
-    tags: ['tools-oxvg-*', 'tools-ffmpeg-*']
+    tags: ['tools-oxvg-*', 'tools-ffmpeg-*', 'tools-pngquant-*']
 
 permissions:
   contents: write
@@ -141,4 +144,62 @@ jobs:
           "@ | Set-Content notes.md -Encoding utf8
           gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
             --title "Build tool: ffmpeg $version (Windows x64)" --notes-file notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  pngquant:
+    if: startsWith(github.ref_name, 'tools-pngquant-')
+    runs-on: windows-latest
+    env:
+      # pngquant.org's only Windows build, unversioned and slow to answer (CI downloads timed out): mirrored unchanged.
+      # Change the four together.
+      BUILD_URL: https://pngquant.org/pngquant-windows.zip
+      BUILD_SHA256: bd0257aeeccfe446a4cd764927e26f8af6051796f28abed104307284107b120d
+      # Its source (GPL-3.0): pngquant at the tag, and libimagequant at the commit that tag's "lib" submodule points to.
+      PNGQUANT_TAG: '2.17.0'
+      LIBIMAGEQUANT_COMMIT: a6cc4ade66710ec799ca41297f6d2c2b4070d0ff
+    steps:
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^tools-pngquant-', ''
+          if ($version -ne $env:PNGQUANT_TAG) { throw "The tag says $version, the pinned build is $env:PNGQUANT_TAG." }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Download and check
+        shell: pwsh
+        run: |
+          # pngquant.org can be slow: a few attempts before giving up.
+          for ($i = 1; $i -le 5; $i++) {
+            try { Invoke-WebRequest $env:BUILD_URL -OutFile build.zip -TimeoutSec 120; break }
+            catch { if ($i -eq 5) { throw }; Start-Sleep -Seconds (15 * $i) }
+          }
+          $hash = (Get-FileHash build.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:BUILD_SHA256) { throw "SHA-256 mismatch: $hash" }
+          Expand-Archive build.zip -DestinationPath build
+          $exe = Get-ChildItem build -Recurse -Filter pngquant.exe | Select-Object -First 1
+          $reported = (& $exe.FullName --version).Trim()
+          if (-not $reported.StartsWith($env:PNGQUANT_TAG)) { throw "pngquant.exe reports $reported." }
+
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ steps.version.outputs.value }}'
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item build.zip "dist/pngquant-$version-windows.zip"
+          Invoke-WebRequest "https://github.com/kornelski/pngquant/archive/refs/tags/$env:PNGQUANT_TAG.tar.gz" -OutFile "dist/pngquant-source-$env:PNGQUANT_TAG.tar.gz"
+          Invoke-WebRequest "https://github.com/ImageOptim/libimagequant/archive/$env:LIBIMAGEQUANT_COMMIT.tar.gz" -OutFile "dist/libimagequant-source-$($env:LIBIMAGEQUANT_COMMIT.Substring(0, 10)).tar.gz"
+          @"
+          pngquant $version (GPL-3.0), Windows: ``pngquant-windows.zip`` from [pngquant.org](https://pngquant.org/), mirrored
+          unchanged because that host is unversioned and sometimes too slow for CI (SHA-256 ``$env:BUILD_SHA256``).
+
+          Source: pngquant at tag ``$env:PNGQUANT_TAG`` and libimagequant at ``$env:LIBIMAGEQUANT_COMMIT`` (the commit its
+          ``lib`` submodule points to) are attached.
+
+          Used by tools/fetch-tools.ps1. Not a Smash It release.
+          "@ | Set-Content notes.md -Encoding utf8
+          gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
+            --title "Build tool: pngquant $version (Windows)" --notes-file notes.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
