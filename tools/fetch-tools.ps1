@@ -57,10 +57,11 @@ $tools = @(
         Needs7z = $true
     },
     @{
-        # pngquant.org only publishes this unversioned zip (2.17.0, unchanged since December 2023): the SHA-256
-        # pins it, so a silent update upstream stops the script instead of shipping an untested build.
+        # pngquant.org only publishes an unversioned zip (2.17.0, unchanged since December 2023), and sometimes too
+        # slowly for CI: this repository's "Build tools" workflow mirrors it unchanged, with its source. The
+        # SHA-256 is that of pngquant.org's zip.
         Name    = 'pngquant 2.17.0'
-        Url     = 'https://pngquant.org/pngquant-windows.zip'
+        Url     = 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-pngquant-2.17.0/pngquant-2.17.0-windows.zip'
         Sha256  = 'bd0257aeeccfe446a4cd764927e26f8af6051796f28abed104307284107b120d'
         Files   = @('pngquant.exe')
         License = @{ 'COPYRIGHT' = 'pngquant.txt' }
