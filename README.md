@@ -122,6 +122,8 @@ separate 256-color picture; a video only stores what changes, in full color. Mea
 | Camera clip, 4.85 MB | 3.23 MB (−33 %) | **364 KB (−93 %)** | **331 KB (−93 %)** |
 | Screen recording, 1.23 MB | 599 KB (−52 %) | **21.8 KB (−98 %)** | **12.4 KB (−99 %)** |
 
+How these were measured: [docs/benchmarks.md](docs/benchmarks.md#animated-gif-to-video).
+
 The timing of every frame is kept. A video only replaces the GIF when it is smaller. GIFs with transparent areas,
 which a video would show as a black box, and still GIFs stay GIFs. On a web page, the video goes in a
 `<video autoplay loop muted playsinline>` tag instead of `<img>`.
@@ -172,6 +174,8 @@ targets a bitrate. On two 10-second 1080p test clips at quality 70:
 |---|---|---|
 | Camera footage | 6.2 MB, VMAF 93.9, 2 s | **4.0 MB (−36 %)**, VMAF 92.6, 10 s |
 | Animation | 6.0 MB, VMAF 84.5, 2 s | **3.9 MB (−36 %)**, VMAF 93.6, 11 s |
+
+How these were measured, and the other encoders tried: [docs/benchmarks.md](docs/benchmarks.md#av1-video).
 
 AV1 takes a few times longer (about real time for 1080p on a 6-core processor) and plays in current browsers, on
 recent phones, and on Windows with the free AV1 Video Extension. Encoding is in 10 bits, which avoids banding in
