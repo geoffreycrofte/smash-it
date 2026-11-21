@@ -224,6 +224,12 @@
                       ItemsSource="{x:Bind ViewModel.OutputFormats}"
                       SelectedItem="{x:Bind ViewModel.SelectedOutputFormat, Mode=TwoWay}"
                       DisplayMemberPath="Label" />
+            <ComboBox Header="{x:Bind app:Strings.AnimatedGifs}" HorizontalAlignment="Stretch"
+                      IsEnabled="{x:Bind ViewModel.ImageLossy, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.AnimatedGifChoices}"
+                      SelectedItem="{x:Bind ViewModel.SelectedAnimatedGif, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      ToolTipService.ToolTip="{x:Bind app:Strings.AnimatedGifsTip}" />
             <ComboBox Header="{x:Bind app:Strings.Effort}" HorizontalAlignment="Stretch"
                       ItemsSource="{x:Bind ViewModel.Efforts}"
                       SelectedItem="{x:Bind ViewModel.SelectedEffort, Mode=TwoWay}"

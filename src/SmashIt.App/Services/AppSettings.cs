@@ -27,6 +27,8 @@ public sealed class AppSettings
     /// <summary>Lossy images: long side, in pixels, they are scaled down to; 0 keeps the size.</summary>
     public int ImageMaxSide { get; set; }
     public MediaFormat? OutputFormat { get; set; }
+    /// <summary>Lossy mode: what animated GIFs become (GIF, MP4 or WebM video).</summary>
+    public AnimatedGifOutput AnimatedGifs { get; set; } = AnimatedGifOutput.Gif;
     public CompressionEffort Effort { get; set; } = CompressionEffort.Balanced;
     public bool StripMetadata { get; set; } = true;
     /// <summary>Image fine tuning (color detail, JPEG encoding, palette, dithering, Zopfli); presets leave it alone.</summary>

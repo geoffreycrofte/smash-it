@@ -62,7 +62,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 
 | | Today | Planned |
 |---|---|---|
-| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
+| **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle), or animated GIF to MP4/WebM video (ffmpeg); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
 | **Videos** | MP4 with AAC sound: H.264 or HEVC through Media Foundation (GPU encoder when available), or AV1 through ffmpeg (SVT-AV1, constant quality); MOV/MKV/AVI become MP4; optional 1080p or 720p cap | |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum); fine tuning per format (color detail, JPEG encoding, palette size, dithering, Zopfli) | |
@@ -110,6 +110,21 @@ gifsicle optimizes GIFs, animated ones included: every frame, delay and loop set
 only what changes from one frame to the next and recompresses it. Lossy, it adds noise you can't see to make the
 file compress much better: the lower the quality setting, the stronger (quality 85 is gifsicle's `--lossy=30`).
 Comments and extensions are removed with the other metadata, unless you keep metadata.
+
+**Animated GIFs to video.** In lossy mode, the **Animated GIFs** setting (`--gif mp4` or `--gif webm`) turns them
+into videos with ffmpeg: H.264 MP4, which plays everywhere, or VP9 WebM, lighter still. A GIF stores every frame as a
+separate 256-color picture; a video only stores what changes, in full color. Measured at quality 70 on 4-second GIFs
+(480 to 800 px wide, 15 frames per second):
+
+| GIF | gifsicle (lossy) | MP4 (H.264) | WebM (VP9) |
+|---|---|---|---|
+| Animation clip, 5.23 MB | no gain | **289 KB (−95 %)** | **164 KB (−97 %)** |
+| Camera clip, 4.85 MB | 3.23 MB (−33 %) | **364 KB (−93 %)** | **331 KB (−93 %)** |
+| Screen recording, 1.23 MB | 599 KB (−52 %) | **21.8 KB (−98 %)** | **12.4 KB (−99 %)** |
+
+The timing of every frame is kept. A video only replaces the GIF when it is smaller. GIFs with transparent areas,
+which a video would show as a black box, and still GIFs stay GIFs. On a web page, the video goes in a
+`<video autoplay loop muted playsinline>` tag instead of `<img>`.
 
 ### SVG
 
@@ -282,18 +297,28 @@ pattern (`CHANGELOG.<code>.md`).
 ```
 smashit [options] <files or folders…>
 
-  --lossless           Lossless only (default)
-  --lossy              Allow quality loss
-  -q, --quality <n>    Quality 1–100 (implies --lossy)
-  -t, --to <format>    Convert to jpg, png, webp, avif, heic, tif, jxr, bmp
+  --lossless           Lossless (default)
+  --lossy              Lossy
+  -q, --quality <n>    Quality 1–100 (turns on lossy mode)
+  -t, --to <format>    Converts to jpg, png, webp, avif, heic, tif, jxr, bmp
   -e, --effort <n>     fast, balanced (default) or max
-  --codec <codec>      Video: h264 (default) or hevc; needs --lossy or -q
-  --keep               Keep the original, write "name-compressed.ext" next to it
-  --folder             Keep the original, write the result into a "compressed" folder next to it
-  --copy-all           Like --folder, and also copy the files that are already optimal
-  --no-recycle         Delete the original instead of using the Recycle Bin
-  --keep-metadata      Keep EXIF, XMP, IPTC and comments
-  --strip-metadata     Remove them (default; color profile and orientation are kept)
+  --codec <codec>      Video: h264 (default), hevc or av1 (smallest, slower); needs --lossy or -q
+  --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
+  --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
+  --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
+  --max-size <n>       Lossy images: bring the long side down to n pixels, e.g. 2560 (default: keep)
+  --color-detail <d>   Lossy JPEG and AVIF: auto (default), full (4:4:4) or reduced (4:2:0)
+  --jpeg <e>           JPEG encoding: auto (the smaller one, default), progressive or baseline
+  --colors <n>         Lossy PNG and GIF: at most n colors, 2–256 (default: up to 256)
+  --no-dither          Lossy PNG: no dithering, much smaller for screenshots and flat images
+  --zopfli             PNG: Zopfli compression, a few % smaller, dozens of times slower
+  --keep               Keeps the original, writes "name-compressed.ext" next to it
+  --folder             Keeps the original, writes the result into a "compressed" folder next to it
+  --copy-all           Like --folder, and also copies the files that are already optimal
+  --no-recycle         Deletes the original instead of sending it to the Recycle Bin
+  --keep-metadata      Keeps EXIF, XMP, IPTC and comments
+  --strip-metadata     Removes them (default; color profile and orientation are kept)
+  -h, --help           Shows this help
 ```
 
 ## License

@@ -8,6 +8,11 @@ Traduction française de CHANGELOG.md, montrée dans « Voir les nouveautés » 
 - Une version absente de ce fichier s'affiche en anglais : rien ne casse si la traduction a du retard.
 -->
 
+## Next version
+
+### Nouveautés
+- **Les GIF animés deviennent des vidéos, souvent plus de 10 fois plus légères.** Avec pertes, choisissez MP4 ou WebM sous « GIF animés » dans les réglages Images. Dans nos tests, un GIF tiré d'un clip est passé de 4,85 Mo à 364 Ko, un enregistrement d'écran de 1,23 Mo à 22 Ko, chaque image gardant sa durée. La vidéo ne remplace le GIF que si elle est plus petite ; les GIF avec des zones transparentes et les GIF fixes restent des GIF. Sur une page web, affichez-la avec une balise vidéo au lieu d'une image.
+
 ## v0.5.0 · 21 novembre 2026
 
 ### Nouveautés

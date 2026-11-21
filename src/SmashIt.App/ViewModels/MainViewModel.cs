@@ -64,6 +64,19 @@ public sealed record MaxColorsChoice(int Colors)
     public override string ToString() => Label;
 }
 
+/// <summary>What animated GIFs become in lossy mode.</summary>
+public sealed record AnimatedGifChoice(AnimatedGifOutput Output)
+{
+    public string Label => Output switch
+    {
+        AnimatedGifOutput.Mp4 => L10n.T("MP4 video (plays everywhere)", "Vidéo MP4 (compatible partout)"),
+        AnimatedGifOutput.WebM => L10n.T("WebM video (lightest, for the web)", "Vidéo WebM (la plus légère, pour le web)"),
+        _ => L10n.T("Keep as GIF", "Garder en GIF"),
+    };
+
+    public override string ToString() => Label;
+}
+
 public sealed record VideoCodecChoice(VideoCodec Codec)
 {
     public string Label => Codec switch
@@ -288,6 +301,13 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial OutputFormatChoice SelectedOutputFormat { get; set; }
 
+    public IReadOnlyList<AnimatedGifChoice> AnimatedGifChoices { get; } =
+        [new(AnimatedGifOutput.Gif), new(AnimatedGifOutput.Mp4), new(AnimatedGifOutput.WebM)];
+
+    /// <summary>Lossy only: animated GIFs can become videos.</summary>
+    [ObservableProperty]
+    public partial AnimatedGifChoice SelectedAnimatedGif { get; set; }
+
     [ObservableProperty]
     public partial EffortChoice SelectedEffort { get; set; }
 
@@ -402,7 +422,7 @@ public sealed partial class MainViewModel : ObservableObject
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
         nameof(SelectedVideoCodec), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
         nameof(AskOutputLocation), nameof(SelectedColorDetail), nameof(SelectedJpegEncoding), nameof(SelectedMaxColors),
-        nameof(Dithering), nameof(Zopfli),
+        nameof(Dithering), nameof(Zopfli), nameof(SelectedAnimatedGif),
     ];
 
     // Sliders change many times per second: the file is written once they settle.
@@ -416,6 +436,7 @@ public sealed partial class MainViewModel : ObservableObject
         ImageQuality = Math.Clamp(settings.ImageQuality, 1, 100);
         SelectedImageSize = ImageSizes.FirstOrDefault(s => s.LongSide == settings.ImageMaxSide) ?? ImageSizes[0];
         SelectedOutputFormat = OutputFormats.FirstOrDefault(f => f.Format == settings.OutputFormat) ?? OutputFormats[0];
+        SelectedAnimatedGif = AnimatedGifChoices.FirstOrDefault(g => g.Output == settings.AnimatedGifs) ?? AnimatedGifChoices[0];
         SelectedEffort = Efforts.FirstOrDefault(e => e.Effort == settings.Effort) ?? Efforts[1];
         StripMetadata = settings.StripMetadata;
         var tuning = settings.Tuning ?? ImageTuning.Default;
@@ -469,6 +490,7 @@ public sealed partial class MainViewModel : ObservableObject
         settings.ImageQuality = (int)Math.Round(ImageQuality);
         settings.ImageMaxSide = SelectedImageSize.LongSide;
         settings.OutputFormat = SelectedOutputFormat.Format;
+        settings.AnimatedGifs = SelectedAnimatedGif.Output;
         settings.Effort = SelectedEffort.Effort;
         settings.StripMetadata = StripMetadata;
         settings.Tuning = Tuning;
@@ -557,6 +579,7 @@ public sealed partial class MainViewModel : ObservableObject
                 ImageMaxSide = SelectedImageSize.LongSide,
                 Effort = SelectedEffort.Effort,
                 TargetFormat = SelectedOutputFormat.Format,
+                AnimatedGifs = SelectedAnimatedGif.Output,
                 StripMetadata = StripMetadata,
                 Tuning = Tuning,
             },

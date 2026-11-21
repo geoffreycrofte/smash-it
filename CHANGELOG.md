@@ -11,6 +11,11 @@ How this file works:
 - CHANGELOG.fr.md holds the French translation, section by section, shown when the app is in French.
 -->
 
+## Next version
+
+### New
+- **Animated GIFs become videos, often more than 10 times lighter.** In lossy mode, choose MP4 or WebM under Animated GIFs in the Images settings. A GIF made from a clip went from 4.85 MB to 364 KB in our tests, a screen recording from 1.23 MB to 22 KB, with every frame timed as before. The video replaces the GIF only when it is smaller; GIFs with transparent areas and still GIFs stay GIFs. On a web page, show it with a video tag instead of an image.
+
 ## v0.5.0 · November 21, 2026
 
 ### New

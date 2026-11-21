@@ -76,6 +76,22 @@ internal static class WicCodec
         }
     }
 
+    /// <summary>The number of frames (several for an animated GIF), or 0 when Windows can't read the image.</summary>
+    public static async Task<uint> ReadFrameCountAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var stream = file.AsRandomAccessStream();
+            var decoder = await BitmapDecoder.CreateAsync(stream).AsTask(cancellationToken);
+            return decoder.FrameCount;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return 0;
+        }
+    }
+
     public static (uint Width, uint Height) ScaledSize(uint width, uint height, double? scale) =>
         scale is { } s
             ? ((uint)Math.Max(1, Math.Round(width * s)), (uint)Math.Max(1, Math.Round(height * s)))

@@ -50,11 +50,12 @@ public sealed partial class FileItem(string path) : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanPreview))]
     public partial string? PreviewOriginalPath { get; set; }
 
-    /// <summary>The compressed image exists and its "before" copy too.</summary>
+    /// <summary>The compressed image exists and its "before" copy too (not when an animated GIF became a video).</summary>
     public bool CanPreview =>
         Kind == MediaKind.Image
         && PreviewOriginalPath is not null
-        && Result is { Status: CompressionStatus.Optimized or CompressionStatus.Converted, OutputPath: not null };
+        && Result is { Status: CompressionStatus.Optimized or CompressionStatus.Converted, OutputPath: { } output }
+        && MediaFormatInfo.KindOf(MediaFormatInfo.FromExtension(output)) == MediaKind.Image;
 
     /// <summary>0–100 while a long job (video) runs.</summary>
     [ObservableProperty]
