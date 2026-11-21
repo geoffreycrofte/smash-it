@@ -64,7 +64,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 |---|---|---|
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle), or animated GIF to MP4/WebM video (ffmpeg); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
 | **Sound** | MP3, M4A/AAC, WAV, AIFF, FLAC, Ogg, Opus through ffmpeg: lossless (WAV/AIFF to FLAC, tags and cover art removed) or lossy, as music (stereo) or voice (mono, a third of the bitrate), keeping each format or converting to MP3, AAC or Opus | |
-| **Videos** | MP4 with AAC sound: H.264 or HEVC through Media Foundation (GPU encoder when available), or AV1 through ffmpeg (SVT-AV1, constant quality); MOV/MKV/AVI become MP4; optional 1080p or 720p cap | |
+| **Videos** | MP4 with AAC sound: H.264, HEVC or AV1 through ffmpeg (x264, x265, SVT-AV1, constant quality), or H.264 and HEVC through the Windows encoder (GPU, fast); MOV/MKV/AVI become MP4; optional 1080p or 720p cap | |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum); fine tuning per format (color detail, JPEG encoding, palette size, dithering, Zopfli) | |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
@@ -157,29 +157,28 @@ as they are. On the command line: `--pdf-dpi 300`, or `--pdf-dpi 0` to keep ever
 
 ### Videos
 
-Videos are re-encoded with the encoder built into Windows, so no extra tool is needed and the GPU does the work when
-it can. Pick H.264 (plays everywhere) or HEVC (about 40 % smaller, needs a HEVC-capable player). The bitrate follows
-the quality setting, the resolution and the frame rate, and never exceeds the source bitrate. **Maximum resolution**
-brings larger videos down to 1080p or 720p (the short side of the picture, so portrait videos are treated the same),
-never up: a 4K phone video at 1080p is typically 3 to 4 times lighter. The Web preset uses 1080p, Email 720p; on
-the command line, `--video-max 1080`. Portrait phone videos
-come out upright. Windows can only write MP4, so MOV/MKV/AVI files become `.mp4`, and only when that makes them
-smaller. Videos need the lossy mode.
+Videos are re-encoded to MP4 with AAC sound. Pick the codec: H.264 (plays everywhere), HEVC (smaller, needs a
+HEVC-capable player) or AV1 (smallest, slower). **Maximum resolution** brings larger videos down to 1080p or 720p
+(the short side of the picture, so portrait videos are treated the same), never up: a 4K phone video at 1080p is
+typically 3 to 4 times lighter. The Web preset uses 1080p, Email 720p; on the command line, `--video-max 1080`.
+Portrait phone videos come out upright. MOV/MKV/AVI/WebM files become `.mp4`, and only when that makes them smaller.
+Videos need the lossy mode.
 
-**AV1** is the third codec choice (`--codec av1`): the smallest files, encoded by ffmpeg with SVT-AV1 on the
-processor. It works at constant quality: the quality setting picks how good the picture must be (quality 70 is tuned
-for differences that are hard to see, VMAF about 93) and the size follows the content, where the Windows encoder
-targets a bitrate. On two 10-second 1080p test clips at quality 70:
+**Encoder.** By default, ffmpeg encodes at constant quality (x264 for H.264, x265 for HEVC, SVT-AV1 for AV1): the
+quality setting picks how good the picture must be (quality 70 is tuned for differences that are hard to see, VMAF
+about 93) and the size follows the content. The **Windows** encoder (`--encoder windows`), built into Windows and run
+on the graphics card, is 4 to 6 times faster but targets a bitrate: detailed videos such as animation or screen
+recordings can come out blurry. AV1 always goes through ffmpeg. On two 10-second 1080p test clips at quality 70:
 
-| Clip | H.264 (Windows) | AV1 (ffmpeg) |
-|---|---|---|
-| Camera footage | 6.2 MB, VMAF 93.9, 2 s | **4.0 MB (−36 %)**, VMAF 92.6, 10 s |
-| Animation | 6.0 MB, VMAF 84.5, 2 s | **3.9 MB (−36 %)**, VMAF 93.6, 11 s |
+| Clip | H.264, Windows | H.264, ffmpeg (x264) | AV1, ffmpeg |
+|---|---|---|---|
+| Camera footage | 6.2 MB, VMAF 93.9, 2 s | 6.8 MB, VMAF 92.5, 8 s | **4.0 MB**, VMAF 92.6, 10 s |
+| Animation | 6.0 MB, **VMAF 84.5**, 2 s | 7.1 MB, VMAF 93.3, 8 s | **3.9 MB**, VMAF 93.6, 11 s |
 
-How these were measured, and the other encoders tried: [docs/benchmarks.md](docs/benchmarks.md#av1-video).
+How these were measured, and the other encoders tried: [docs/benchmarks.md](docs/benchmarks.md#h264-and-hevc).
 
-AV1 takes a few times longer (about real time for 1080p on a 6-core processor) and plays in current browsers, on
-recent phones, and on Windows with the free AV1 Video Extension. Encoding is in 10 bits, which avoids banding in
+ffmpeg takes about real time for 1080p on a 6-core processor (AV1 a little more). AV1 plays in current browsers, on
+recent phones, and on Windows with the free AV1 Video Extension; it is encoded in 10 bits, which avoids banding in
 skies and gradients. Unlike the Windows encoder, ffmpeg keeps the dates and location of a video when you choose to
 keep metadata, and removes them otherwise.
 
@@ -335,6 +334,7 @@ smashit [options] <files or folders…>
   -t, --to <format>    Converts images to jpg, png, webp, avif, heic, tif, jxr, bmp; sounds to mp3, m4a, ogg, opus
   -e, --effort <n>     fast, balanced (default) or max
   --codec <codec>      Video: h264 (default), hevc or av1 (smallest, slower); needs --lossy or -q
+  --encoder <e>        H.264 and HEVC: ffmpeg (steady quality, default) or windows (fast, graphics card)
   --voice              Lossy sound: speech (mono, a third of the bitrate); --music is the default
   --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
   --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)

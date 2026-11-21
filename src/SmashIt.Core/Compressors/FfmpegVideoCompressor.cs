@@ -7,12 +7,13 @@ using SmashIt.Core.Tools;
 namespace SmashIt.Core.Compressors;
 
 /// <summary>
-/// AV1 videos with ffmpeg and SVT-AV1 (GPL build), in MP4 with AAC sound. Constant quality: the quality setting
-/// picks a CRF and the size follows the content, where Media Foundation targets a bitrate.
+/// Videos with ffmpeg, in MP4 with AAC sound: H.264 (x264) and HEVC (x265), the default engine for these codecs, and
+/// AV1 (SVT-AV1), always. Constant quality: the quality setting picks a CRF and the size follows the content, where
+/// the Windows encoder targets a bitrate (and falls to VMAF 84 on detailed animation in our tests).
 /// </summary>
 /// <remarks>
-/// Phone videos come out upright (ffmpeg applies the rotation). The video is encoded in 10 bits, which avoids
-/// banding in skies and gradients at no cost in size, and keeps the color tags of HDR sources. Metadata (dates,
+/// Phone videos come out upright (ffmpeg applies the rotation). AV1 is encoded in 10 bits, which avoids banding in
+/// skies and gradients at no cost in size; H.264 and HEVC stay in 8 bits, which every player reads. Metadata (dates,
 /// location) is kept or removed with the "Remove metadata" setting.
 /// </remarks>
 public sealed partial class FfmpegVideoCompressor() : ToolCompressor("ffmpeg.exe")
@@ -24,9 +25,24 @@ public sealed partial class FfmpegVideoCompressor() : ToolCompressor("ffmpeg.exe
 
     public override string DisplayName => "ffmpeg";
 
+    /// <summary>AV1 always; H.264 and HEVC unless the Windows encoder is chosen. Never both engines on one video.</summary>
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
         Readable.Contains(input) && output == MediaFormat.Mp4 && options.Mode == CompressionMode.Lossy
-        && options.VideoCodec == VideoCodec.Av1;
+        && (options.VideoCodec == VideoCodec.Av1 || options.VideoEncoder == VideoEncoder.Ffmpeg);
+
+    /// <summary>x264's CRF: 16 at quality 100, 23 at 70 (x264's default; VMAF 92.5–93.3 on our test clips), 30 at 40.</summary>
+    public static int H264Crf(int quality) => FfmpegGifVideoCompressor.H264Crf(quality);
+
+    /// <summary>x265's CRF: 18 at quality 100, 24 at 70 (VMAF 92.5–93.7 on our test clips), 30 at 40.</summary>
+    public static int HevcCrf(int quality) => Math.Clamp((int)Math.Round(24 + (70 - Math.Clamp(quality, 1, 100)) / 5.0), 0, 51);
+
+    /// <summary>x264 and x265 presets: veryfast, medium, slow. Slow saved 0–5 % over medium in our tests, for 40 % more time.</summary>
+    public static string X26xPreset(CompressionEffort effort) => effort switch
+    {
+        CompressionEffort.Fast => "veryfast",
+        CompressionEffort.Maximum => "slow",
+        _ => "medium",
+    };
 
     /// <summary>
     /// SVT-AV1's CRF (0–63, lower is better) for a Smash It quality: 20 at 100, 34 at 70 (VMAF about 93 on our test
@@ -58,11 +74,28 @@ public sealed partial class FfmpegVideoCompressor() : ToolCompressor("ffmpeg.exe
         var options = job.Options;
         List<string> args = ["-hide_banner", "-nostdin", "-y", "-i", job.InputPath, "-map", "0:v:0", "-map", "0:a:0?"];
         if (options.VideoMaxShortSide > 0) args.AddRange(["-vf", ScaleFilter(options.VideoMaxShortSide)]);
-        args.AddRange([
-            "-c:v", "libsvtav1", "-preset", Preset(options.Effort).ToString(CultureInfo.InvariantCulture),
-            "-crf", Crf(options.Quality).ToString(CultureInfo.InvariantCulture), "-pix_fmt", "yuv420p10le",
-            "-svtav1-params", "tune=0",
-        ]);
+        args.AddRange(options.VideoCodec switch
+        {
+            VideoCodec.Av1 =>
+            [
+                "-c:v", "libsvtav1", "-preset", Preset(options.Effort).ToString(CultureInfo.InvariantCulture),
+                "-crf", Crf(options.Quality).ToString(CultureInfo.InvariantCulture), "-pix_fmt", "yuv420p10le",
+                "-svtav1-params", "tune=0",
+            ],
+            VideoCodec.Hevc =>
+            [
+                "-c:v", "libx265", "-preset", X26xPreset(options.Effort),
+                "-crf", HevcCrf(options.Quality).ToString(CultureInfo.InvariantCulture), "-pix_fmt", "yuv420p",
+                // "hvc1" is the tag Apple's players and Windows ask for; x265 only reports errors.
+                "-tag:v", "hvc1", "-x265-params", "log-level=error",
+            ],
+            _ =>
+            [
+                "-c:v", "libx264", "-preset", X26xPreset(options.Effort),
+                "-crf", H264Crf(options.Quality).ToString(CultureInfo.InvariantCulture), "-pix_fmt", "yuv420p",
+                "-profile:v", "high",
+            ],
+        });
 
         // AAC up to 192 kbit/s is copied as is; anything else becomes AAC at the source bitrate, 128–160 kbit/s.
         if (source.AudioCodec is "aac" && source.AudioBitrate is > 0 and <= 192_000) args.AddRange(["-c:a", "copy"]);

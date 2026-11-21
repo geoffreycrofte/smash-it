@@ -17,6 +17,9 @@ How this file works:
 - **Animated GIFs become videos, often more than 10 times lighter.** In lossy mode, choose MP4 or WebM under Animated GIFs in the Images settings. A GIF made from a clip went from 4.85 MB to 364 KB in our tests, a screen recording from 1.23 MB to 22 KB, with every frame timed as before. The video replaces the GIF only when it is smaller; GIFs with transparent areas and still GIFs stay GIFs. On a web page, show it with a video tag instead of an image.
 - **Sound files.** MP3, M4A, WAV, AIFF, FLAC, Ogg and Opus, under the new Sound settings. Lossless, a WAV becomes a FLAC about half the size with every sample kept, and other files lose their tags and cover art if you remove metadata. Lossy, choose Music or Voice: a minute of CD-quality music went from 10.09 MB to 763 KB in Opus in our tests, and an audiobook chapter lost half its weight in MP3 and three quarters in Opus. Keep each file's format, or turn everything into MP3, AAC or Opus. Web and Email presets now include sound.
 
+### Improved
+- **Steady video quality.** H.264 and HEVC videos now go through ffmpeg by default, at constant quality: detailed videos such as animation or screen recordings no longer come out blurry (VMAF 93 instead of 84 on our animated test clip), and dates and location stay when you keep metadata. It takes about real time for 1080p. For speed, choose the Windows encoder under Encoder in the Video settings: 4 to 6 times faster on the graphics card.
+
 ### Fixed
 - AV1 videos now keep their dates and location when "Remove metadata" is unticked; the app always removed them.
 

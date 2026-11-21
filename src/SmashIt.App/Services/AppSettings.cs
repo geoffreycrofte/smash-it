@@ -41,6 +41,8 @@ public sealed class AppSettings
     /// <summary>Short side of the picture, in pixels, videos are scaled down to; 0 keeps the resolution.</summary>
     public int VideoMaxShortSide { get; set; }
     public VideoCodec VideoCodec { get; set; } = VideoCodec.H264;
+    /// <summary>H.264 and HEVC: ffmpeg (default since it keeps quality steady) or the Windows encoder.</summary>
+    public VideoEncoder VideoEncoder { get; set; } = VideoEncoder.Ffmpeg;
     public bool AudioLossy { get; set; }
     public int AudioQuality { get; set; } = 70;
     public AudioContent AudioContent { get; set; } = AudioContent.Music;

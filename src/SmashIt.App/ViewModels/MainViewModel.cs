@@ -64,6 +64,16 @@ public sealed record MaxColorsChoice(int Colors)
     public override string ToString() => Label;
 }
 
+/// <summary>The engine for H.264 and HEVC videos.</summary>
+public sealed record VideoEncoderChoice(VideoEncoder Encoder)
+{
+    public string Label => Encoder == VideoEncoder.Windows
+        ? L10n.T("Windows (fast, uses the graphics card)", "Windows (rapide, utilise la carte graphique)")
+        : L10n.T("ffmpeg (steady quality)", "ffmpeg (qualité régulière)");
+
+    public override string ToString() => Label;
+}
+
 /// <summary>What sound files hold: music or speech.</summary>
 public sealed record AudioContentChoice(AudioContent Content)
 {
@@ -393,7 +403,17 @@ public sealed partial class MainViewModel : ObservableObject
     public partial double VideoQuality { get; set; } = 70;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChooseVideoEncoder))]
     public partial VideoCodecChoice SelectedVideoCodec { get; set; }
+
+    public IReadOnlyList<VideoEncoderChoice> VideoEncoders { get; } = [new(VideoEncoder.Ffmpeg), new(VideoEncoder.Windows)];
+
+    /// <summary>H.264 and HEVC: ffmpeg (steady quality) or the Windows encoder (fast).</summary>
+    [ObservableProperty]
+    public partial VideoEncoderChoice SelectedVideoEncoder { get; set; }
+
+    /// <summary>AV1 always goes through ffmpeg: the encoder choice only applies to H.264 and HEVC.</summary>
+    public bool CanChooseVideoEncoder => SelectedVideoCodec?.Codec is not VideoCodec.Av1;
 
     public IReadOnlyList<VideoResolutionChoice> VideoResolutions { get; } = [new(0), new(1080), new(720)];
 
@@ -467,7 +487,7 @@ public sealed partial class MainViewModel : ObservableObject
     [
         nameof(ImageLossy), nameof(ImageQuality), nameof(SelectedImageSize), nameof(SelectedOutputFormat), nameof(SelectedEffort),
         nameof(StripMetadata), nameof(PdfLossy), nameof(PdfQuality), nameof(SelectedPdfResolution), nameof(VideoQuality),
-        nameof(SelectedVideoCodec), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
+        nameof(SelectedVideoCodec), nameof(SelectedVideoEncoder), nameof(SelectedVideoResolution), nameof(KeepOriginal), nameof(OutputLocationIndex), nameof(CopyAlreadyOptimal),
         nameof(AskOutputLocation), nameof(SelectedColorDetail), nameof(SelectedJpegEncoding), nameof(SelectedMaxColors),
         nameof(Dithering), nameof(Zopfli), nameof(SelectedAnimatedGif), nameof(AudioLossy), nameof(AudioQuality),
         nameof(SelectedAudioContent), nameof(SelectedAudioFormat),
@@ -498,6 +518,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedPdfResolution = PdfResolutions.FirstOrDefault(r => r.Dpi == settings.PdfMaxImageDpi) ?? PdfResolutions[^1];
         VideoQuality = Math.Clamp(settings.VideoQuality, 1, 100);
         SelectedVideoCodec = VideoCodecs.FirstOrDefault(c => c.Codec == settings.VideoCodec) ?? VideoCodecs[0];
+        SelectedVideoEncoder = VideoEncoders.FirstOrDefault(e => e.Encoder == settings.VideoEncoder) ?? VideoEncoders[0];
         SelectedVideoResolution = VideoResolutions.FirstOrDefault(r => r.ShortSide == settings.VideoMaxShortSide) ?? VideoResolutions[0];
         AudioLossy = settings.AudioLossy;
         AudioQuality = Math.Clamp(settings.AudioQuality, 1, 100);
@@ -551,6 +572,7 @@ public sealed partial class MainViewModel : ObservableObject
         settings.PdfMaxImageDpi = SelectedPdfResolution.Dpi;
         settings.VideoQuality = (int)Math.Round(VideoQuality);
         settings.VideoCodec = SelectedVideoCodec.Codec;
+        settings.VideoEncoder = SelectedVideoEncoder.Encoder;
         settings.VideoMaxShortSide = SelectedVideoResolution.ShortSide;
         settings.AudioLossy = AudioLossy;
         settings.AudioQuality = (int)Math.Round(AudioQuality);
@@ -627,6 +649,7 @@ public sealed partial class MainViewModel : ObservableObject
                 Mode = CompressionMode.Lossy,
                 Quality = (int)Math.Round(VideoQuality),
                 VideoCodec = SelectedVideoCodec.Codec,
+                VideoEncoder = SelectedVideoEncoder.Encoder,
                 VideoMaxShortSide = SelectedVideoResolution.ShortSide,
             },
             MediaKind.Audio => common with

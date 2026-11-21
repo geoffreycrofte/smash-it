@@ -119,9 +119,14 @@ public static class Strings
     public static string Codec => T("Codec", "Codec");
     public static string VideoResolution => T("Maximum resolution", "Résolution maximale");
     public static string VideoResolutionName => T("Maximum video resolution", "Résolution maximale des vidéos");
+    public static string VideoEncoder => T("Encoder (H.264, HEVC)", "Encodeur (H.264, HEVC)");
+    public static string VideoEncoderName => T("Video encoder for H.264 and HEVC", "Encodeur vidéo pour H.264 et HEVC");
+    public static string VideoEncoderTip => T(
+        "ffmpeg keeps the same visible quality whatever the video, and its dates and location if you keep metadata; about real time for 1080p. The Windows encoder is 4 to 6 times faster on the graphics card, but detailed videos (animation, screen recordings) can come out blurry. AV1 always uses ffmpeg.",
+        "ffmpeg garde la même qualité visible quelle que soit la vidéo, et sa date et son lieu si vous gardez les métadonnées ; environ le temps réel en 1080p. L'encodeur de Windows est 4 à 6 fois plus rapide sur la carte graphique, mais les vidéos détaillées (animation, enregistrements d'écran) peuvent ressortir floues. L'AV1 passe toujours par ffmpeg.");
     public static string VideoNote => T(
-        "Re-encoded to MP4: H.264 and HEVC with the Windows encoder (fast), AV1 with ffmpeg (often 30 to 60 % smaller, a few times slower; plays in current browsers, recent phones, and Windows with the AV1 extension). MOV, MKV and AVI become MP4, only when they get smaller. Larger videos (4K) are brought down to the chosen resolution, never enlarged.",
-        "Réencodage en MP4 : H.264 et HEVC avec l'encodeur de Windows (rapide), AV1 avec ffmpeg (souvent 30 à 60 % plus léger, plusieurs fois plus lent ; lu par les navigateurs actuels, les téléphones récents et Windows avec l'extension AV1). Les MOV, MKV et AVI deviennent des MP4, seulement s'ils y gagnent. Les vidéos plus grandes (4K) sont ramenées à la résolution choisie, jamais agrandies.");
+        "Re-encoded to MP4. AV1 is about a third lighter than H.264 at the same quality, a few times slower, and plays in current browsers, recent phones, and Windows with the AV1 extension. MOV, MKV and AVI become MP4, only when they get smaller. Larger videos (4K) are brought down to the chosen resolution, never enlarged.",
+        "Réencodage en MP4. L'AV1 est environ un tiers plus léger que le H.264 à qualité égale, plusieurs fois plus lent, et se lit dans les navigateurs actuels, sur les téléphones récents et sous Windows avec l'extension AV1. Les MOV, MKV et AVI deviennent des MP4, seulement s'ils y gagnent. Les vidéos plus grandes (4K) sont ramenées à la résolution choisie, jamais agrandies.");
 
     // Settings: all files
     public static string AllFiles => T("All files", "Tous les fichiers");

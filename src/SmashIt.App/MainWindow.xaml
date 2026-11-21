@@ -308,6 +308,13 @@
                       ItemsSource="{x:Bind ViewModel.VideoCodecs}"
                       SelectedItem="{x:Bind ViewModel.SelectedVideoCodec, Mode=TwoWay}"
                       DisplayMemberPath="Label" />
+            <ComboBox Header="{x:Bind app:Strings.VideoEncoder}" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="{x:Bind app:Strings.VideoEncoderName}"
+                      IsEnabled="{x:Bind ViewModel.CanChooseVideoEncoder, Mode=OneWay}"
+                      ItemsSource="{x:Bind ViewModel.VideoEncoders}"
+                      SelectedItem="{x:Bind ViewModel.SelectedVideoEncoder, Mode=TwoWay}"
+                      DisplayMemberPath="Label"
+                      ToolTipService.ToolTip="{x:Bind app:Strings.VideoEncoderTip}" />
             <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"
                        Text="{x:Bind app:Strings.VideoNote}" />
           </StackPanel>

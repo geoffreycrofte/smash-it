@@ -11,7 +11,7 @@ public class VideoCompressorTests
 
     private static readonly CompressionOptions Lossy = new()
     {
-        Mode = CompressionMode.Lossy, Quality = 30, OriginalHandling = OriginalHandling.KeepAlongside,
+        Mode = CompressionMode.Lossy, Quality = 30, OriginalHandling = OriginalHandling.KeepAlongside, VideoEncoder = VideoEncoder.Windows,
     };
 
     [Theory]

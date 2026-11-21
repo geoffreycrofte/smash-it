@@ -47,6 +47,16 @@ public enum VideoCodec
     Av1,
 }
 
+/// <summary>The engine that encodes H.264 and HEVC videos (AV1 always goes through ffmpeg).</summary>
+public enum VideoEncoder
+{
+    /// <summary>x264 / x265 at constant quality: the same visible quality whatever the content, slower.</summary>
+    Ffmpeg,
+
+    /// <summary>Windows' Media Foundation, on the GPU when there is one: several times faster, at a fixed bitrate.</summary>
+    Windows,
+}
+
 /// <summary>What becomes of animated GIFs in lossy mode.</summary>
 public enum AnimatedGifOutput
 {
@@ -86,6 +96,9 @@ public sealed record CompressionOptions
     public MediaFormat? TargetFormat { get; init; }
 
     public VideoCodec VideoCodec { get; init; } = VideoCodec.H264;
+
+    /// <summary>H.264 and HEVC: ffmpeg (steady quality, the default) or the Windows encoder (fast).</summary>
+    public VideoEncoder VideoEncoder { get; init; } = VideoEncoder.Ffmpeg;
 
     /// <summary>
     /// Removes EXIF, XMP, IPTC and comments. The color profile and the orientation are always kept,
