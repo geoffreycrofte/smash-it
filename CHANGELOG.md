@@ -14,7 +14,7 @@ How this file works:
 ## v0.5.0 · November 21, 2026
 
 ### New
-- **AV1 videos, about a third lighter.** Choose AV1 as the video codec and videos come out around 36 % smaller than with H.264 at the same visible quality, sometimes better looking too. It takes a few times longer, and plays in current browsers, on recent phones, and on Windows with the free AV1 Video Extension. H.264 stays the default, for videos that must play everywhere. The AV1 encoder (FFmpeg) makes the download about 40 MB larger.
+- **AV1 videos, about a third lighter.** Choose AV1 as the video codec and videos come out around 36 % smaller than with H.264 at the same visible quality, sometimes better looking too. It takes a few times longer, and plays in current browsers, on recent phones, and on Windows with the free AV1 Video Extension. H.264 stays the default, for videos that must play everywhere. The AV1 encoder (FFmpeg) makes the installer about 45 MB larger.
 - **Lighter photos.** In lossy mode, pick a maximum size (3840, 2560, 1920 or 1280 pixels on the long side) and larger images are scaled down to it, never enlarged. A large photo at 2560 px is often half as heavy, at 1920 px a quarter, and still sharp on any screen. The Web preset uses 2560 px, Email 1920 px.
 - **Fine tuning.** Under Images in Settings, for those who want more control: color detail for JPEG and AVIF, progressive or baseline JPEG, a maximum number of colors for PNG and GIF, dithering on or off, and Zopfli for the smallest PNGs. Without dithering, a lossy screenshot can get several times smaller.
 
