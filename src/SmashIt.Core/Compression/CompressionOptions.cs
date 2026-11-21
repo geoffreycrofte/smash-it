@@ -47,6 +47,19 @@ public enum VideoCodec
     Av1,
 }
 
+/// <summary>What becomes of animated GIFs in lossy mode.</summary>
+public enum AnimatedGifOutput
+{
+    /// <summary>They stay GIFs, compressed by gifsicle.</summary>
+    Gif,
+
+    /// <summary>H.264 MP4 video: plays everywhere, often more than 10 times lighter.</summary>
+    Mp4,
+
+    /// <summary>VP9 WebM video: lighter still, for the web.</summary>
+    WebM,
+}
+
 public sealed record CompressionOptions
 {
     public CompressionMode Mode { get; init; } = CompressionMode.Lossless;
@@ -110,6 +123,12 @@ public sealed record CompressionOptions
 
     /// <summary>Per-engine image settings (color detail, JPEG encoding, palette, dithering, Zopfli).</summary>
     public ImageTuning Tuning { get; init; } = ImageTuning.Default;
+
+    /// <summary>
+    /// Lossy mode: animated GIFs become MP4 or WebM videos, when the video is smaller. Still GIFs and GIFs with
+    /// transparent areas (which a video can't show) stay GIFs.
+    /// </summary>
+    public AnimatedGifOutput AnimatedGifs { get; init; } = AnimatedGifOutput.Gif;
 
     public static CompressionOptions Default { get; } = new();
 }

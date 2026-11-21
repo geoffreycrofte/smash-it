@@ -42,6 +42,10 @@ public static class Strings
     public static string ImageSizeTip => T(
         "Lossy only: larger images are scaled down to this length on their long side, never enlarged.",
         "Avec pertes uniquement : les images plus grandes sont réduites à cette longueur sur leur grand côté, jamais agrandies.");
+    public static string AnimatedGifs => T("Animated GIFs", "GIF animés");
+    public static string AnimatedGifsTip => T(
+        "Lossy only: an animated GIF becomes a video, often more than 10 times lighter, when it gets smaller. A web page then shows it with a <video> tag instead of <img>. GIFs with transparent areas and still GIFs stay GIFs.",
+        "Avec pertes uniquement : un GIF animé devient une vidéo, souvent plus de 10 fois plus légère, s'il y gagne. Une page web l'affiche alors avec une balise <video> au lieu de <img>. Les GIF avec des zones transparentes et les GIF fixes restent des GIF.");
     public static string Effort => T("Effort", "Effort");
     public static string EffortTip => T("More effort: smaller files, slower compression.", "Plus d'effort : fichiers plus petits, compression plus lente.");
     public static string StripMetadata => T("Remove metadata", "Supprimer les métadonnées");

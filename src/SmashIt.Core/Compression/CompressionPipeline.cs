@@ -31,9 +31,62 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
             return new(path, CompressionStatus.Unsupported, originalSize, originalSize, Message: L10n.T("Unrecognized format.", "Format non reconnu."));
 
         var outputFormat = MediaFormatInfo.ResolveOutput(inputFormat, options.TargetFormat);
-        var isConversion = outputFormat != inputFormat;
         // A conversion the user asked for is kept even if larger; one forced on us (MKV → MP4) is not.
-        var isRequestedConversion = isConversion && options.TargetFormat == outputFormat;
+        var requested = outputFormat != inputFormat && options.TargetFormat == outputFormat;
+
+        if (await GifVideoFormatAsync(path, inputFormat, options, cancellationToken).ConfigureAwait(false) is { } videoFormat)
+        {
+            // Animated GIF → video, kept only when smaller. Nothing is copied to the output folder yet: the GIF may
+            // still be compressed below.
+            var video = await ProcessAsAsync(path, inputFormat, videoFormat, requested: false,
+                options with { CopyAlreadyOptimal = false }, originalSize, cancellationToken, progress).ConfigureAwait(false);
+            if (video.Status is CompressionStatus.Converted or CompressionStatus.Cancelled) return video;
+
+            // Not smaller, transparent, or the encoder failed: the GIF stays a GIF, compressed as usual. Why it
+            // wasn't converted is said, unless the video was simply larger.
+            var gif = await ProcessAsAsync(path, inputFormat, outputFormat, requested, options, originalSize, cancellationToken, progress)
+                .ConfigureAwait(false);
+            return video.Status is CompressionStatus.AlreadyOptimal || video.Message is null
+                ? gif
+                : gif with { Message = gif.Message is null ? video.Message : gif.Message + Environment.NewLine + video.Message };
+        }
+
+        return await ProcessAsAsync(path, inputFormat, outputFormat, requested, options, originalSize, cancellationToken, progress)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The video format an animated GIF becomes (<see cref="CompressionOptions.AnimatedGifs"/>), or <c>null</c>: not
+    /// a GIF, lossless mode, a still GIF, or no engine for it.
+    /// </summary>
+    private async Task<MediaFormat?> GifVideoFormatAsync(
+        string path, MediaFormat inputFormat, CompressionOptions options, CancellationToken cancellationToken)
+    {
+        if (inputFormat != MediaFormat.Gif || options.Mode != CompressionMode.Lossy) return null;
+        MediaFormat? format = options.AnimatedGifs switch
+        {
+            AnimatedGifOutput.Mp4 => MediaFormat.Mp4,
+            AnimatedGifOutput.WebM => MediaFormat.WebM,
+            _ => null,
+        };
+        if (format is not { } f || !_compressors.Any(c => c.IsAvailable && c.CanHandle(inputFormat, f, options))) return null;
+        return await Imaging.WicCodec.ReadFrameCountAsync(path, cancellationToken).ConfigureAwait(false) > 1 ? f : null;
+    }
+
+    /// <summary>Compresses <paramref name="path"/> to <paramref name="outputFormat"/>.</summary>
+    /// <param name="requested">A conversion the user asked for: kept even when larger.</param>
+    private async Task<CompressionResult> ProcessAsAsync(
+        string path,
+        MediaFormat inputFormat,
+        MediaFormat outputFormat,
+        bool requested,
+        CompressionOptions options,
+        long originalSize,
+        CancellationToken cancellationToken,
+        IProgress<double>? progress)
+    {
+        var isConversion = outputFormat != inputFormat;
+        var isRequestedConversion = requested;
         var available = _compressors.Where(c => c.IsAvailable).ToList();
         var candidates = available.Where(c => c.CanHandle(inputFormat, outputFormat, options)).ToList();
 

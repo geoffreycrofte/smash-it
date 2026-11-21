@@ -84,15 +84,24 @@ public sealed partial class FfmpegVideoCompressor() : ToolCompressor("ffmpeg.exe
         var tool = ToolPath ?? throw new ExternalToolException(L10n.T("ffmpeg not found.", "ffmpeg est introuvable."));
         var source = await ProbeAsync(tool, job.InputPath, cancellationToken);
 
-        var result = await ExternalTool.RunRawAsync(tool, Arguments(job, source), cancellationToken, line =>
-        {
-            // -progress writes "out_time_us=12345678" lines: microseconds encoded so far.
-            if (job.Progress is null || source.Duration <= TimeSpan.Zero || !line.StartsWith("out_time_us=", StringComparison.Ordinal)) return;
-            if (long.TryParse(line.AsSpan("out_time_us=".Length), out var us) && us > 0)
-                job.Progress.Report(Math.Clamp(us / 10.0 / source.Duration.TotalMilliseconds, 0, 100));
-        });
+        var result = await ExternalTool.RunRawAsync(
+            tool, Arguments(job, source), cancellationToken, ProgressReader(job.Progress, source.Duration));
         if (result.ExitCode != 0) throw ExternalTool.Failure(tool, result);
     }
+
+    /// <summary>
+    /// Turns the lines of <c>-progress pipe:1</c> into a percentage: "out_time_us=12345678" is the time encoded so
+    /// far, in microseconds.
+    /// </summary>
+    internal static Action<string>? ProgressReader(IProgress<double>? progress, TimeSpan duration) =>
+        progress is null || duration <= TimeSpan.Zero
+            ? null
+            : line =>
+            {
+                if (line.StartsWith("out_time_us=", StringComparison.Ordinal) &&
+                    long.TryParse(line.AsSpan("out_time_us=".Length), out var us) && us > 0)
+                    progress.Report(Math.Clamp(us / 10.0 / duration.TotalMilliseconds, 0, 100));
+            };
 
     /// <summary>What the encoding needs to know about the source.</summary>
     public sealed record SourceInfo(TimeSpan Duration, string? AudioCodec, int AudioBitrate);
