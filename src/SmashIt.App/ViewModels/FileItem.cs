@@ -39,6 +39,7 @@ public sealed partial class FileItem(string path) : ObservableObject
     /// <summary>Segoe Fluent Icons glyph for the kind of file, shown when there is no thumbnail.</summary>
     public string KindGlyph => Kind switch
     {
+        MediaKind.Document when MediaFormatInfo.FromExtension(Name) is MediaFormat.Pptx or MediaFormat.Keynote => "", // Slideshow
         MediaKind.Image => "",    // Photo
         MediaKind.Document => "", // PDF
         MediaKind.Video => "",    // Video

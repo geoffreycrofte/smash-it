@@ -4,13 +4,13 @@
 
 # Smash It
 
-A native Windows app to make images, videos, sounds and PDFs smaller — in the spirit of ImageOptim on macOS.
+A native Windows app to make images, videos, sounds, PDFs and presentations smaller — in the spirit of ImageOptim on macOS.
 
 Drop files or folders on the window: Smash It tries every engine that can handle them, keeps the smallest
 result, and only keeps it when it actually got smaller. By default the app is lossless and keeps your originals:
 the result is saved next to each file as `name-compressed.ext`, or in a `compressed` folder if you prefer.
 
-> Status: early development (v0.5). Images, PDFs, videos and sounds work today; the "Planned" column below lists what's coming.
+> Status: early development (v0.5). Images, PDFs, presentations, videos and sounds work today; the "Planned" column below lists what's coming.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md) ([en français](CHANGELOG.fr.md)). Using a keyboard or a screen reader:
 [ACCESSIBILITY.md](ACCESSIBILITY.md). How releases are built and signed: [CODE_SIGNING.md](CODE_SIGNING.md).
@@ -66,6 +66,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Sound** | MP3, M4A/AAC, WAV, AIFF, FLAC, Ogg, Opus through ffmpeg: lossless (WAV/AIFF to FLAC, tags and cover art removed) or lossy, as music (stereo) or voice (mono, a third of the bitrate), keeping each format or converting to MP3, AAC or Opus | |
 | **Videos** | MP4 with AAC sound: H.264, HEVC or AV1 through ffmpeg (x264, x265, SVT-AV1, constant quality), or H.264 and HEVC through the Windows encoder (GPU, fast); MOV/MKV/AVI become MP4; optional 1080p or 720p cap | |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
+| **Presentations** | PowerPoint and Keynote: the pictures, videos and sounds inside compressed in their own format; PowerPoint pictures scaled down to their size on the slide (150 or 300 dpi) in lossy mode | |
 | **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum); fine tuning per format (color detail, JPEG encoding, palette size, dithering, Zopfli) | |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them: JPEG, PNG, WebP and AVIF results, from JPEG, PNG, WebP, HEIC and AVIF sources | HEIC results |
@@ -154,6 +155,34 @@ for a screen) or 300 dpi (print), set under **Maximum image resolution**. A scan
 and only touches an image that is more than 1.5 times finer than the target (Ghostscript's rule). Only plain
 grayscale or RGB JPEG images are resampled; CMYK, masked or indexed images, and images not drawn on a page, stay
 as they are. On the command line: `--pdf-dpi 300`, or `--pdf-dpi 0` to keep every image's resolution.
+
+### PowerPoint and Keynote
+
+PowerPoint (`.pptx`, `.ppsx`, `.potx` and their macro versions) and Keynote (`.key`) files are ZIP packages whose
+weight is almost always in the pictures, videos and sounds they hold. Smash It compresses each of those with the
+other engines, in its own format and under its own name, and writes it back; slides, text, animations and notes are
+untouched. They follow the **Documents** settings, shared with PDFs.
+
+- **Lossy, PowerPoint:** pictures far finer than the size they are shown at on their slide are scaled down to the
+  **Maximum image resolution** (150 dpi by default, 300 for print), like PowerPoint's own "Compress Pictures", then
+  re-encoded at the quality setting. Cropped pictures count their hidden parts; a picture also used in a group, as a
+  background or a fill keeps its size. Videos (H.264 MP4) and sounds (MP3, M4A) are recompressed in their format.
+- **Keynote:** only the pictures, which keep their exact pixel size: Keynote records each picture's size in its own
+  index files, which Smash It doesn't rewrite. Entries Keynote stores uncompressed stay so.
+- **Lossless:** pictures are optimized without changing a pixel (jpegtran, oxipng…).
+
+On a deck of five 3000×2000 photos (4.58 MB) shown full width, half and a third of a 16:9 slide:
+
+| Settings | Result |
+|---|---|
+| Lossless | 4.58 MB (−0.1 %: the photos were already optimized) |
+| Lossy, quality 75, 300 dpi | 2.86 MB (−38 %) |
+| Lossy, quality 75, 150 dpi | **1.17 MB (−75 %)** |
+| Lossy, quality 60, 150 dpi (Email) | **896 KB (−81 %)** |
+
+How this was measured: [docs/benchmarks.md](docs/benchmarks.md#powerpoint). Every result was checked with the Open
+XML SDK's validator. Keynote files are handled from their documented structure; no Keynote file was available to
+test with, so tell us if one doesn't open.
 
 ### Videos
 
@@ -337,7 +366,7 @@ smashit [options] <files or folders…>
   --encoder <e>        H.264 and HEVC: ffmpeg (steady quality, default) or windows (fast, graphics card)
   --voice              Lossy sound: speech (mono, a third of the bitrate); --music is the default
   --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
-  --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
+  --pdf-dpi <n>        Lossy PDFs and PowerPoint: scale images down to n dpi at most (default 150, 0 keeps them)
   --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
   --max-size <n>       Lossy images: bring the long side down to n pixels, e.g. 2560 (default: keep)
   --color-detail <d>   Lossy JPEG and AVIF: auto (default), full (4:4:4) or reduced (4:2:0)

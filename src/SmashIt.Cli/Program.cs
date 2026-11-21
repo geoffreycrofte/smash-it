@@ -220,7 +220,7 @@ static int Fail(string message)
 }
 
 static void PrintHelp() => Console.WriteLine(L10n.T("""
-    Smash It — image, PDF, video and sound compression
+    Smash It — image, PDF, presentation, video and sound compression
 
     Usage: smashit [options] <files or folders…>
 
@@ -233,7 +233,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --encoder <e>        H.264 and HEVC: ffmpeg (steady quality, default) or windows (fast, graphics card)
       --voice              Lossy sound: speech (mono, a third of the bitrate); --music is the default
       --gif <output>       Lossy animated GIFs: gif (default), mp4 or webm video, often over 10 times lighter
-      --pdf-dpi <n>        Lossy PDFs: scale images down to n dpi at most (default 150, 0 keeps them)
+      --pdf-dpi <n>        Lossy PDFs and PowerPoint: scale images down to n dpi at most (default 150, 0 keeps them)
       --video-max <n>      Videos: bring the short side down to n pixels, e.g. 1080 or 720 (default: keep)
       --max-size <n>       Lossy images: bring the long side down to n pixels, e.g. 2560 (default: keep)
       --color-detail <d>   Lossy JPEG and AVIF: auto (default), full (4:4:4) or reduced (4:2:0)
@@ -249,7 +249,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --strip-metadata     Removes them (default; color profile and orientation are kept)
       -h, --help           Shows this help
     """, """
-    Smash It — compression d'images, de PDF, de vidéos et de sons
+    Smash It — compression d'images, de PDF, de présentations, de vidéos et de sons
 
     Usage : smashit [options] <fichiers ou dossiers…>
 
@@ -262,7 +262,7 @@ static void PrintHelp() => Console.WriteLine(L10n.T("""
       --encoder <e>        H.264 et HEVC : ffmpeg (qualité régulière, par défaut) ou windows (rapide, carte graphique)
       --voice              Son avec pertes : de la parole (mono, un tiers du débit) ; --music par défaut
       --gif <sortie>       GIF animés avec pertes : gif (par défaut), vidéo mp4 ou webm, souvent plus de 10 fois plus légère
-      --pdf-dpi <n>        PDF avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
+      --pdf-dpi <n>        PDF et PowerPoint avec pertes : réduit les images à n ppp au plus (150 par défaut, 0 les garde)
       --video-max <n>      Vidéos : ramène le petit côté à n pixels, ex. 1080 ou 720 (par défaut : inchangé)
       --max-size <n>       Images avec pertes : ramène le grand côté à n pixels, ex. 2560 (par défaut : inchangé)
       --color-detail <d>   JPEG et AVIF avec pertes : auto (par défaut), full (4:4:4) ou reduced (4:2:0)

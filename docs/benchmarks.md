@@ -125,6 +125,43 @@ also does, but made the animation clip 59 % larger. WebM keeps each frame's dura
 **Settings chosen:** x264 CRF from 16 (quality 100) to 23 (70) and 30 (40), preset `veryfast` / `slow` /
 `veryslow` by effort, constant frame rate; VP9 CRF from 24 to 34 and 44, `cpu-used` 4 / 2 / 1.
 
+## PowerPoint
+
+*Measured on 2026-11-21, for the version after v0.5.0.*
+
+**Question:** what Smash It saves on a typical deck of photos, and whether the files stay valid.
+
+**Files:** a deck made with the Open XML SDK (the test helper `tests/SmashIt.Core.Tests/TestPresentation.cs`): five
+3000×2000 JPEG photos (650 KB to 1.3 MB each, 4.58 MB in all), one per 16:9 slide, shown 13.33, 6, 4, 13.33 and 6
+inches wide. No PowerPoint or LibreOffice was available, so the results were checked with the SDK's validator
+(Office 2019 rules) rather than opened in PowerPoint.
+
+**Tools:** the Smash It command line (WIC, jpegtran, the presentation engine).
+
+```sh
+smashit --lossless --keep photos.pptx
+smashit -q 75 --pdf-dpi 150 --keep photos.pptx
+```
+
+**Results:**
+
+| Settings | Result | Time |
+|---|---|---|
+| Lossless | 4.58 MB (−0.1 %) | 3.6 s |
+| Lossy, quality 75, no resolution limit | 4.58 MB (−0.1 %) | 3.4 s |
+| Lossy, quality 75, 300 dpi | 2.86 MB (−38 %) | 2.8 s |
+| Lossy, quality 75, 150 dpi | **1.17 MB (−75 %)** | 2.2 s |
+| Lossy, quality 60, 150 dpi | **896 KB (−81 %)** | 2.2 s |
+
+At 150 dpi the pictures came out 2000×1333 (13.33 inches), 900×600 (6 inches) and 600×400 (4 inches), as expected.
+All five results pass the validator. These photos were already well compressed, so re-encoding alone gains
+nothing: the gain comes from scaling pictures to the size they are shown at. Photos straight from a phone (often
+3–5 MB) would also gain from the re-encoding.
+
+**Keynote:** no `.key` file was available. The handling follows the format as documented by
+[keynote-parser](https://github.com/psobot/keynote-parser): a ZIP whose entries are stored uncompressed, with the
+pictures in `Data/`, replaceable at the same pixel size. The tests cover it with a package built that way.
+
 ## Sound
 
 *Measured on 2026-11-21, for the version after v0.5.0.*
