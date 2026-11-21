@@ -54,9 +54,10 @@ public sealed class OxipngCompressor() : ToolCompressor("oxipng.exe")
         };
 
         // "safe" keeps the color chunks (iCCP, sRGB…); EXIF and text are handled by the pipeline.
-        return RunAsync(
-            ["--opt", level, "--strip", "safe", "--quiet", "--out", job.OutputPath, job.InputPath],
-            cancellationToken);
+        List<string> args = ["--opt", level, "--strip", "safe", "--quiet"];
+        if (job.Options.Tuning.Zopfli) args.Add("--zopfli");
+        args.AddRange(["--out", job.OutputPath, job.InputPath]);
+        return RunAsync(args, cancellationToken);
     }
 }
 
@@ -78,11 +79,18 @@ public sealed class JpegtranCompressor() : ToolCompressor("jpegtran.exe")
     public override async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
     {
         // Metadata is rewritten by the pipeline afterwards.
+        var encoding = job.Options.Tuning.JpegEncoding;
+        if (encoding == JpegEncoding.Baseline)
+        {
+            await RunAsync(["-copy", "none", "-optimize", "-outfile", job.OutputPath, job.InputPath], cancellationToken);
+            return;
+        }
+
         await RunAsync(
             ["-copy", "none", "-optimize", "-progressive", "-outfile", job.OutputPath, job.InputPath],
             cancellationToken);
 
-        if (job.Options.Effort == CompressionEffort.Fast) return;
+        if (encoding == JpegEncoding.Progressive || job.Options.Effort == CompressionEffort.Fast) return;
 
         var baseline = job.OutputPath + ".baseline.jpg";
         try
@@ -133,6 +141,29 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
         return (Math.Max(0, max - 30), max);
     }
 
+    /// <summary>
+    /// pngquant's command line. A color count chosen by the user is a deliberate trade: the minimum quality is
+    /// dropped so pngquant applies it instead of giving up.
+    /// </summary>
+    public static List<string> Arguments(CompressionOptions options, string source, string output)
+    {
+        var tuning = options.Tuning;
+        var (min, max) = QualityRange(options.Quality);
+        if (tuning.MaxColors > 0) min = 0;
+        var speed = options.Effort switch
+        {
+            CompressionEffort.Fast => "10",
+            CompressionEffort.Maximum => "1",
+            _ => "4",
+        };
+        List<string> args = ["--quality", $"{min}-{max}", "--speed", speed, "--strip", "--force"];
+        if (!tuning.Dithering) args.Add("--nofs");
+        args.AddRange(["--output", output]);
+        if (tuning.MaxColors > 0) args.Add(Math.Clamp(tuning.MaxColors, 2, 256).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        args.AddRange(["--", source]);
+        return args;
+    }
+
     public override async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
     {
         var source = job.OutputPath + ".src.png";
@@ -170,17 +201,10 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
             if (profileRestored) png = PngMetadataIO.RemoveChunks(png, ColorChunks);
             await File.WriteAllBytesAsync(source, png, cancellationToken);
 
-            var (min, max) = QualityRange(job.Options.Quality);
-            var speed = job.Options.Effort switch
-            {
-                CompressionEffort.Fast => "10",
-                CompressionEffort.Maximum => "1",
-                _ => "4",
-            };
             // Metadata is written by the pipeline (or was already chosen in the intermediate PNG).
             var result = await ExternalTool.RunRawAsync(
                 ToolPath ?? throw new ExternalToolException(L10n.T("pngquant not found.", "pngquant est introuvable.")),
-                ["--quality", $"{min}-{max}", "--speed", speed, "--strip", "--force", "--output", job.OutputPath, "--", source],
+                Arguments(job.Options, source, job.OutputPath),
                 cancellationToken);
 
             if (result.ExitCode == QualityTooLow)
@@ -238,6 +262,9 @@ public sealed class GifsicleCompressor() : ToolCompressor("gifsicle.exe")
         };
         if (options.Mode == CompressionMode.Lossy && Lossiness(options.Quality) > 0)
             args.Add($"--lossy={Lossiness(options.Quality)}");
+        // Fewer colors than the GIF has: gifsicle picks the palette, without dithering.
+        if (options.Mode == CompressionMode.Lossy && options.Tuning.MaxColors > 0)
+            args.Add($"--colors={Math.Clamp(options.Tuning.MaxColors, 2, 256)}");
         // Comments, frame names and extra extensions (XMP…); the loop count is not an extension and stays.
         if (options.StripMetadata) args.AddRange(["--no-comments", "--no-names", "--no-extensions"]);
         // Every frame and its position scale together.
@@ -338,7 +365,15 @@ public sealed class AvifencCompressor() : ToolCompressor("avifenc.exe")
                 "--jobs", "all",
             };
             if (options.Mode == CompressionMode.Lossless) args.Add("--lossless");
-            else args.AddRange(["-q", Math.Clamp(options.Quality, 0, 100).ToString()]);
+            else
+            {
+                args.AddRange(["-q", Math.Clamp(options.Quality, 0, 100).ToString()]);
+                switch (options.Tuning.ColorDetail)
+                {
+                    case ColorDetail.Full: args.AddRange(["--yuv", "444"]); break;
+                    case ColorDetail.Reduced: args.AddRange(["--yuv", "420"]); break;
+                }
+            }
             if (options.StripMetadata) args.AddRange(["--ignore-exif", "--ignore-xmp"]);
 
             args.AddRange([source, job.OutputPath]);

@@ -49,6 +49,34 @@ public static class Strings
         "Removes EXIF (camera, date, GPS…), XMP, IPTC and comments. The color profile and orientation are always kept.",
         "Retire EXIF (appareil, date, GPS…), XMP, IPTC et commentaires. Le profil couleur et l'orientation sont toujours conservés.");
 
+    // Settings: images, fine tuning
+    public static string FineTuning => T("Fine tuning", "Réglages fins");
+    public static string FineTuningNote => T(
+        "Per format, for those who want them. Presets don't change these.",
+        "Par format, pour qui en a l'usage. Les préréglages n'y touchent pas.");
+    public static string ColorDetail => T("Color detail (JPEG, AVIF, lossy)", "Détail des couleurs (JPEG, AVIF, avec pertes)");
+    public static string ColorDetailName => T("Color detail", "Détail des couleurs");
+    public static string ColorDetailTip => T(
+        "Reduced keeps color at half resolution: invisible on photos, smaller files. Full keeps colored text and thin lines sharp.",
+        "Réduit garde la couleur à mi-résolution : invisible sur les photos, fichiers plus petits. Complet garde nets le texte coloré et les traits fins.");
+    public static string JpegEncoding => T("JPEG encoding", "Encodage JPEG");
+    public static string JpegEncodingTip => T(
+        "Progressive shows a blurry preview first while a web page loads. Baseline is for old devices and software.",
+        "Progressif affiche d'abord un aperçu flou pendant le chargement d'une page web. Classique sert aux appareils et logiciels anciens.");
+    public static string MaxColors => T("Maximum colors (PNG, GIF, lossy)", "Couleurs maximum (PNG, GIF, avec pertes)");
+    public static string MaxColorsName => T("Maximum colors", "Couleurs maximum");
+    public static string MaxColorsTip => T(
+        "Fewer colors, smaller files: fine for icons, logos and simple illustrations, visible on photos.",
+        "Moins de couleurs, fichiers plus petits : bien pour les icônes, logos et illustrations simples, visible sur les photos.");
+    public static string Dithering => T("Dithering (lossy PNG)", "Tramage (PNG avec pertes)");
+    public static string DitheringTip => T(
+        "Smooths gradients with fine noise. Turn it off for screenshots and flat illustrations: they can get several times smaller.",
+        "Adoucit les dégradés avec un bruit fin. Désactivez-le pour les captures d'écran et illustrations en aplats : elles peuvent devenir plusieurs fois plus légères.");
+    public static string Zopfli => T("Zopfli (PNG)", "Zopfli (PNG)");
+    public static string ZopfliTip => T(
+        "A stronger compressor: PNGs about 5 to 10 % smaller, but compressing takes dozens of times longer.",
+        "Un compresseur plus poussé : PNG environ 5 à 10 % plus petits, mais une compression des dizaines de fois plus longue.");
+
     // Names read by screen readers where the visible label alone is ambiguous.
     public static string ImageQualityName => T("Image quality", "Qualité des images");
     public static string PdfQualityName => T("PDF image quality", "Qualité des images des PDF");

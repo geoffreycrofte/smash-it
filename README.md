@@ -65,7 +65,7 @@ or run on demand, in Settings → About. Pre-releases are only offered to people
 | **Images** | JPEG, PNG, TIFF, BMP, JPEG XR, HEIC via the Windows Imaging Component; lossless JPEG (jpegtran) and PNG (oxipng) optimization; lossy PNG (pngquant); GIF, animated or not (gifsicle); SVG (oxvg); WebP (cwebp) and AVIF (avifenc) encoding; lossy, optional maximum size (long side 3840, 2560, 1920 or 1280 px) | |
 | **Videos** | MP4 (H.264 or HEVC + AAC) through Media Foundation, GPU encoder when available; MOV/MKV/AVI become MP4; optional 1080p or 720p cap | ffmpeg for fine tuning (CRF, AV1, VP9) |
 | **PDF** | Images recompressed in place (qpdf + jpegtran) and, in lossy mode, scaled down to 150 or 300 dpi; object streams, Flate level 9; text, fonts, links, forms and bookmarks untouched | |
-| **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum) | Per-engine algorithm settings |
+| **Modes** | Lossless / lossy, quality 1–100, effort (fast / balanced / maximum); fine tuning per format (color detail, JPEG encoding, palette size, dithering, Zopfli) | |
 | **Conversion** | HEIC/PNG/WebP/AVIF/… → JPEG, PNG, WebP, AVIF, HEIC, TIFF, JPEG XR, BMP | |
 | **Metadata** | Strip EXIF/XMP/IPTC/comments or keep them: JPEG, PNG, WebP and AVIF results, from JPEG, PNG, WebP, HEIC and AVIF sources | HEIC results |
 | **Originals** | Kept by default, with the result saved as `name-compressed.ext` or in a `compressed` folder; or replaced, the original going to the Recycle Bin | |
@@ -82,6 +82,19 @@ sharp on any screen. The
 image is resized once, while it is decoded (Fant filter), then encoded by the engine you chose: JPEG, PNG through
 pngquant, WebP, AVIF, animated GIF (every frame). The Web preset uses 2560 px, Email 1920 px; on the command line,
 `--max-size 2560`. Lossless mode and SVG never change the size.
+
+### Fine tuning
+
+Under **Images → Fine tuning** in Settings. Every setting starts on what Smash It does by default, and the presets
+leave them alone.
+
+| Setting | Formats | What it does | Command line |
+|---|---|---|---|
+| Color detail | Lossy JPEG, AVIF | **Reduced** (4:2:0) keeps color at half resolution: invisible on photos, smaller files. **Full** (4:4:4) keeps colored text and thin lines sharp. Automatic: JPEG reduced below quality 90, AVIF full. | `--color-detail reduced` |
+| JPEG encoding | JPEG | **Progressive** shows a blurry preview first while a page loads; **baseline** is for old devices. Automatic keeps the smaller of the two. | `--jpeg progressive` |
+| Maximum colors | Lossy PNG, GIF | 128, 64, 32 or 16 colors: much smaller icons, logos and illustrations (a photo PNG at 64 colors: −34 % in our test), visible on photos. | `--colors 64` |
+| Dithering | Lossy PNG | On, it smooths gradients with fine noise. Off, screenshots and flat illustrations get much smaller (−69 % on a screenshot in our test). | `--no-dither` |
+| Zopfli | PNG | A stronger compressor for the last few percent (−9 % on a screenshot in our test), dozens of times slower. | `--zopfli` |
 
 ### Lossy PNG
 
