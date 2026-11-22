@@ -50,6 +50,10 @@ package() { # tool version binary license [arguments to check it runs]
     fi
   else
     ldd "$folder/$tool" || true
+    # Only glibc, zlib and the C++ runtime: anything else may be missing on the user's system.
+    if ldd "$folder/$tool" | grep -v -E '(linux-vdso|ld-linux|libc\.so|libm\.so|libz\.so|libgcc_s\.so|libstdc\+\+\.so|libpthread\.so|libdl\.so)'; then
+      echo "$tool links to a library outside the base system"; exit 1
+    fi
   fi
   "$folder/$tool" "$@" > /dev/null
   cp "$license" "$folder/LICENSE.txt"
@@ -61,7 +65,8 @@ git clone --quiet --depth 1 --recurse-submodules --shallow-submodules --branch "
   https://github.com/kornelski/pngquant.git "$work/pngquant"
 (
   cd "$work/pngquant"
-  ./configure --without-lcms2 --extra-cflags="-I$libpng_include" --extra-ldflags="$libpng_static -lz -lm"
+  # No pkg-config: it would point to the shared libpng, ahead of the flags below.
+  PKG_CONFIG=false ./configure --without-lcms2 --extra-cflags="-I$libpng_include" --extra-ldflags="$libpng_static -lz -lm"
   make -j"$jobs"
 )
 package pngquant "$PNGQUANT_VERSION" "$work/pngquant/pngquant" "$work/pngquant/COPYRIGHT" --version
