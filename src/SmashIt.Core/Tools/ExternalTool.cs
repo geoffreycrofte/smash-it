@@ -13,13 +13,19 @@ public static class ExternalTool
     /// <summary>Full path of the bundled <paramref name="tool"/> ("ffmpeg": ffmpeg.exe on Windows), or <c>null</c> when it is missing.</summary>
     public static string? Find(string tool)
     {
+        var executable = OperatingSystem.IsWindows() ? tool + ".exe" : tool;
         var candidates = new List<string>();
         if (Environment.GetEnvironmentVariable(ToolsDirectoryVariable) is { Length: > 0 } custom)
             candidates.Add(custom);
         candidates.Add(Path.Combine(AppContext.BaseDirectory, "tools"));
 
         return candidates
-            .Select(dir => Path.Combine(dir, OperatingSystem.IsWindows() ? tool + ".exe" : tool))
+            .SelectMany(dir => new[]
+            {
+                Path.Combine(dir, executable),
+                // A tool shipped with its own libraries keeps its folder: tools/qpdf/bin/qpdf, tools/qpdf/lib/.
+                Path.Combine(dir, tool, "bin", executable),
+            })
             .FirstOrDefault(File.Exists);
     }
 
