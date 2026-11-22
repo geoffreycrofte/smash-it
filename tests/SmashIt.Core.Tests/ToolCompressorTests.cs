@@ -177,14 +177,14 @@ public class ToolCompressorTests
             await TestImages.WriteAsync(dir.File("f3.gif"), MediaFormat.Gif, 160, 120, noisy: false),
         };
         var path = dir.File(name);
-        await Tools.ExternalTool.RunAsync(Tools.ExternalTool.Find("gifsicle.exe")!,
+        await Tools.ExternalTool.RunAsync(Tools.ExternalTool.Find("gifsicle")!,
             ["--merge", "--loopcount=forever", "--delay=20", "--comment", "made by a test", .. frames, "--output", path], Ct);
         foreach (var frame in frames) File.Delete(frame);
         return path;
     }
 
     private static async Task<string> GifInfoAsync(string path) =>
-        (await Tools.ExternalTool.RunRawAsync(Tools.ExternalTool.Find("gifsicle.exe")!, ["--info", path], Ct)).StandardOutput;
+        (await Tools.ExternalTool.RunRawAsync(Tools.ExternalTool.Find("gifsicle")!, ["--info", path], Ct)).StandardOutput;
 
     [Theory]
     [InlineData(CompressionMode.Lossless)]

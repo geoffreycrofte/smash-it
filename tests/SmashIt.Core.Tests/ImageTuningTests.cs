@@ -93,7 +93,7 @@ public class ImageTuningTests
 
         async Task<int> ColorTable(string gif)
         {
-            var info = (await ExternalTool.RunRawAsync(ExternalTool.Find("gifsicle.exe")!, ["--info", gif], Ct)).StandardOutput;
+            var info = (await ExternalTool.RunRawAsync(ExternalTool.Find("gifsicle")!, ["--info", gif], Ct)).StandardOutput;
             return int.Parse(System.Text.RegularExpressions.Regex.Match(info, @"color table \[(\d+)\]").Groups[1].Value);
         }
         Assert.True(await ColorTable(path) > 16, "the test image should have more colors to begin with");

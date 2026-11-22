@@ -97,12 +97,12 @@ public class ImageResizeTests
             await TestImages.WriteAsync(dir.File("f2.gif"), MediaFormat.Gif, 400, 300, noisy: true),
         };
         var gif = dir.File("anim.gif");
-        await ExternalTool.RunAsync(ExternalTool.Find("gifsicle.exe")!, ["--merge", "--loopcount=forever", .. frames, "--output", gif], Ct);
+        await ExternalTool.RunAsync(ExternalTool.Find("gifsicle")!, ["--merge", "--loopcount=forever", .. frames, "--output", gif], Ct);
 
         var result = await new CompressionPipeline([gifsicle]).ProcessAsync(gif, Lossy200, Ct);
 
         Assert.True(result.IsSuccess);
-        var info = (await ExternalTool.RunRawAsync(ExternalTool.Find("gifsicle.exe")!, ["--info", result.OutputPath ?? gif], Ct)).StandardOutput;
+        var info = (await ExternalTool.RunRawAsync(ExternalTool.Find("gifsicle")!, ["--info", result.OutputPath ?? gif], Ct)).StandardOutput;
         Assert.Contains("2 images", info);
         Assert.Contains("logical screen 200x150", info);
     }

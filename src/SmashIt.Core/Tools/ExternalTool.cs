@@ -10,8 +10,8 @@ public static class ExternalTool
     /// <summary>Overrides the tools folder (useful for development and tests).</summary>
     public const string ToolsDirectoryVariable = "SMASHIT_TOOLS_DIR";
 
-    /// <summary>Full path of <paramref name="executable"/>, or <c>null</c> when it is not bundled.</summary>
-    public static string? Find(string executable)
+    /// <summary>Full path of the bundled <paramref name="tool"/> ("ffmpeg": ffmpeg.exe on Windows), or <c>null</c> when it is missing.</summary>
+    public static string? Find(string tool)
     {
         var candidates = new List<string>();
         if (Environment.GetEnvironmentVariable(ToolsDirectoryVariable) is { Length: > 0 } custom)
@@ -19,7 +19,7 @@ public static class ExternalTool
         candidates.Add(Path.Combine(AppContext.BaseDirectory, "tools"));
 
         return candidates
-            .Select(dir => Path.Combine(dir, executable))
+            .Select(dir => Path.Combine(dir, OperatingSystem.IsWindows() ? tool + ".exe" : tool))
             .FirstOrDefault(File.Exists);
     }
 

@@ -9,7 +9,7 @@ internal sealed class Qpdf(string executable)
     // qpdf exit codes: 0 = OK, 2 = errors, 3 = warnings only.
     private const int Warnings = 3;
 
-    public static Qpdf? Find() => ExternalTool.Find("qpdf.exe") is { } path ? new Qpdf(path) : null;
+    public static Qpdf? Find() => ExternalTool.Find("qpdf") is { } path ? new Qpdf(path) : null;
 
     public string Executable => executable;
 

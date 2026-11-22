@@ -1,4 +1,3 @@
-using Microsoft.VisualBasic.FileIO;
 using SmashIt.Core.Compression;
 
 namespace SmashIt.Core.IO;
@@ -31,7 +30,7 @@ internal static class FileOutput
         switch (handling)
         {
             case OriginalHandling.RecycleBin:
-                FileSystem.DeleteFile(original, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                Platform.MoveToTrash(original);
                 break;
             case OriginalHandling.Overwrite:
                 File.Delete(original);

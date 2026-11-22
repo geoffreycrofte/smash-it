@@ -1,13 +1,37 @@
+using SmashIt.Core.Compressors;
+using SmashIt.Core.Formats;
 using Windows.Graphics.Imaging;
 
 namespace SmashIt.Core.Imaging;
 
-/// <summary>Scales a JPEG down and re-encodes it, keeping its colors as they are (no color management).</summary>
-internal static class JpegResampler
+/// <summary><see cref="IImageCodec"/> over the Windows Imaging Component.</summary>
+internal sealed class WicImageCodec : IImageCodec
 {
-    /// <summary>Writes <paramref name="output"/>, a <paramref name="width"/>×<paramref name="height"/> JPEG.</summary>
-    /// <param name="grayscale">One channel in, one channel out (a PDF's DeviceGray must stay one channel).</param>
-    public static async Task ResizeAsync(
+    public bool CanRead(MediaFormat format) => WicImageCompressor.CanRead(format);
+
+    public Task<(uint Width, uint Height)?> ReadSizeAsync(string path, CancellationToken cancellationToken) =>
+        WicCodec.ReadSizeAsync(path, cancellationToken);
+
+    public Task<uint> ReadFrameCountAsync(string path, CancellationToken cancellationToken) =>
+        WicCodec.ReadFrameCountAsync(path, cancellationToken);
+
+    public async Task<uint> WritePngAsync(string input, string output, PngConversion conversion, CancellationToken cancellationToken)
+    {
+        var image = await WicCodec.DecodeAsync(
+            input, conversion.ApplyOrientation, conversion.ConvertToSrgb, BitmapAlphaMode.Straight, cancellationToken, conversion.Scale);
+
+        var options = conversion.Fast
+            ? new BitmapPropertySet
+            {
+                // WICPngFilterNone: the fastest to encode.
+                ["FilterOption"] = new BitmapTypedValue((byte)1, Windows.Foundation.PropertyType.UInt8),
+            }
+            : null;
+        await WicCodec.EncodeAsync(output, BitmapEncoder.PngEncoderId, options, image, BitmapAlphaMode.Straight, cancellationToken);
+        return image.FrameCount;
+    }
+
+    public async Task ResizeJpegAsync(
         string input, string output, uint width, uint height, bool grayscale, int quality, CancellationToken cancellationToken)
     {
         byte[] pixels;

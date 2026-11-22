@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>$(SmashItTargetFramework)</TargetFramework>
+    <TargetFrameworks>$(SmashItTargetFramework);$(SmashItPortableTargetFramework)</TargetFrameworks>
     <RootNamespace>SmashIt.Cli</RootNamespace>
     <!-- Not "smashit": it would overwrite the app's SmashIt.exe once both share one folder (file names are
          case-insensitive). Releases ship a cmd\smashit.cmd shim so the command stays `smashit`. -->

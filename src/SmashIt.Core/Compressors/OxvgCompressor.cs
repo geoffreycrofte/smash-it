@@ -17,7 +17,7 @@ namespace SmashIt.Core.Compressors;
 /// title (screen readers). oxvg is young, so its output is only used when it is a well-formed SVG with the same
 /// size as the original (<see cref="CheckSameDocument"/>); otherwise the original stays.
 /// </remarks>
-public sealed partial class OxvgCompressor() : ToolCompressor("oxvg.exe")
+public sealed partial class OxvgCompressor() : ToolCompressor("oxvg")
 {
     public override string Id => "oxvg";
 

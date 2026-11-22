@@ -165,7 +165,7 @@ public class FfmpegVideoTests
     /// <summary>The first video stream's codec and size, as ffmpeg sees the file.</summary>
     private static async Task<(string Codec, int Width, int Height)> DescribeAsync(string path)
     {
-        var description = (await ExternalTool.RunRawAsync(ExternalTool.Find("ffmpeg.exe")!, ["-hide_banner", "-i", path], Ct)).StandardError;
+        var description = (await ExternalTool.RunRawAsync(ExternalTool.Find("ffmpeg")!, ["-hide_banner", "-i", path], Ct)).StandardError;
         var match = Regex.Match(description, @"Video: (\w+).*?, (\d{2,5})x(\d{2,5})");
         Assert.True(match.Success, description);
         return (match.Groups[1].Value, int.Parse(match.Groups[2].Value), int.Parse(match.Groups[3].Value));

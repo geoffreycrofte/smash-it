@@ -20,7 +20,7 @@ public class FfmpegAudioTests
 
     private static string RequireFfmpeg()
     {
-        var path = ExternalTool.Find("ffmpeg.exe");
+        var path = ExternalTool.Find("ffmpeg");
         if (path is null) Assert.Skip("ffmpeg absent : lancez tools\\fetch-tools.ps1.");
         return path;
     }

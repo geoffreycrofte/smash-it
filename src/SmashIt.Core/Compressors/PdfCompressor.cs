@@ -23,7 +23,7 @@ namespace SmashIt.Core.Compressors;
 public sealed class PdfCompressor : ICompressor
 {
     private readonly Qpdf? _qpdf = Qpdf.Find();
-    private readonly string? _jpegtran = ExternalTool.Find("jpegtran.exe");
+    private readonly string? _jpegtran = ExternalTool.Find("jpegtran");
 
     public string Id => "qpdf";
 
@@ -87,7 +87,7 @@ public sealed class PdfCompressor : ICompressor
                 {
                     var (width, height) = size;
                     var resampled = data + ".resampled.jpg";
-                    await JpegResampler.ResizeAsync(data, resampled, (uint)width, (uint)height, grayscale,
+                    await Platform.ImageCodec.ResizeJpegAsync(data, resampled, (uint)width, (uint)height, grayscale,
                         Math.Clamp(job.Options.Quality, 1, 100), cancellationToken);
                     if (new FileInfo(resampled).Length < new FileInfo(data).Length)
                     {

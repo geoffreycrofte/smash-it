@@ -43,7 +43,7 @@ public class ContainerMetadataTests
     /// <summary>An AVIF (HEIF container, like HEIC) made by avifenc, with EXIF and XMP items.</summary>
     private static async Task<string> AvifWithMetadataAsync(TempDirectory dir)
     {
-        var avifenc = Tool("avifenc.exe");
+        var avifenc = Tool("avifenc");
         var png = await TestImages.WriteAsync(dir.File("plain.png"), MediaFormat.Png, 160, 120, noisy: false);
         await File.WriteAllBytesAsync(dir.File("exif.bin"), Exif, Ct);
         await File.WriteAllBytesAsync(dir.File("xmp.xml"), TestImages.Xmp, Ct);
@@ -58,7 +58,7 @@ public class ContainerMetadataTests
     /// </summary>
     private static async Task<string> WebPWithMetadataAsync(TempDirectory dir)
     {
-        Tool("cwebp.exe");
+        Tool("cwebp");
         var png = await PngWithMetadataAsync(dir);
         var result = await new CompressionPipeline([new CwebpCompressor()]).ProcessAsync(png, new CompressionOptions
         {
@@ -76,7 +76,7 @@ public class ContainerMetadataTests
     [InlineData(CompressionMode.Lossless)] // simple VP8L → extended
     public async Task Metadata_added_to_a_webp_keeps_the_image_readable(CompressionMode mode)
     {
-        Tool("cwebp.exe");
+        Tool("cwebp");
         using var dir = new TempDirectory();
         var png = await TestImages.WriteAsync(dir.File("plain.png"), MediaFormat.Png, 161, 97, noisy: false);
         var result = await new CompressionPipeline([new CwebpCompressor()]).ProcessAsync(png, new CompressionOptions
@@ -192,7 +192,7 @@ public class ContainerMetadataTests
     [Fact]
     public async Task A_png_and_a_webp_converted_to_avif_keep_their_exif_and_xmp()
     {
-        Tool("avifenc.exe");
+        Tool("avifenc");
         using var dir = new TempDirectory();
         var webp = await WebPWithMetadataAsync(dir);
         await RequireWindowsDecoder(webp);
