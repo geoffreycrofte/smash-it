@@ -1,23 +1,23 @@
 name: Build tools
 
-# Some bundled tools publish no Windows x64 build. This workflow compiles one from the tool's own tagged source
-# and attaches it to a "tools-<name>-<version>" pre-release of this repository, where tools/fetch-tools.ps1
-# downloads it (pinned by SHA-256, like every other tool).
+# Some bundled tools publish no Windows x64 build, or none that suits Smash It. This workflow builds or mirrors them
+# and attaches them to a "tools-<name>-<version>" pre-release of this repository, where tools/fetch-tools.ps1
+# downloads them (pinned by SHA-256, like every other tool).
 #
-#   git tag tools-oxvg-0.0.9 && git push origin tools-oxvg-0.0.9
-#
-# ffmpeg is not compiled here but mirrored: BtbN's builds (github.com/BtbN/FFmpeg-Builds) are the reference for
-# Windows, but their dated builds are deleted after a while. The ffmpeg job re-publishes one pinned build, with the
-# sources it was made from (GPL): git tag tools-ffmpeg-9.0.2 && git push origin tools-ffmpeg-9.0.2
-#
-# pngquant is mirrored too: pngquant.org only publishes an unversioned zip and sometimes times out in CI.
-#   git tag tools-pngquant-2.17.0 && git push origin tools-pngquant-2.17.0
+# - oxvg: compiled from its tagged source (its own release only has an ARM64 Windows exe).
+#     git tag tools-oxvg-0.0.9 && git push origin tools-oxvg-0.0.9
+# - ffmpeg: compiled in MSYS2 with only what Smash It uses (tools/ffmpeg-configure.sh), statically: one exe, no DLL,
+#   about a third of a full build. The release carries the FFmpeg source and the MSYS2 source package of every
+#   library linked in (GPL). "Run workflow" (manual) builds it as an artifact without publishing, to try changes.
+#     git tag tools-ffmpeg-9.0.2-slim && git push origin tools-ffmpeg-9.0.2-slim
+# - pngquant: mirrored unchanged: pngquant.org only publishes an unversioned zip and sometimes times out in CI.
+#     git tag tools-pngquant-2.17.0 && git push origin tools-pngquant-2.17.0
 #
 # These releases are pre-releases and never "latest": the app's download links and update check ignore them.
 on:
   push:
     tags: ['tools-oxvg-*', 'tools-ffmpeg-*', 'tools-pngquant-*']
-    branches: ['ci/ffmpeg-slim']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -86,8 +86,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   ffmpeg:
-    # Tags "tools-ffmpeg-<version>-slim" publish; pushes to ci/ffmpeg-slim only build (artifact), to try changes.
-    if: startsWith(github.ref_name, 'tools-ffmpeg-') || github.ref_name == 'ci/ffmpeg-slim'
+    # Tags "tools-ffmpeg-<version>-slim" publish; a manual run only builds (artifact), to try changes.
+    if: startsWith(github.ref_name, 'tools-ffmpeg-') || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     env:
       FFMPEG_TAG: n9.0.2
