@@ -130,11 +130,11 @@ public class CompressionPipelineTests
         var first = await pipeline.ProcessAsync(file, options, Ct);
         var second = await pipeline.ProcessAsync(file, options, Ct);
 
-        Assert.Equal(dir.File(@"compressed\photo.png"), first.OutputPath);
+        Assert.Equal(dir.File("compressed", "photo.png"), first.OutputPath);
         Assert.Equal(400, new FileInfo(first.OutputPath!).Length);
         Assert.Equal(1000, new FileInfo(file).Length);
         // A second run never overwrites the first result.
-        Assert.Equal(dir.File(@"compressed\photo (2).png"), second.OutputPath);
+        Assert.Equal(dir.File("compressed", "photo (2).png"), second.OutputPath);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class CompressionPipelineTests
 
         var copied = await pipeline.ProcessAsync(file, options with { CopyAlreadyOptimal = true }, Ct);
         Assert.Equal(CompressionStatus.AlreadyOptimal, copied.Status);
-        Assert.Equal(dir.File(@"compressed\photo.png"), copied.OutputPath);
+        Assert.Equal(dir.File("compressed", "photo.png"), copied.OutputPath);
         Assert.Equal(await File.ReadAllBytesAsync(file, Ct), await File.ReadAllBytesAsync(copied.OutputPath!, Ct));
         Assert.Equal(0, copied.SavedBytes);
     }
@@ -164,18 +164,18 @@ public class CompressionPipelineTests
     public void A_folder_drop_skips_the_results_of_an_earlier_run()
     {
         using var dir = new TempDirectory();
-        Directory.CreateDirectory(dir.File(@"trip\compressed"));
-        Directory.CreateDirectory(dir.File(@"trip\day 2\compressed"));
-        File.WriteAllText(dir.File(@"trip\a.png"), "");
-        File.WriteAllText(dir.File(@"trip\compressed\a.png"), "");
-        File.WriteAllText(dir.File(@"trip\day 2\b.jpg"), "");
-        File.WriteAllText(dir.File(@"trip\day 2\compressed\b.jpg"), "");
+        Directory.CreateDirectory(dir.File("trip", "compressed"));
+        Directory.CreateDirectory(dir.File("trip", "day 2", "compressed"));
+        File.WriteAllText(dir.File("trip", "a.png"), "");
+        File.WriteAllText(dir.File("trip", "compressed", "a.png"), "");
+        File.WriteAllText(dir.File("trip", "day 2", "b.jpg"), "");
+        File.WriteAllText(dir.File("trip", "day 2", "compressed", "b.jpg"), "");
 
         var files = InputCollector.Expand([dir.File("trip")], CompressionOptions.CompressedFolderName).ToList();
 
-        Assert.Equal([dir.File(@"trip\a.png"), dir.File(@"trip\day 2\b.jpg")], files.Order());
+        Assert.Equal([dir.File("trip", "a.png"), dir.File("trip", "day 2", "b.jpg")], files.Order());
         // A "compressed" folder given on purpose is still compressed.
-        Assert.Single(InputCollector.Expand([dir.File(@"trip\compressed")], CompressionOptions.CompressedFolderName));
+        Assert.Single(InputCollector.Expand([dir.File("trip", "compressed")], CompressionOptions.CompressedFolderName));
     }
 
     [Fact]
