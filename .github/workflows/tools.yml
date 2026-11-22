@@ -113,7 +113,11 @@ jobs:
         run: |
           pacman -Sy --noconfirm --needed make diffutils git \
             mingw-w64-ucrt-x86_64-{gcc,nasm,pkgconf,zlib,x264,x265,svt-av1,libvpx,lame,opus,libvorbis,libogg,dav1d,mpg123}
-          pacman -Q | grep -E 'x264|x265|svt-av1|libvpx|lame|opus|libvorbis|libogg|dav1d|mpg123|zlib' > libraries.txt
+          # The libraries linked into ffmpeg.exe: "<source package base> <version>", the name of their MSYS2 source
+          # package (an epoch "1:" is written "1~" there). The C/C++ runtimes (gcc-libs, winpthreads) are linked too.
+          for p in x264 x265 svt-av1 libvpx lame opus libvorbis libogg dav1d mpg123 zlib gcc-libs libwinpthread; do
+            pacman -Qi "mingw-w64-ucrt-x86_64-$p" | awk -F' *: ' '/^Version/ {v=$2} /^Base/ {b=$2} END {gsub(":", "~", v); print b, v}'
+          done > libraries.txt
           cat libraries.txt
           # x265's pkg-config asks for -lgcc_s, the import library of libgcc_s_seh-1.dll: without it, everything links
           # statically and ffmpeg.exe needs no DLL.
@@ -159,9 +163,9 @@ jobs:
           cp tools/ffmpeg-configure.sh libraries.txt dist/
           # Corresponding source: FFmpeg at the tag, and the MSYS2 source package of every library linked in.
           git -C ffsrc archive --format=tar.gz --prefix="ffmpeg-$version/" -o "../dist/ffmpeg-source-$version.tar.gz" HEAD
-          while read -r name ver; do
-            base="${name#mingw-w64-ucrt-x86_64-}"
-            curl -fsSL -o "dist/mingw-w64-$base-$ver.src.tar.zst" "https://repo.msys2.org/mingw/sources/mingw-w64-$base-$ver.src.tar.zst"
+          while read -r base ver; do
+            curl -fsSL -o "dist/$base-$ver.src.tar.zst" "https://repo.msys2.org/mingw/sources/$base-$ver.src.tar.zst" \
+              || { echo "No source package $base-$ver"; exit 1; }
           done < libraries.txt
           ls -l dist
           sha256sum dist/*.exe
