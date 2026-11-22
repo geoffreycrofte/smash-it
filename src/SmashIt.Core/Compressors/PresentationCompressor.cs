@@ -146,7 +146,7 @@ public sealed class PresentationCompressor(CompressionPipeline media) : ICompres
         if (job.InputFormat == MediaFormat.Keynote && kind != MediaKind.Image) return null;
 
         var maxSide = 0;
-        if (kind == MediaKind.Image && shown is not null && await WicCodec.ReadSizeAsync(path, cancellationToken) is { } size)
+        if (kind == MediaKind.Image && shown is not null && await Platform.ImageCodec.ReadSizeAsync(path, cancellationToken) is { } size)
             maxSide = SlideImageSizes.TargetLongSide(size.Width, size.Height, shown, job.Options.PdfMaxImageDpi);
 
         var result = await media.ProcessAsync(path, MediaOptions(job.Options, maxSide), cancellationToken);

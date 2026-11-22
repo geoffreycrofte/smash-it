@@ -17,7 +17,7 @@ namespace SmashIt.Core.Compressors;
 /// stereo music, 32 kbit/s for speech; LAME: V2 for music). A lossy file that is already at or below that bitrate in
 /// the same format is not re-encoded, which would only lose quality: its sound is copied as it is.</para>
 /// </remarks>
-public sealed partial class FfmpegAudioCompressor() : ToolCompressor("ffmpeg.exe")
+public sealed partial class FfmpegAudioCompressor() : ToolCompressor("ffmpeg")
 {
     private static readonly HashSet<MediaFormat> Writable =
         [MediaFormat.Mp3, MediaFormat.M4a, MediaFormat.Flac, MediaFormat.Ogg, MediaFormat.Opus];

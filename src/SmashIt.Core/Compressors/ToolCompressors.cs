@@ -33,7 +33,7 @@ public abstract class ToolCompressor(string executable) : ICompressor
 }
 
 /// <summary>oxipng: lossless PNG optimizer (MIT).</summary>
-public sealed class OxipngCompressor() : ToolCompressor("oxipng.exe")
+public sealed class OxipngCompressor() : ToolCompressor("oxipng")
 {
     public override string Id => "oxipng";
 
@@ -65,7 +65,7 @@ public sealed class OxipngCompressor() : ToolCompressor("oxipng.exe")
 /// jpegtran (libjpeg-turbo): lossless JPEG optimization — optimal Huffman tables and progressive encoding.
 /// Both baseline and progressive are tried; progressive usually wins except on tiny images.
 /// </summary>
-public sealed class JpegtranCompressor() : ToolCompressor("jpegtran.exe")
+public sealed class JpegtranCompressor() : ToolCompressor("jpegtran")
 {
     public override string Id => "jpegtran";
 
@@ -115,7 +115,7 @@ public sealed class JpegtranCompressor() : ToolCompressor("jpegtran.exe")
 /// source profile back (<see cref="MetadataTransfer.PipelineHandles"/>), that would apply the profile twice, so
 /// pngquant gets the pixels without any color tag and quantizes them in the source color space instead.
 /// </remarks>
-public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
+public sealed class PngquantCompressor() : ToolCompressor("pngquant")
 {
     /// <summary>pngquant's exit code when it can't reach the minimum quality: no file is written.</summary>
     private const int QualityTooLow = 99;
@@ -129,7 +129,7 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
     public override bool CanResize => true;
 
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
-        output == MediaFormat.Png && options.Mode == CompressionMode.Lossy && WicImageCompressor.CanRead(input);
+        output == MediaFormat.Png && options.Mode == CompressionMode.Lossy && Platform.ImageCodec.CanRead(input);
 
     /// <summary>
     /// pngquant's --quality range for a Smash It quality: the target is the upper bound, and images that can't
@@ -183,10 +183,8 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
                 {
                     // Scaled down as stored (no rotation, no color conversion): the pipeline writes the source's
                     // orientation and color profile back, as for an unscaled PNG.
-                    var scaled = await WicCodec.DecodeAsync(job.InputPath, applyOrientation: false, convertToSrgb: false,
-                        Windows.Graphics.Imaging.BitmapAlphaMode.Straight, cancellationToken, job.ResizeScale);
-                    await WicCodec.EncodeAsync(source, Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, null, scaled,
-                        Windows.Graphics.Imaging.BitmapAlphaMode.Straight, cancellationToken);
+                    await Platform.ImageCodec.WritePngAsync(job.InputPath, source,
+                        new PngConversion(ApplyOrientation: false, ConvertToSrgb: false, job.ResizeScale), cancellationToken);
                     png = await File.ReadAllBytesAsync(source, cancellationToken);
                 }
             }
@@ -233,7 +231,7 @@ public sealed class PngquantCompressor() : ToolCompressor("pngquant.exe")
 /// changes and recompresses it; lossy, its <c>--lossy</c> option trades invisible noise for a much smaller file.
 /// Frames, timing and looping are kept.
 /// </summary>
-public sealed class GifsicleCompressor() : ToolCompressor("gifsicle.exe")
+public sealed class GifsicleCompressor() : ToolCompressor("gifsicle")
 {
     public override string Id => "gifsicle";
 
@@ -275,7 +273,7 @@ public sealed class GifsicleCompressor() : ToolCompressor("gifsicle.exe")
 }
 
 /// <summary>cwebp (libwebp): WebP encoder, lossy or lossless (BSD).</summary>
-public sealed class CwebpCompressor() : ToolCompressor("cwebp.exe")
+public sealed class CwebpCompressor() : ToolCompressor("cwebp")
 {
     public override string Id => "cwebp";
 
@@ -284,7 +282,7 @@ public sealed class CwebpCompressor() : ToolCompressor("cwebp.exe")
     public override bool CanResize => true; // through the intermediate PNG
 
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
-        output == MediaFormat.WebP && WicImageCompressor.CanRead(input);
+        output == MediaFormat.WebP && Platform.ImageCodec.CanRead(input);
 
     public override async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
     {
@@ -335,7 +333,7 @@ public sealed class CwebpCompressor() : ToolCompressor("cwebp.exe")
 }
 
 /// <summary>avifenc (libavif): AVIF encoder, lossy or lossless (BSD).</summary>
-public sealed class AvifencCompressor() : ToolCompressor("avifenc.exe")
+public sealed class AvifencCompressor() : ToolCompressor("avifenc")
 {
     public override string Id => "avifenc";
 
@@ -344,7 +342,7 @@ public sealed class AvifencCompressor() : ToolCompressor("avifenc.exe")
     public override bool CanResize => true; // through the intermediate PNG
 
     public override bool CanHandle(MediaFormat input, MediaFormat output, CompressionOptions options) =>
-        output == MediaFormat.Avif && WicImageCompressor.CanRead(input);
+        output == MediaFormat.Avif && Platform.ImageCodec.CanRead(input);
 
     public override async Task CompressAsync(CompressionJob job, CancellationToken cancellationToken)
     {

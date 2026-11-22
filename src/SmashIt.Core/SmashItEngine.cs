@@ -10,7 +10,7 @@ public static class SmashItEngine
     {
         List<ICompressor> engines =
         [
-            new WicImageCompressor(),
+            .. Platform.ImageEngines(),
             new JpegtranCompressor(),
             new OxipngCompressor(),
             new PngquantCompressor(),
@@ -19,7 +19,7 @@ public static class SmashItEngine
             new CwebpCompressor(),
             new AvifencCompressor(),
             new PdfCompressor(),
-            new VideoCompressor(),
+            .. Platform.VideoEngines(),
             new FfmpegVideoCompressor(),
             new FfmpegGifVideoCompressor(),
             new FfmpegAudioCompressor(),

@@ -16,7 +16,7 @@ namespace SmashIt.Core.Compressors;
 /// skies and gradients at no cost in size; H.264 and HEVC stay in 8 bits, which every player reads. Metadata (dates,
 /// location) is kept or removed with the "Remove metadata" setting.
 /// </remarks>
-public sealed partial class FfmpegVideoCompressor() : ToolCompressor("ffmpeg.exe")
+public sealed partial class FfmpegVideoCompressor() : ToolCompressor("ffmpeg")
 {
     private static readonly HashSet<MediaFormat> Readable =
         [MediaFormat.Mp4, MediaFormat.Mov, MediaFormat.Mkv, MediaFormat.Avi, MediaFormat.WebM];

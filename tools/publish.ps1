@@ -69,7 +69,7 @@ if ($Step -in 'All', 'Stage') {
     $build = Join-Path $artifacts 'build\'
     if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 
-    $common = @('-c', 'Release', '-r', $runtime, '--self-contained', '-o', $stage,
+    $common = @('-c', 'Release', '-f', 'net10.0-windows10.0.19041.0', '-r', $runtime, '--self-contained', '-o', $stage,
         "-p:Version=$Version", "-p:BaseOutputPath=$build", '-nologo', '-v', 'quiet')
     foreach ($project in 'src\SmashIt.App', 'src\SmashIt.Cli') {
         Write-Host "→ dotnet publish $project"

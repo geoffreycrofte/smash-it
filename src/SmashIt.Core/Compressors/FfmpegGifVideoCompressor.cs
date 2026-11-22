@@ -15,7 +15,7 @@ namespace SmashIt.Core.Compressors;
 /// video doesn't loop by itself: the page or the player does it. GIFs with transparent areas are turned down
 /// (<see cref="NotSupportedException"/>): a video would show them as a black box.
 /// </remarks>
-public sealed class FfmpegGifVideoCompressor() : ToolCompressor("ffmpeg.exe")
+public sealed class FfmpegGifVideoCompressor() : ToolCompressor("ffmpeg")
 {
     public override string Id => "ffmpeg";
 

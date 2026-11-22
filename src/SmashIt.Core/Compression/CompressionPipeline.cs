@@ -70,7 +70,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
             _ => null,
         };
         if (format is not { } f || !_compressors.Any(c => c.IsAvailable && c.CanHandle(inputFormat, f, options))) return null;
-        return await Imaging.WicCodec.ReadFrameCountAsync(path, cancellationToken).ConfigureAwait(false) > 1 ? f : null;
+        return await Platform.ImageCodec.ReadFrameCountAsync(path, cancellationToken).ConfigureAwait(false) > 1 ? f : null;
     }
 
     /// <summary>Compresses <paramref name="path"/> to <paramref name="outputFormat"/>.</summary>
@@ -284,7 +284,7 @@ public sealed class CompressionPipeline(IEnumerable<ICompressor> compressors)
     {
         if (options.ImageMaxSide <= 0 || options.Mode != CompressionMode.Lossy) return null;
         if (MediaFormatInfo.KindOf(format) != MediaKind.Image || format == MediaFormat.Svg) return null;
-        var size = await Imaging.WicCodec.ReadSizeAsync(path, cancellationToken).ConfigureAwait(false);
+        var size = await Platform.ImageCodec.ReadSizeAsync(path, cancellationToken).ConfigureAwait(false);
         return ScaleFor(size, options.ImageMaxSide);
     }
 

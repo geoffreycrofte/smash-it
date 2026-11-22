@@ -37,7 +37,7 @@ switch ($Command) {
         Invoke-Dotnet (@('run', '--project', (Join-Path $repo 'src\SmashIt.App'), '--') + $Arguments)
     }
     'cli' {
-        Invoke-Dotnet (@('run', '--project', (Join-Path $repo 'src\SmashIt.Cli'), '--') + $Arguments)
+        Invoke-Dotnet (@('run', '--project', (Join-Path $repo 'src\SmashIt.Cli'), '-f', 'net10.0-windows10.0.19041.0', '--') + $Arguments)
     }
     'build' {
         Invoke-Dotnet (@('build', (Join-Path $repo 'SmashIt.slnx')) + $Arguments)

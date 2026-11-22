@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(SmashItTargetFramework)</TargetFramework>
+    <TargetFrameworks>$(SmashItTargetFramework);$(SmashItPortableTargetFramework)</TargetFrameworks>
     <RootNamespace>SmashIt.Core</RootNamespace>
     <SmashItToolsDir>$(MSBuildThisFileDirectory)..\..\tools\bin\</SmashItToolsDir>
   </PropertyGroup>
@@ -10,13 +10,22 @@
     <InternalsVisibleTo Include="SmashIt.Core.Tests" />
   </ItemGroup>
 
+  <!-- What differs between systems lives in Platforms\: the Windows build compiles Platforms\Windows (WIC, Media
+       Foundation, Recycle Bin, Explorer menu), the plain .NET build (macOS, Linux) compiles Platforms\Other. -->
+  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'windows'">
+    <Compile Remove="Platforms\Other\**" />
+  </ItemGroup>
+  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'windows'">
+    <Compile Remove="Platforms\Windows\**" />
+  </ItemGroup>
+
   <!-- Bundled third-party tools (fetched by tools/fetch-tools.ps1) land in <output>\tools\. -->
   <ItemGroup>
     <Content Include="$(SmashItToolsDir)**\*" Link="tools\%(RecursiveDir)%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 
-  <Target Name="WarnMissingTools" BeforeTargets="Build" Condition="!Exists('$(SmashItToolsDir)oxipng.exe')">
+  <Target Name="WarnMissingTools" BeforeTargets="Build" Condition="!Exists('$(SmashItToolsDir)oxipng.exe') And !Exists('$(SmashItToolsDir)oxipng')">
     <Warning Text="Outils tiers absents (oxipng, pngquant, gifsicle, oxvg, jpegtran, cwebp, avifenc, qpdf, ffmpeg) : lancez tools\fetch-tools.ps1. Seul le moteur Windows (WIC) sera disponible." />
   </Target>
 

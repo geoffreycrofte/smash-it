@@ -17,7 +17,7 @@ public class FfmpegGifVideoTests
         OriginalHandling = OriginalHandling.KeepAlongside,
     };
 
-    private static string RequireFfmpeg() => RequireTool("ffmpeg.exe");
+    private static string RequireFfmpeg() => RequireTool("ffmpeg");
 
     private static string RequireTool(string name)
     {
@@ -161,7 +161,7 @@ public class FfmpegGifVideoTests
     /// <summary>gifsicle turns identical frames in a row into one longer frame, as optimized GIFs often have.</summary>
     private static async Task MergeIdenticalFramesAsync(string path)
     {
-        var gifsicle = RequireTool("gifsicle.exe");
+        var gifsicle = RequireTool("gifsicle");
         await ExternalTool.RunAsync(gifsicle, ["-O2", "--batch", path], Ct);
     }
 
