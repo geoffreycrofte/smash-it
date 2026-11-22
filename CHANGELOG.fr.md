@@ -17,7 +17,7 @@ Traduction française de CHANGELOG.md, montrée dans « Voir les nouveautés » 
 
 ### Améliorations
 - **Une qualité vidéo régulière.** Les vidéos H.264 et HEVC passent désormais par ffmpeg par défaut, à qualité constante : les vidéos détaillées, comme l'animation ou les enregistrements d'écran, ne ressortent plus floues (VMAF 93 au lieu de 84 sur notre clip d'animation de test), et la date et le lieu restent si vous gardez les métadonnées. Comptez environ le temps réel en 1080p. Pour aller vite, choisissez l'encodeur Windows sous « Encodeur » dans les réglages Vidéo : 4 à 6 fois plus rapide sur la carte graphique.
-- **Un téléchargement plus léger.** Smash It embarque désormais son propre ffmpeg, compilé avec les seuls codecs qu'il utilise : environ 30 Mo de moins à télécharger, pour les mêmes résultats.
+- **Un téléchargement plus léger.** Smash It embarque désormais son propre ffmpeg, compilé avec les seuls codecs qu'il utilise : l'installeur est un tiers plus léger (65,7 Mo au lieu de 98,8), pour les mêmes résultats.
 
 ### Corrections
 - Les vidéos AV1 gardent désormais leur date et leur lieu quand « Supprimer les métadonnées » est décoché ; l'app les retirait toujours.

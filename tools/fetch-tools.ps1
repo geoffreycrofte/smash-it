@@ -96,14 +96,14 @@ $tools = @(
         License = @{ 'license.rst.txt' = 'qpdf.txt' }
     },
     @{
-        # BtbN's static GPL build (x264, x265, SVT-AV1…), mirrored unchanged by this repository's "Build tools"
-        # workflow with its sources, because BtbN deletes dated builds after a while. Encodes AV1 videos.
-        Name       = 'ffmpeg 9.0.2'
-        Url        = 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-ffmpeg-9.0.2/ffmpeg-9.0.2-win64-gpl.exe'
-        Sha256     = 'bd2a2260fe651c7b0975b86e58c4519f9884a2b6756c909c8a5becf4de074342'
+        # Built by this repository's "Build tools" workflow with only what Smash It uses (tools/ffmpeg-configure.sh):
+        # one static exe, about a third of a full build. The release carries every source (GPL).
+        Name       = 'ffmpeg 9.0.2 (slim)'
+        Url        = 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-ffmpeg-9.0.2-slim/ffmpeg-9.0.2-slim-win64.exe'
+        Sha256     = '0e25e5d9b7e8ed3e152878807537cf7781911b5632270f9de3bf9fe5151fcd54'
         Files      = @('ffmpeg.exe')
         Executable = $true
-        LicenseUrl = @{ 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-ffmpeg-9.0.2/ffmpeg-LICENSE.txt' = 'ffmpeg.txt' }
+        LicenseUrl = @{ 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-ffmpeg-9.0.2-slim/ffmpeg-LICENSE.txt' = 'ffmpeg.txt' }
         License    = @{}
     }
 )

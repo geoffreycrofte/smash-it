@@ -219,8 +219,9 @@ gets 60 % of the stereo bitrate.
 **Question:** does an ffmpeg built with only what Smash It uses (`tools/ffmpeg-configure.sh`, static, MSYS2 UCRT64)
 give the same results as the full BtbN build it replaces, and how much does it save?
 
-**Size:** 168.3 MB → **54.0 MB** for `ffmpeg.exe`; compressed with LZMA2 at the strongest level (what the installer
-does), 41.0 MB → **9.8 MB**: about 31 MB off the installer. One exe, no DLL.
+**Size:** 160.5 MB → **51.5 MB** for `ffmpeg.exe`; compressed with LZMA2 at the strongest level (what the installer
+does), 41.0 MB → **9.8 MB**. Measured on the packages themselves: the installer goes from 98.8 MB (v0.5.0) to
+**65.7 MB**, the portable zip from 152.5 MB to **101.0 MB**. One exe, no DLL.
 
 **Same results:** every test passes with it (268), and the encodes of the sections above, run with each build through
 the Smash It command line at quality 70, came out the same:
