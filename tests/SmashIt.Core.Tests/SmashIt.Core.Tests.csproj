@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(SmashItTargetFramework)</TargetFramework>
+    <!-- Windows (WIC, Media Foundation) and plain .NET (libvips), as the Core is built: the second one is what
+         macOS and Linux run. -->
+    <TargetFrameworks>$(SmashItTargetFramework);$(SmashItPortableTargetFramework)</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -14,6 +16,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SmashIt.Core\SmashIt.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Engines and helpers that only exist on Windows. Tests mixing both use #if WINDOWS. -->
+  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'windows'">
+    <Compile Remove="WicImageCompressorTests.cs;VideoCompressorTests.cs;ExplorerContextMenuTests.cs;TestVideo.cs" />
   </ItemGroup>
 
   <ItemGroup>

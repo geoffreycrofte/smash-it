@@ -141,7 +141,7 @@ public class ContainerMetadataTests
         var webp = await WebPWithMetadataAsync(dir);
         await RequireWindowsDecoder(webp);
 
-        var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(webp, KeepMetadata with
+        var result = await new CompressionPipeline([.. Platform.ImageEngines()]).ProcessAsync(webp, KeepMetadata with
         {
             Mode = CompressionMode.Lossy, TargetFormat = MediaFormat.Jpeg,
         }, Ct);
@@ -180,7 +180,7 @@ public class ContainerMetadataTests
         var webp = await WebPWithMetadataAsync(dir);
         await RequireWindowsDecoder(webp);
 
-        var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(webp, KeepMetadata with
+        var result = await new CompressionPipeline([.. Platform.ImageEngines()]).ProcessAsync(webp, KeepMetadata with
         {
             StripMetadata = true, Mode = CompressionMode.Lossy, TargetFormat = MediaFormat.Jpeg,
         }, Ct);
@@ -218,7 +218,7 @@ public class ContainerMetadataTests
         var avif = await AvifWithMetadataAsync(dir);
         await RequireWindowsDecoder(avif);
 
-        var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(avif, KeepMetadata with
+        var result = await new CompressionPipeline([.. Platform.ImageEngines()]).ProcessAsync(avif, KeepMetadata with
         {
             Mode = CompressionMode.Lossy, TargetFormat = MediaFormat.Jpeg,
         }, Ct);

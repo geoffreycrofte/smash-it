@@ -17,6 +17,9 @@
   </ItemGroup>
   <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'windows'">
     <Compile Remove="Platforms\Windows\**" />
+    <!-- libvips (LGPL-2.1+) and its .NET binding (MIT): the image codec on macOS and Linux. -->
+    <PackageReference Include="NetVips" Version="3.2.0" />
+    <PackageReference Include="NetVips.Native" Version="8.18.7" />
   </ItemGroup>
 
   <!-- Bundled third-party tools (fetched by tools/fetch-tools.ps1) land in <output>\tools\. -->

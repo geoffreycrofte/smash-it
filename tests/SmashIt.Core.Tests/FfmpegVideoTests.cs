@@ -30,6 +30,7 @@ public class FfmpegVideoTests
     [InlineData(1, 63)]
     public void Quality_maps_to_a_crf(int quality, int crf) => Assert.Equal(crf, FfmpegVideoCompressor.Crf(quality));
 
+#if WINDOWS // WIC or Media Foundation
     [Fact]
     public void Exactly_one_engine_encodes_each_video()
     {
@@ -49,6 +50,7 @@ public class FfmpegVideoTests
         Assert.True(mf.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, windows with { VideoCodec = VideoCodec.Hevc }));
         Assert.False(ffmpeg.CanHandle(MediaFormat.Mov, MediaFormat.Mp4, Av1 with { Mode = CompressionMode.Lossless }));
     }
+#endif
 
     [Theory]
     [InlineData(100, 16, 18)]
@@ -75,6 +77,7 @@ public class FfmpegVideoTests
             hevc.Skip(hevc.IndexOf("-c:v")).Take(10));
     }
 
+#if WINDOWS // WIC or Media Foundation
     [Theory]
     [InlineData(VideoCodec.H264, "h264")]
     [InlineData(VideoCodec.Hevc, "hevc")]
@@ -91,6 +94,7 @@ public class FfmpegVideoTests
         if (result.Status == CompressionStatus.Optimized)
             Assert.Equal((name, 640, 360), await DescribeAsync(result.OutputPath!));
     }
+#endif
 
     [Fact]
     public void The_probe_reads_duration_and_audio()
@@ -129,6 +133,7 @@ public class FfmpegVideoTests
         Assert.Contains("+faststart+use_metadata_tags", kept);
     }
 
+#if WINDOWS // WIC or Media Foundation
     [Fact]
     public async Task A_video_becomes_a_smaller_av1_mp4_with_progress()
     {
@@ -161,6 +166,7 @@ public class FfmpegVideoTests
 
         Assert.Equal(("av1", 360, 640), await DescribeAsync(output));
     }
+#endif
 
     /// <summary>The first video stream's codec and size, as ffmpeg sees the file.</summary>
     private static async Task<(string Codec, int Width, int Height)> DescribeAsync(string path)
