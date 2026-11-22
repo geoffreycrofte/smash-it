@@ -65,9 +65,11 @@ git clone --quiet --depth 1 --recurse-submodules --shallow-submodules --branch "
   https://github.com/kornelski/pngquant.git "$work/pngquant"
 (
   cd "$work/pngquant"
-  # No pkg-config: it would point to the shared libpng, ahead of the flags below.
-  PKG_CONFIG=false ./configure --without-lcms2 --extra-cflags="-I$libpng_include" --extra-ldflags="$libpng_static -lz -lm"
+  ./configure --without-lcms2 --extra-cflags="-I$libpng_include"
   make -j"$jobs"
+  # configure always links the shared libpng it finds: the program is linked again, with the static one.
+  rm pngquant
+  cc pngquant.o pngquant_opts.o rwpng.o ./lib/libimagequant.a "$libpng_static" -lz -lm -o pngquant
 )
 package pngquant "$PNGQUANT_VERSION" "$work/pngquant/pngquant" "$work/pngquant/COPYRIGHT" --version
 
