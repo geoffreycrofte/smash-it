@@ -20,6 +20,7 @@ How this file works:
 
 ### Improved
 - **Steady video quality.** H.264 and HEVC videos now go through ffmpeg by default, at constant quality: detailed videos such as animation or screen recordings no longer come out blurry (VMAF 93 instead of 84 on our animated test clip), and dates and location stay when you keep metadata. It takes about real time for 1080p. For speed, choose the Windows encoder under Encoder in the Video settings: 4 to 6 times faster on the graphics card.
+- **A lighter download.** Smash It now ships its own ffmpeg, built with only the codecs it uses: the installer is a third lighter (65.7 MB instead of 98.8), with the same results.
 
 ### Fixed
 - AV1 videos now keep their dates and location when "Remove metadata" is unticked; the app always removed them.
