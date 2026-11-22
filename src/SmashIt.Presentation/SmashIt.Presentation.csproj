@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- What the desktop apps share: view-models, texts, settings. No UI toolkit here: the WinUI app (Windows) and the
+       Avalonia app (macOS, Linux) bind to the same classes and plug their own pieces in (IDesktopIntegration). -->
+  <PropertyGroup>
+    <TargetFrameworks>$(SmashItTargetFramework);$(SmashItPortableTargetFramework)</TargetFrameworks>
+    <RootNamespace>SmashIt.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmashIt.Core\SmashIt.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="SmashIt.Core.Localization" />
+  </ItemGroup>
+
+</Project>

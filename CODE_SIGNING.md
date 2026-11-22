@@ -10,8 +10,8 @@ how signing will work once it starts.
 
 ## What will be signed
 
-- Smash It's own programs and libraries: `SmashIt.exe`, `SmashIt.dll`, `SmashIt.Cli.exe`, `SmashIt.Cli.dll` and
-  `SmashIt.Core.dll`.
+- Smash It's own programs and libraries: `SmashIt.exe`, `SmashIt.dll`, `SmashIt.Cli.exe`, `SmashIt.Cli.dll`,
+  `SmashIt.Core.dll` and `SmashIt.Presentation.dll`.
 - The installer, `SmashIt-Setup-x64.exe`. The portable zip will contain the same signed files.
 
 The bundled tools (oxipng, pngquant, gifsicle, oxvg, jpegtran, cwebp, avifenc, qpdf) are other open source

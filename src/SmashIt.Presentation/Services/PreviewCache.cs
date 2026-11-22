@@ -1,12 +1,12 @@
 using System.Diagnostics;
 
-namespace SmashIt.App.Services;
+namespace SmashIt.Presentation.Services;
 
 /// <summary>
 /// Keeps a temporary copy of each image before it is compressed, so the before/after preview still works
 /// once the original has gone to the Recycle Bin. One folder per app instance, removed on exit.
 /// </summary>
-internal static class PreviewCache
+public static class PreviewCache
 {
     private static readonly string Root = Path.Combine(Path.GetTempPath(), "SmashIt", "Preview");
     private static readonly string Folder = Path.Combine(Root, Environment.ProcessId.ToString());

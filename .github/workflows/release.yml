@@ -82,6 +82,7 @@ jobs:
             artifacts/publish/SmashIt/SmashIt.Cli.exe
             artifacts/publish/SmashIt/SmashIt.Cli.dll
             artifacts/publish/SmashIt/SmashIt.Core.dll
+            artifacts/publish/SmashIt/SmashIt.Presentation.dll
           if-no-files-found: error
 
       - name: Sign the app files
