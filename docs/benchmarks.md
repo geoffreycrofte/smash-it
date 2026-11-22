@@ -212,6 +212,32 @@ speech, LAME V2 for music. Quality 70 sits on those points, and the slider moves
 V2 / V5, Vorbis q8 / q5 / q3. Voice (mono): Opus 48 / 32 / 24 kbit/s, AAC and MP3 96 / 64 / 48 kbit/s. Mono music
 gets 60 % of the stereo bitrate.
 
+## Slim ffmpeg build
+
+*Measured on 2026-11-22, for the version after v0.5.0.*
+
+**Question:** does an ffmpeg built with only what Smash It uses (`tools/ffmpeg-configure.sh`, static, MSYS2 UCRT64)
+give the same results as the full BtbN build it replaces, and how much does it save?
+
+**Size:** 168.3 MB → **54.0 MB** for `ffmpeg.exe`; compressed with LZMA2 at the strongest level (what the installer
+does), 41.0 MB → **9.8 MB**: about 31 MB off the installer. One exe, no DLL.
+
+**Same results:** every test passes with it (268), and the encodes of the sections above, run with each build through
+the Smash It command line at quality 70, came out the same:
+
+| Encode | BtbN build | Slim build |
+|---|---|---|
+| AV1, camera clip | 4,166,689 bytes, VMAF 92.63, 11.7 s | 4,166,689 bytes, VMAF 92.63, 10.3 s |
+| H.264 (x264), animation clip | 7,463,941 bytes, VMAF 93.30, 7.9 s | 7,463,956 bytes, VMAF 93.30, 8.0 s |
+| HEVC (x265), camera clip | 4,254,589 bytes, VMAF 92.52, 14.2 s | 4,254,562 bytes, VMAF 92.52, 14.6 s |
+| Animated GIF → MP4 | 296,406 bytes | 296,421 bytes |
+| Animated GIF → WebM | 168,410 bytes | 168,410 bytes |
+| Music → Opus / MP3 / AAC | 780,942 / 1,484,000 / 1,241,173 bytes | 782,844 / 1,484,005 / 1,241,173 bytes |
+| Music → FLAC | 5,472,016 bytes | 5,472,016 bytes |
+
+The few bytes apart come from the library versions written in the files (the Opus file differs by 0.2 %). The
+library versions are listed in the release's `libraries.txt`.
+
 ## Earlier measurements
 
 These figures appear in the README; their test files and commands weren't recorded at the time. They will be
