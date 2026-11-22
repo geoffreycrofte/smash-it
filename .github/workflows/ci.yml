@@ -3,6 +3,10 @@ name: CI
 # Builds and tests every pull request and every push to main, on the same Windows runner the Release workflow
 # uses: a test that only passes on a developer's machine (codecs from the Store, tools in tools\bin) shows up here
 # instead of failing the release after the tag. Warnings are errors.
+#
+# A red run should always mean something to fix: the bundled tools are cached between runs (keyed on
+# tools/fetch-tools.ps1, so a new version or hash downloads again), which keeps slow third-party hosts out of the
+# picture, and runs on main are never cancelled (each merge gets its verdict; only a pull request's outdated runs are).
 on:
   pull_request:
   push:
@@ -13,7 +17,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
@@ -25,6 +29,13 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Restore bundled tools
+        uses: actions/cache@v6
+        with:
+          path: tools/bin
+          key: tools-${{ runner.os }}-${{ hashFiles('tools/fetch-tools.ps1') }}
+
+      # Downloads only what the cache didn't have (the cached files were verified by the run that downloaded them).
       - name: Fetch bundled tools
         shell: pwsh
         run: ./tools/fetch-tools.ps1

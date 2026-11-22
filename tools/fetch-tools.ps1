@@ -117,6 +117,21 @@ function Find-7Zip {
     return $null
 }
 
+function Save-Url([string] $Url, [string] $Path) {
+    # Hosts sometimes answer slowly or drop the connection: a few attempts, with growing pauses, before giving up.
+    for ($attempt = 1; ; $attempt++) {
+        try {
+            Invoke-WebRequest $Url -OutFile $Path -UseBasicParsing -TimeoutSec 120
+            return
+        }
+        catch {
+            if ($attempt -ge 3) { throw }
+            Write-Warning "Téléchargement interrompu ($($_.Exception.Message)), nouvel essai…"
+            Start-Sleep -Seconds (10 * $attempt)
+        }
+    }
+}
+
 New-Item -ItemType Directory -Force $bin, $licenses, $cache | Out-Null
 $sevenZip = Find-7Zip
 $failed = @()
@@ -137,7 +152,7 @@ foreach ($tool in $tools) {
     $archive = Join-Path $cache ([IO.Path]::GetFileName($tool.Url))
     if (-not (Test-Path $archive) -or (Get-FileHash $archive -Algorithm SHA256).Hash -ne $tool.Sha256) {
         Write-Host "↓ $($tool.Name)"
-        Invoke-WebRequest $tool.Url -OutFile $archive -UseBasicParsing
+        Save-Url $tool.Url $archive
     }
 
     $hash = (Get-FileHash $archive -Algorithm SHA256).Hash
@@ -150,7 +165,7 @@ foreach ($tool in $tools) {
         # Downloaded as the program itself: copied under its usual name, license fetched next to it.
         Copy-Item $archive (Join-Path $bin $tool.Files[0]) -Force
         foreach ($entry in $tool.LicenseUrl.GetEnumerator()) {
-            Invoke-WebRequest $entry.Key -OutFile (Join-Path $licenses $entry.Value) -UseBasicParsing
+            Save-Url $entry.Key (Join-Path $licenses $entry.Value)
         }
         Write-Host "✔ $($tool.Name)"
         continue
