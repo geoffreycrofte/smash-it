@@ -1,0 +1,2 @@
+# Shell scripts run in bash, also on Windows runners (MSYS2): they must keep LF line endings.
+*.sh text eol=lf
