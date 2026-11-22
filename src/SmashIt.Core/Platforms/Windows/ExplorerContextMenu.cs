@@ -14,7 +14,7 @@ namespace SmashIt.Core.Shell;
 /// accepts packaged, signed apps. Explorer starts the command once per selected item; the app forwards those
 /// launches to its first window.
 /// </remarks>
-public sealed class ExplorerContextMenu(RegistryKey classesRoot)
+public sealed class ExplorerContextMenu(RegistryKey classesRoot) : IContextMenu
 {
     public const string VerbName = "SmashIt.Compress";
 

@@ -1,14 +1,14 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SmashIt.App.Services;
 using SmashIt.Core;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
 using SmashIt.Core.IO;
 using SmashIt.Core.Shell;
+using SmashIt.Presentation.Services;
 
-namespace SmashIt.App.ViewModels;
+namespace SmashIt.Presentation.ViewModels;
 
 // Labels are read when a window binds them, so they follow the current language.
 
@@ -461,7 +461,11 @@ public sealed partial class MainViewModel : ObservableObject
     public partial bool AskOutputLocation { get; set; } = true;
 
     // Explorer: the registry is the source of truth, not the settings file.
-    private readonly ExplorerContextMenu _contextMenu = ExplorerContextMenu.ForCurrentUser();
+    private readonly IDesktopIntegration _desktop;
+    private readonly IContextMenu? _contextMenu;
+
+    /// <summary>Whether this system has a file manager entry to offer.</summary>
+    public bool HasContextMenu => _contextMenu is not null;
 
     [ObservableProperty]
     public partial bool ContextMenuEnabled { get; set; }
@@ -494,10 +498,13 @@ public sealed partial class MainViewModel : ObservableObject
     ];
 
     // Sliders change many times per second: the file is written once they settle.
-    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer? _saveTimer;
+    private static readonly TimeSpan SaveDelay = TimeSpan.FromMilliseconds(500);
+    private CancellationTokenSource? _pendingSave;
 
-    public MainViewModel()
+    public MainViewModel(IDesktopIntegration desktop)
     {
+        _desktop = desktop;
+        _contextMenu = desktop.ContextMenu;
         Updates = new UpdateViewModel(() => IsBusy);
         var settings = AppSettings.Current;
         ImageLossy = settings.ImageLossy;
@@ -531,25 +538,14 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedLanguage = Languages.First(l => l.Language == settings.Language);
 
         // The entry points to a program that is gone (portable folder moved, old install): point it here.
-        if (_contextMenu.RegisteredExecutable is { } registered && !File.Exists(registered)) UpdateContextMenu(true);
-        ContextMenuEnabled = _contextMenu.IsRegistered;
+        if (_contextMenu?.RegisteredExecutable is { } registered && !File.Exists(registered)) UpdateContextMenu(true);
+        ContextMenuEnabled = _contextMenu?.IsRegistered ?? false;
 
-        if (Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread() is { } dispatcher)
-        {
-            _saveTimer = dispatcher.CreateTimer();
-            _saveTimer.Interval = TimeSpan.FromMilliseconds(500);
-            _saveTimer.IsRepeating = false;
-            _saveTimer.Tick += (_, _) => SaveSettings();
-        }
         UpdateSelectedPreset();
         PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is { } changed && PresetProperties.Contains(changed)) UpdateSelectedPreset();
-            if (e.PropertyName is { } name && SavedProperties.Contains(name))
-            {
-                if (_saveTimer is null) SaveSettings();
-                else { _saveTimer.Stop(); _saveTimer.Start(); }
-            }
+            if (e.PropertyName is { } name && SavedProperties.Contains(name)) ScheduleSave();
         };
 
         Files.CollectionChanged += (_, _) => FileCount = Files.Count;
@@ -585,14 +581,31 @@ public sealed partial class MainViewModel : ObservableObject
         settings.Save();
     }
 
+    /// <summary>Saves once the settings have stopped changing for <see cref="SaveDelay"/>.</summary>
+    private async void ScheduleSave()
+    {
+        _pendingSave?.Cancel();
+        var pending = _pendingSave = new CancellationTokenSource();
+        try
+        {
+            // Resumes on the UI thread, like the change that started it.
+            await Task.Delay(SaveDelay, pending.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return; // a newer change restarted the wait, or the save was flushed
+        }
+        _pendingSave = null;
+        SaveSettings();
+    }
+
     /// <summary>Writes a pending change right away (the window is closing).</summary>
     public void FlushSettings()
     {
-        if (_saveTimer is { IsRunning: true })
-        {
-            _saveTimer.Stop();
-            SaveSettings();
-        }
+        if (_pendingSave is not { } pending) return;
+        pending.Cancel();
+        _pendingSave = null;
+        SaveSettings();
     }
 
     partial void OnSelectedLanguageChanged(LanguageChoice value)
@@ -602,18 +615,19 @@ public sealed partial class MainViewModel : ObservableObject
         AppSettings.Current.Save();
         L10n.Use(value.Language);
         // The menu label follows the language, when the entry is this program's.
-        if (_contextMenu.IsRegisteredFor(Environment.ProcessPath!)) UpdateContextMenu(true);
+        if (_contextMenu?.IsRegisteredFor(Environment.ProcessPath!) == true) UpdateContextMenu(true);
         UpdateSummary();
         LanguageChanged?.Invoke();
     }
 
     partial void OnContextMenuEnabledChanged(bool value)
     {
-        if (value != _contextMenu.IsRegistered) UpdateContextMenu(value);
+        if (_contextMenu is not null && value != _contextMenu.IsRegistered) UpdateContextMenu(value);
     }
 
     private void UpdateContextMenu(bool enabled)
     {
+        if (_contextMenu is null) return;
         try
         {
             if (enabled) _contextMenu.Register(Environment.ProcessPath!, Strings.ContextMenuLabel);
@@ -713,10 +727,12 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var item = new FileItem(path);
             Files.Add(item);
-            item.ThumbnailLoading = Thumbnails.LoadAsync(item);
+            item.ThumbnailLoading = LoadThumbnailAsync(item);
             _ = ProcessAsync(item, OptionsFor(item.Kind), _cts.Token);
         }
     }
+
+    private async Task LoadThumbnailAsync(FileItem item) => item.Thumbnail = await _desktop.LoadThumbnailAsync(item.Path);
 
     /// <summary>Shows the "where do the compressed files go?" question; <c>null</c> when cancelled. Set by the window.</summary>
     public Func<IReadOnlyList<string>, Task<OutputLocationAnswer?>>? AskWhereToSave { get; set; }

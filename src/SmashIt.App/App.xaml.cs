@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 using SmashIt.App.Services;
-using SmashIt.App.ViewModels;
+using SmashIt.Presentation.ViewModels;
 
 namespace SmashIt.App;
 
@@ -19,7 +19,7 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _viewModel = new MainViewModel();
+        _viewModel = new MainViewModel(new WindowsDesktop());
         _viewModel.LanguageChanged += RebuildMainWindow;
         var window = new MainWindow(_viewModel);
         _window = window;

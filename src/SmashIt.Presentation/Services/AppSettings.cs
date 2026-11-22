@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
 
-namespace SmashIt.App.Services;
+namespace SmashIt.Presentation.Services;
 
 /// <summary>Preferences kept between launches, in %LOCALAPPDATA%\SmashIt\settings.json.</summary>
 public sealed class AppSettings

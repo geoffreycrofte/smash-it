@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using SmashIt.Core.Compression;
 using SmashIt.Core.Formats;
 
-namespace SmashIt.App.ViewModels;
+namespace SmashIt.Presentation.ViewModels;
 
 public enum FileItemState
 {
@@ -24,10 +24,13 @@ public sealed partial class FileItem(string path) : ObservableObject
 
     public MediaKind Kind { get; } = MediaFormatInfo.KindOf(MediaFormatInfo.FromExtension(path));
 
-    /// <summary>Shell thumbnail (images, videos, and PDFs when a PDF handler provides previews).</summary>
+    /// <summary>
+    /// The system's thumbnail (images, videos, and PDFs when a PDF handler provides previews), as the UI toolkit's
+    /// image object (<see cref="IDesktopIntegration.LoadThumbnailAsync"/>).
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasThumbnail), nameof(ShowKindGlyph))]
-    public partial Microsoft.UI.Xaml.Media.ImageSource? Thumbnail { get; set; }
+    public partial object? Thumbnail { get; set; }
 
     public bool HasThumbnail => Thumbnail is not null;
 

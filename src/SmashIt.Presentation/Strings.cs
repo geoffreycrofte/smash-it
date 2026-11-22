@@ -1,4 +1,4 @@
-namespace SmashIt.App;
+namespace SmashIt.Presentation;
 
 /// <summary>
 /// The app's texts, for XAML (<c>{x:Bind app:Strings.Add}</c>) and code. Read when a window is built:

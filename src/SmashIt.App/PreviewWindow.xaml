@@ -3,7 +3,7 @@
     x:Class="SmashIt.App.PreviewWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:app="using:SmashIt.App"
+    xmlns:app="using:SmashIt.Presentation"
     xmlns:controls="using:SmashIt.App.Controls">
 
   <Window.SystemBackdrop>

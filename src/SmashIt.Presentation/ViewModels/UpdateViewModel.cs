@@ -2,11 +2,10 @@ using System.Diagnostics;
 using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.UI.Xaml.Controls;
-using SmashIt.App.Services;
 using SmashIt.Core.Updates;
+using SmashIt.Presentation.Services;
 
-namespace SmashIt.App.ViewModels;
+namespace SmashIt.Presentation.ViewModels;
 
 /// <summary>
 /// Looks for a newer release when the app starts (GitHub releases), shows it in a banner with its notes, and
@@ -56,7 +55,7 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
     public partial string BannerMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial InfoBarSeverity BannerSeverity { get; set; } = InfoBarSeverity.Informational;
+    public partial BannerSeverity BannerSeverity { get; set; } = BannerSeverity.Informational;
 
     /// <summary>A newer version is offered (the install and skip buttons show).</summary>
     [ObservableProperty]
@@ -171,7 +170,7 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
         _offered = latest;
         _notes = notes;
         _notesTitle = L10n.T("What's new", "Nouveautés");
-        BannerSeverity = InfoBarSeverity.Informational;
+        BannerSeverity = BannerSeverity.Informational;
         BannerTitle = L10n.T($"Smash It {_offered.Version} is available", $"Smash It {_offered.Version} est disponible");
         BannerMessage = IsInstalled
             ? L10n.T($"You have version {Current}. The update takes a few seconds and keeps your settings.",
@@ -188,7 +187,7 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
         _offered = null;
         _notes = brought;
         _notesTitle = L10n.T($"New in Smash It {Current}", $"Nouveautés de Smash It {Current}");
-        BannerSeverity = InfoBarSeverity.Success;
+        BannerSeverity = BannerSeverity.Success;
         BannerTitle = L10n.T($"Smash It was updated to {Current}", $"Smash It a été mis à jour en {Current}");
         BannerMessage = string.Empty;
         // Without the notes (offline, checks turned off), the button opens the release page.
@@ -255,7 +254,7 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
                                        or System.ComponentModel.Win32Exception)
         {
             IsDownloading = false;
-            BannerSeverity = InfoBarSeverity.Error;
+            BannerSeverity = BannerSeverity.Error;
             BannerMessage = ex is System.ComponentModel.Win32Exception
                 ? L10n.T("The update was cancelled.", "La mise à jour a été annulée.") // UAC prompt declined
                 : L10n.T($"The update failed: {ex.Message}", $"La mise à jour a échoué : {ex.Message}");
@@ -273,4 +272,13 @@ public sealed partial class UpdateViewModel(Func<bool> isBusy) : ObservableObjec
             // No browser: nothing more to do.
         }
     }
+}
+
+/// <summary>How the update banner looks (the WinUI InfoBar's severities, in the same order).</summary>
+public enum BannerSeverity
+{
+    Informational,
+    Success,
+    Warning,
+    Error,
 }

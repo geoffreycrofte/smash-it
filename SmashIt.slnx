@@ -5,6 +5,7 @@
     </Project>
     <Project Path="src/SmashIt.Cli/SmashIt.Cli.csproj" />
     <Project Path="src/SmashIt.Core/SmashIt.Core.csproj" />
+    <Project Path="src/SmashIt.Presentation/SmashIt.Presentation.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SmashIt.Core.Tests/SmashIt.Core.Tests.csproj" />

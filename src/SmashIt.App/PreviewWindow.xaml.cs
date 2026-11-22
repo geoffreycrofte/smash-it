@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using SmashIt.App.ViewModels;
+using SmashIt.Presentation.ViewModels;
 using Windows.Foundation;
 using Windows.Graphics;
 using Windows.Graphics.Imaging;
