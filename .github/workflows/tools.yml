@@ -142,7 +142,7 @@ jobs:
             grep -q " $e " encoders.txt || { echo "Encoder $e missing"; exit 1; }
           done
           # Non-system DLLs the exe needs: shipped next to it (the libraries MSYS2 has no static build of).
-          ldd ffmpeg.exe | grep -i '/ucrt64/' | awk '{print $3}' | tee ../dlls.txt
+          { ldd ffmpeg.exe | grep -i '/ucrt64/' || true; } | awk '{print $3}' | tee ../dlls.txt
           ./ffmpeg.exe -hide_banner -f lavfi -i testsrc2=s=320x240:d=1 -f lavfi -i sine=d=1 \
             -c:v libx264 -c:a aac -y check.mp4
           ./ffmpeg.exe -hide_banner -i check.mp4 -f null -
