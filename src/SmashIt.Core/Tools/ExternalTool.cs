@@ -67,7 +67,8 @@ public static class ExternalTool
                 $"Could not start {Path.GetFileName(executable)}.",
                 $"Impossible de lancer {Path.GetFileName(executable)}."));
         try { process.PriorityClass = ProcessPriorityClass.BelowNormal; }
-        catch (InvalidOperationException) { } // already exited
+        // Already exited: Windows says so with InvalidOperationException, macOS and Linux with ESRCH ("No such process").
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
 
         var stdout = onOutputLine is null
             ? process.StandardOutput.ReadToEndAsync(CancellationToken.None)
