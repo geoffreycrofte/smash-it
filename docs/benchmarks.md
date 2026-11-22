@@ -239,6 +239,56 @@ the Smash It command line at quality 70, came out the same:
 The few bytes apart come from the library versions written in the files (the Opus file differs by 0.2 %). The
 library versions are listed in the release's `libraries.txt`.
 
+## libvips and WIC
+
+*Measured on 2026-11-22, for the macOS and Linux versions (phase 0 of `docs/cross-platform-plan.md`).*
+
+**Question:** on macOS and Linux, libvips reads and writes the images where Windows uses WIC. Do the same files and
+settings give the same results?
+
+**Files:**
+- **The [Kodak set](http://r0k.us/graphics/kodak/):** 24 photos, 768×512, uncompressed PNG, 14.68 MB.
+- **Three large photos,** 5000×3333 JPEG, 5.83 MB in all, from Unsplash through Picsum:
+  [1015](https://unsplash.com/photos/-oWyJoSqBRM), [1043](https://unsplash.com/photos/mWRR1xj95hg) and
+  [1050](https://unsplash.com/photos/xcC5ozHk_N8) (`https://picsum.photos/id/<id>/5000/3333.jpg`).
+
+**Tools:** the Smash It command line, built twice on the same Windows machine:
+- for the Windows target, so with WIC;
+- for plain .NET, so with libvips 8.18.7 (NetVips.Native), as on macOS and Linux.
+
+Both builds use the same bundled tools.
+
+**Method:** each case runs both builds on a fresh copy of the files and adds up the output sizes. Times are for the
+whole batch and include starting the program; each figure is the median of three runs. Quality is the mean PSNR
+against the source PNG, over the RGB channels, computed with libvips.
+
+```sh
+smashit --folder kodak/*                                  # lossless PNG
+smashit --folder --lossy -q 80 -t jpg kodak/*             # PNG to JPEG
+smashit --folder --lossy -q 80 -t webp kodak/*            # PNG to WebP, through the intermediate PNG
+smashit --folder --lossy -q 80 --max-size 2560 large/*    # large JPEGs scaled down
+```
+
+**Results:**
+
+| Case | WIC | libvips |
+|---|---|---|
+| Lossless PNG (oxipng wins) | 14,709,218 bytes, 4.9 s | 14,709,218 bytes, 4.4 s |
+| PNG → JPEG, quality 80 | 1,774,627 bytes, PSNR 35.370 dB, 1.4 s | 1,774,627 bytes, PSNR 35.370 dB, 1.2 s |
+| PNG → WebP, quality 80 | 1,434,822 bytes, 1.7 s | 1,434,822 bytes, 1.5 s |
+| 5000 px JPEG → 2560 px, quality 80 | 2,646,517 bytes, 1.3 s | 2,746,423 bytes (**+3.8 %**), 0.9 s |
+
+**What it shows:**
+- **Same results at the same size:**
+  - **JPEG:** both engines use libjpeg-turbo with the same quantization tables. The files differ only by 3 header
+    bytes (the declared resolution: WIC writes 96 dpi).
+  - **WebP:** the files are identical byte for byte, since the intermediate PNG handed to cwebp holds the same pixels.
+  - **Lossless PNG:** oxipng's result wins on both systems.
+- **Scaling down differs:** WIC averages pixels (Fant), libvips uses Lanczos3. Lanczos3 keeps more fine detail, so
+  the JPEGs are about 4 % heavier. Windows keeps WIC, so its results don't change; the macOS and Linux versions will
+  be a little sharper and a little heavier at the same settings.
+- **libvips is a little faster here,** 10 to 30 % depending on the case.
+
 ## Earlier measurements
 
 These figures appear in the README; their test files and commands weren't recorded at the time. They will be
