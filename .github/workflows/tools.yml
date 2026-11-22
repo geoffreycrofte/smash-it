@@ -151,11 +151,11 @@ jobs:
         id: package
         run: |
           version='${{ steps.version.outputs.value }}'
-          mkdir -p dist/pkg
-          cp ffsrc/ffmpeg.exe dist/pkg/
-          while read -r dll; do [ -n "$dll" ] && cp "$dll" dist/pkg/; done < dlls.txt
-          cp ffsrc/COPYING.GPLv3 dist/pkg/ffmpeg-LICENSE.txt
-          (cd dist/pkg && zip -q -9 "../ffmpeg-$version-slim-win64.zip" *)
+          # Smash It runs ffmpeg.exe on its own: no DLL may be needed.
+          if [ -s dlls.txt ]; then echo "ffmpeg.exe needs DLLs:"; cat dlls.txt; exit 1; fi
+          mkdir -p dist
+          cp ffsrc/ffmpeg.exe "dist/ffmpeg-$version-slim-win64.exe"
+          cp ffsrc/COPYING.GPLv3 dist/ffmpeg-LICENSE.txt
           cp tools/ffmpeg-configure.sh libraries.txt dist/
           # Corresponding source: FFmpeg at the tag, and the MSYS2 source package of every library linked in.
           git -C ffsrc archive --format=tar.gz --prefix="ffmpeg-$version/" -o "../dist/ffmpeg-source-$version.tar.gz" HEAD
@@ -164,7 +164,7 @@ jobs:
             curl -fsSL -o "dist/mingw-w64-$base-$ver.src.tar.zst" "https://repo.msys2.org/mingw/sources/mingw-w64-$base-$ver.src.tar.zst"
           done < libraries.txt
           ls -l dist
-          sha256sum dist/*.zip dist/pkg/ffmpeg.exe
+          sha256sum dist/*.exe
 
       - uses: actions/upload-artifact@v7
         if: github.ref_type != 'tag'
@@ -184,13 +184,13 @@ jobs:
           containers and filters the app needs. Configure flags: \`ffmpeg-configure.sh\`; library versions:
           \`libraries.txt\` (MSYS2 UCRT64).
 
-          SHA-256 of the zip: \`$(sha256sum dist/*.zip | cut -d' ' -f1)\`
+          A single static exe, no DLL. SHA-256: \`$(sha256sum dist/*.exe | cut -d' ' -f1)\`
 
           Source: FFmpeg at tag \`$FFMPEG_TAG\` and the MSYS2 source package of every library are attached.
 
           Used by tools/fetch-tools.ps1. Not a Smash It release.
           NOTES
-          gh release create "$GITHUB_REF_NAME" dist/*.zip dist/*.tar.gz dist/*.src.tar.zst dist/ffmpeg-configure.sh dist/libraries.txt \
+          gh release create "$GITHUB_REF_NAME" dist/*.exe dist/ffmpeg-LICENSE.txt dist/*.tar.gz dist/*.src.tar.zst dist/ffmpeg-configure.sh dist/libraries.txt \
             --repo "$GITHUB_REPOSITORY" --prerelease --latest=false --title "Build tool: ffmpeg $version slim (Windows x64)" --notes-file notes.md
 
   pngquant:
