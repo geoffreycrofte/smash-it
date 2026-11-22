@@ -1,10 +1,14 @@
 using SmashIt.Core.Formats;
 using SmashIt.Core.Metadata;
+#if WINDOWS
 using Windows.Graphics.Imaging;
+#else
+using NetVips;
+#endif
 
 namespace SmashIt.Core.Tests;
 
-/// <summary>Builds real images with WIC for the tests.</summary>
+/// <summary>Builds real images for the tests: with WIC on Windows, with libvips elsewhere.</summary>
 internal static class TestImages
 {
     /// <summary>A recognizable fake ICC profile: content is opaque to the metadata code.</summary>
@@ -50,29 +54,51 @@ internal static class TestImages
             pixels[i + 3] = 255;
         }
 
+        await EncodeAsync(path, format, width, height, pixels);
+        if (metadata is not null) MetadataTransfer.Write(path, format, metadata);
+        return path;
+    }
+
+    public static async Task<(uint Width, uint Height)> SizeAsync(string path) =>
+        await Platform.ImageCodec.ReadSizeAsync(path, CancellationToken.None)
+        ?? throw new InvalidDataException($"Image illisible : {path}");
+
+#if WINDOWS
+    /// <param name="bgra">8-bit BGRA pixels; alpha is ignored.</param>
+    private static async Task EncodeAsync(string path, MediaFormat format, uint width, uint height, byte[] bgra)
+    {
         var encoderId = format switch
         {
             MediaFormat.Jpeg => BitmapEncoder.JpegEncoderId,
             MediaFormat.Gif => BitmapEncoder.GifEncoderId,
             _ => BitmapEncoder.PngEncoderId,
         };
-        await using (var file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
-        {
-            using var stream = file.AsRandomAccessStream();
-            var encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
-            encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, width, height, 96, 96, pixels);
-            await encoder.FlushAsync();
-        }
-
-        if (metadata is not null) MetadataTransfer.Write(path, format, metadata);
-        return path;
-    }
-
-    public static async Task<(uint Width, uint Height)> SizeAsync(string path)
-    {
-        await using var file = new FileStream(path, FileMode.Open, FileAccess.Read);
+        await using var file = new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
         using var stream = file.AsRandomAccessStream();
-        var decoder = await BitmapDecoder.CreateAsync(stream);
-        return (decoder.PixelWidth, decoder.PixelHeight);
+        var encoder = await BitmapEncoder.CreateAsync(encoderId, stream);
+        encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, width, height, 96, 96, bgra);
+        await encoder.FlushAsync();
     }
+#else
+    /// <param name="bgra">8-bit BGRA pixels; alpha is ignored.</param>
+    private static Task EncodeAsync(string path, MediaFormat format, uint width, uint height, byte[] bgra)
+    {
+        var rgb = new byte[width * height * 3];
+        for (int i = 0, o = 0; i < bgra.Length; i += 4, o += 3)
+        {
+            rgb[o] = bgra[i + 2];
+            rgb[o + 1] = bgra[i + 1];
+            rgb[o + 2] = bgra[i];
+        }
+        using var raw = Image.NewFromMemory(rgb, (int)width, (int)height, 3, Enums.BandFormat.Uchar);
+        using var image = raw.Copy(interpretation: Enums.Interpretation.Srgb, xres: 96 / 25.4, yres: 96 / 25.4);
+        switch (format)
+        {
+            case MediaFormat.Jpeg: image.Jpegsave(path, q: 90); break; // WIC's default quality
+            case MediaFormat.Gif: image.Gifsave(path); break;
+            default: image.Pngsave(path); break;
+        }
+        return Task.CompletedTask;
+    }
+#endif
 }

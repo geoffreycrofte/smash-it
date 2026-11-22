@@ -28,14 +28,14 @@ public class ImageResizeTests
     {
         using var dir = new TempDirectory();
         var path = await TestImages.WriteAsync(dir.File("photo.jpg"), MediaFormat.Jpeg, 400, 300, noisy: false);
-        var engines = new List<ICompressor> { new WicImageCompressor() };
+        List<ICompressor> engines = [.. Platform.ImageEngines()];
         if (new JpegtranCompressor() is { IsAvailable: true } jpegtran) engines.Add(jpegtran);
 
         var result = await new CompressionPipeline(engines).ProcessAsync(path, Lossy200, Ct);
 
         Assert.Equal(CompressionStatus.Optimized, result.Status);
         Assert.Equal((200u, 150u), await TestImages.SizeAsync(result.OutputPath!));
-        Assert.StartsWith("wic", result.CompressorId); // jpegtran can't scale: it may only follow
+        Assert.StartsWith(engines[0].Id, result.CompressorId); // jpegtran can't scale: it may only follow
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class ImageResizeTests
         using var dir = new TempDirectory();
         var big = await TestImages.WriteAsync(dir.File("big.png"), MediaFormat.Png, 400, 300);
         var small = await TestImages.WriteAsync(dir.File("small.jpg"), MediaFormat.Jpeg, 160, 120, noisy: false);
-        var pipeline = new CompressionPipeline([new WicImageCompressor()]);
+        var pipeline = new CompressionPipeline([.. Platform.ImageEngines()]);
 
         var lossless = await pipeline.ProcessAsync(big, Lossy200 with { Mode = CompressionMode.Lossless }, Ct);
         var smallResult = await pipeline.ProcessAsync(small, Lossy200, Ct);

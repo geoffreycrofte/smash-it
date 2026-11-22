@@ -32,7 +32,7 @@ public class ImageTuningTests
         var path = await TestImages.WriteAsync(dir.File("photo.png"), MediaFormat.Png, 64, 48);
         var options = Lossy with { Quality = quality, TargetFormat = MediaFormat.Jpeg, Tuning = new() { ColorDetail = detail } };
 
-        var result = await new CompressionPipeline([new WicImageCompressor()]).ProcessAsync(path, options, Ct);
+        var result = await new CompressionPipeline([.. Platform.ImageEngines()]).ProcessAsync(path, options, Ct);
 
         Assert.Equal(lumaSampling, LumaSampling(await File.ReadAllBytesAsync(result.OutputPath!, Ct)));
     }

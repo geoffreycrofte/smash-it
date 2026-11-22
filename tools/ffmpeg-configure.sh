@@ -21,11 +21,13 @@ decoders=(
 )
 encoders=(
   libx264 libx265 libsvtav1 libvpx_vp9 aac libmp3lame libopus libvorbis flac
+  # macOS and Linux: HEIC photos are decoded to a PNG for libvips (its build has no HEVC decoder)
+  png
   # Tests, and "-f null"
   pcm_s16le pcm_f32le mjpeg gif wrapped_avframe
 )
 demuxers=(mov matroska avi gif mp3 flac ogg wav aiff aac lavfi)
-muxers=(mp4 ipod webm mp3 flac ogg opus wav null md5 gif)
+muxers=(mp4 ipod webm mp3 flac ogg opus wav null md5 gif image2)
 parsers=(h264 hevc av1 vp8 vp9 mpeg4video mpegvideo mjpeg png gif aac aac_latm mpegaudio flac opus vorbis ac3 dca)
 bsfs=(aac_adtstoasc extract_extradata vp9_superframe vp9_superframe_split av1_frame_merge av1_frame_split
       h264_mp4toannexb hevc_mp4toannexb dump_extradata null)

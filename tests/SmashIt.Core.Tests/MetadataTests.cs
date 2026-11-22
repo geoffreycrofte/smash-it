@@ -96,7 +96,7 @@ public class MetadataTests
     {
         using var dir = new TempDirectory();
         var path = await TestImages.WriteAsync(dir.File("a.jpg"), MediaFormat.Jpeg, 128, 64, FullMetadata(MediaFormat.Jpeg));
-        var pipeline = new CompressionPipeline([new WicImageCompressor()]);
+        var pipeline = new CompressionPipeline([.. Platform.ImageEngines()]);
 
         var result = await pipeline.ProcessAsync(path, new CompressionOptions
         {
@@ -126,7 +126,7 @@ public class MetadataTests
     {
         using var dir = new TempDirectory();
         var path = await TestImages.WriteAsync(dir.File("a.jpg"), MediaFormat.Jpeg, 128, 64, FullMetadata(MediaFormat.Jpeg, 6));
-        var pipeline = new CompressionPipeline([new WicImageCompressor()]);
+        var pipeline = new CompressionPipeline([.. Platform.ImageEngines()]);
 
         await pipeline.ProcessAsync(path, new CompressionOptions
         {
@@ -142,7 +142,7 @@ public class MetadataTests
     {
         using var dir = new TempDirectory();
         var path = await TestImages.WriteAsync(dir.File("a.jpg"), MediaFormat.Jpeg, 128, 64, FullMetadata(MediaFormat.Jpeg, 6));
-        var pipeline = new CompressionPipeline([new WicImageCompressor()]);
+        var pipeline = new CompressionPipeline([.. Platform.ImageEngines()]);
 
         var result = await pipeline.ProcessAsync(path, new CompressionOptions
         {
@@ -167,7 +167,7 @@ public class MetadataTests
             Xmp = Enumerable.Repeat((byte)'x', 20_000).ToArray(),
         };
         var path = await TestImages.WriteAsync(dir.File("a.png"), MediaFormat.Png, 32, 32, bigXmp);
-        var pipeline = new CompressionPipeline([new WicImageCompressor()]);
+        var pipeline = new CompressionPipeline([.. Platform.ImageEngines()]);
 
         var result = await pipeline.ProcessAsync(path, new CompressionOptions { OriginalHandling = OriginalHandling.Overwrite }, Ct);
 
