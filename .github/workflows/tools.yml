@@ -117,9 +117,9 @@ jobs:
           # package (an epoch "1:" is written "1~" there). The C/C++ runtimes (gcc-libs, winpthreads) are linked too.
           runtimes=$(pacman -Qqo /ucrt64/lib/libstdc++.a /ucrt64/lib/libwinpthread.a "$(gcc -print-libgcc-file-name)" | sort -u)
           for p in $(printf 'mingw-w64-ucrt-x86_64-%s\n' x264 x265 svt-av1 libvpx lame opus libvorbis libogg dav1d mpg123 zlib) $runtimes; do
-            # The installed version (the one linked), and the base name from the repository database (-Qi has none).
-            base=$(pacman -Si "$p" | awk -F' *: ' '/^Base/ {print $2; exit}')
-            version=$(pacman -Qi "$p" | awk -F' *: ' '/^Version/ {print $2; exit}')
+            # The installed version (the one linked), and its base name from pacman's local database.
+            version=$(pacman -Q "$p" | cut -d' ' -f2)
+            base=$(awk '/^%BASE%$/ {getline; print; exit}' "/var/lib/pacman/local/$p-$version/desc")
             echo "${base:?no base for $p} ${version//:/~}"
           done | sort -u > libraries.txt
           cat libraries.txt
