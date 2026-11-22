@@ -115,6 +115,8 @@ jobs:
             mingw-w64-ucrt-x86_64-{gcc,nasm,pkgconf,zlib,x264,x265,svt-av1,libvpx,lame,opus,libvorbis,libogg,dav1d}
           pacman -Q | grep -E 'x264|x265|svt-av1|libvpx|lame|opus|libvorbis|libogg|dav1d|zlib' > libraries.txt
           cat libraries.txt
+          # Which libraries MSYS2 ships as static archives.
+          ls -l /ucrt64/lib/lib{mp3lame,x264,x265,SvtAv1Enc,vpx,opus,vorbis,vorbisenc,ogg,dav1d,z}.a 2>&1 || true
 
       - name: Build
         run: |
@@ -124,6 +126,10 @@ jobs:
           make -j"$(nproc)"
           strip ffmpeg.exe
           ls -l ffmpeg.exe
+
+      - name: Configure log
+        if: failure()
+        run: tail -n 60 ffsrc/ffbuild/config.log || true
 
       - name: Check
         run: |
