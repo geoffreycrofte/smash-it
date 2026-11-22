@@ -4,11 +4,17 @@
 
 .DESCRIPTION
     Every archive is pinned to a version and verified against its SHA-256 before anything is extracted.
-    jpegtran ships only inside the libjpeg-turbo installer, which is unpacked with 7-Zip
+    The tools are those of the system the script runs on: Windows x64, macOS on Apple Silicon or Linux x64
+    (PowerShell 7, "pwsh", runs there too).
+
+    Windows: jpegtran ships only inside the libjpeg-turbo installer, which is unpacked with 7-Zip
     (install it with: winget install 7zip.7zip). The installer itself is never run.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\fetch-tools.ps1
+
+.EXAMPLE
+    pwsh tools/fetch-tools.ps1
 #>
 [CmdletBinding()]
 param(
@@ -25,7 +31,10 @@ $bin = Join-Path $root 'bin'
 $licenses = Join-Path $bin 'licenses'
 $cache = Join-Path ([IO.Path]::GetTempPath()) 'SmashIt.tools'
 
-$tools = @(
+# $IsMacOS and $IsLinux only exist in PowerShell 7; Windows PowerShell 5.1 leaves them empty.
+$platform = if ($IsMacOS) { 'osx-arm64' } elseif ($IsLinux) { 'linux-x64' } else { 'win-x64' }
+
+$windowsTools = @(
     @{
         Name    = 'oxipng 10.2.1'
         Url     = 'https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-x86_64-pc-windows-msvc.zip'
@@ -108,6 +117,85 @@ $tools = @(
     }
 )
 
+# macOS (Apple Silicon) and Linux (x64): the projects' own builds. pngquant, gifsicle, oxvg, jpegtran and ffmpeg have
+# none for these systems: the "Build tools" workflow will provide them. Without them Smash It still works, with fewer
+# engines.
+$unixTools = @(
+    @{
+        Name     = 'oxipng 10.2.1'
+        Platform = 'osx-arm64'
+        Url      = 'https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-aarch64-apple-darwin.tar.gz'
+        Sha256   = '7039fcfc78e8aa1ed2b57d848057a0296f082e92b3e1807ac65402d10d926764'
+        Files    = @('oxipng')
+        License  = @{ 'LICENSE' = 'oxipng.txt' }
+    },
+    @{
+        # musl, static: runs on any distribution.
+        Name     = 'oxipng 10.2.1'
+        Platform = 'linux-x64'
+        Url      = 'https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-x86_64-unknown-linux-musl.tar.gz'
+        Sha256   = '1813750ef592c5350ca79c88f98b2c0876d05c826dc7156245256d4255c1ad17'
+        Files    = @('oxipng')
+        License  = @{ 'LICENSE' = 'oxipng.txt' }
+    },
+    @{
+        Name     = 'libwebp 1.6.0'
+        Platform = 'osx-arm64'
+        Url      = 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0-mac-arm64.tar.gz'
+        Sha256   = 'bc6bf84cc70f3f8574fba797d1e4a7dea4feebe9fa4be919f202413ea2b3b8f2'
+        Files    = @('cwebp')
+        License  = @{}
+    },
+    @{
+        Name     = 'libwebp 1.6.0'
+        Platform = 'linux-x64'
+        Url      = 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0-linux-x86-64.tar.gz'
+        Sha256   = '1c5ffab71efecefa0e3c23516c3a3a1dccb45cc310ae1095c6f14ae268e38067'
+        Files    = @('cwebp')
+        License  = @{}
+    },
+    @{
+        Name     = 'libavif 1.4.2'
+        Platform = 'osx-arm64'
+        Url      = 'https://github.com/AOMediaCodec/libavif/releases/download/v1.4.2/macOS-artifacts.zip'
+        Sha256   = '41f9a3db7b7697aa4f9c83d5e07a1b2e00f28f23676d3f27698eef766689a6b6'
+        Files    = @('avifenc')
+        License  = @{}
+    },
+    @{
+        # Needs glibc 2.34 (Ubuntu 22.04, Debian 12, Fedora 35 and later).
+        Name     = 'libavif 1.4.2'
+        Platform = 'linux-x64'
+        Url      = 'https://github.com/AOMediaCodec/libavif/releases/download/v1.4.2/linux-artifacts.zip'
+        Sha256   = 'faf58a670ffbfdc0e3559e6d37592cff277c447dd39453f1cd1d7d7f5a20b8ef'
+        Files    = @('avifenc')
+        License  = @{}
+    },
+    @{
+        # bin/qpdf finds its library in ../lib: the whole folder is kept, as tools/qpdf/.
+        Name       = 'qpdf 12.4.2'
+        Platform   = 'osx-arm64'
+        Url        = 'https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-bin-macos-arm64.zip'
+        Sha256     = '62e46987a30ea167cbc530ccb22690aec3d8c812ed09979a941bcee92e504b79'
+        Tree       = 'qpdf'
+        Files      = @('bin/qpdf')
+        LicenseUrl = @{ 'https://raw.githubusercontent.com/qpdf/qpdf/v12.4.2/LICENSE.txt' = 'qpdf.txt' }
+        License    = @{}
+    },
+    @{
+        Name       = 'qpdf 12.4.2'
+        Platform   = 'linux-x64'
+        Url        = 'https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2-bin-linux-x86_64.zip'
+        Sha256     = 'db367d897829f22c4198ce1094143c9d467bd6ee7dfabc44ba6f02056b24f8b1'
+        Tree       = 'qpdf'
+        Files      = @('bin/qpdf')
+        LicenseUrl = @{ 'https://raw.githubusercontent.com/qpdf/qpdf/v12.4.2/LICENSE.txt' = 'qpdf.txt' }
+        License    = @{}
+    }
+)
+
+$tools = if ($platform -eq 'win-x64') { $windowsTools } else { @($unixTools | Where-Object { $_.Platform -eq $platform }) }
+
 function Find-7Zip {
     $command = Get-Command 7z.exe -ErrorAction SilentlyContinue
     if ($command) { return $command.Source }
@@ -132,12 +220,30 @@ function Save-Url([string] $Url, [string] $Path) {
     }
 }
 
+function Expand-Download([string] $Archive, [string] $Destination) {
+    New-Item -ItemType Directory -Force $Destination | Out-Null
+    if ($Archive.EndsWith('.tar.gz')) {
+        & tar -xzf $Archive -C $Destination
+        if ($LASTEXITCODE -ne 0) { throw "tar n'a pas pu extraire $Archive." }
+    }
+    elseif ($platform -ne 'win-x64') {
+        # unzip keeps the executable bits that Expand-Archive drops.
+        & unzip -q -o $Archive -d $Destination
+        if ($LASTEXITCODE -ne 0) { throw "unzip n'a pas pu extraire $Archive." }
+    }
+    else {
+        Expand-Archive $Archive -DestinationPath $Destination -Force
+    }
+}
+
 New-Item -ItemType Directory -Force $bin, $licenses, $cache | Out-Null
-$sevenZip = Find-7Zip
+$sevenZip = if ($platform -eq 'win-x64') { Find-7Zip } else { $null }
 $failed = @()
 
 foreach ($tool in $tools) {
-    $present = $tool.Files | Where-Object { -not (Test-Path (Join-Path $bin $_)) }
+    # A "Tree" tool keeps its folder (bin/, lib/) as tools/<Tree>/; the others are single files in tools/.
+    $target = if ($tool.Tree) { Join-Path $bin $tool.Tree } else { $bin }
+    $present = $tool.Files | Where-Object { -not (Test-Path (Join-Path $target $_)) }
     if (-not $Force -and -not $present) {
         Write-Host "✔ $($tool.Name) déjà présent"
         continue
@@ -164,6 +270,7 @@ foreach ($tool in $tools) {
     if ($tool.Executable) {
         # Downloaded as the program itself: copied under its usual name, license fetched next to it.
         Copy-Item $archive (Join-Path $bin $tool.Files[0]) -Force
+        if ($platform -ne 'win-x64') { & chmod +x (Join-Path $bin $tool.Files[0]) }
         foreach ($entry in $tool.LicenseUrl.GetEnumerator()) {
             Save-Url $entry.Key (Join-Path $licenses $entry.Value)
         }
@@ -178,13 +285,31 @@ foreach ($tool in $tools) {
         if ($LASTEXITCODE -ne 0) { throw "7-Zip n'a pas pu extraire $($tool.Name)." }
     }
     else {
-        Expand-Archive $archive -DestinationPath $extracted -Force
+        Expand-Download $archive $extracted
+    }
+
+    if ($tool.Tree) {
+        # The archive's own layout: its top folder when it has one, else everything.
+        $top = @(Get-ChildItem $extracted)
+        $source = if ($top.Count -eq 1 -and $top[0].PSIsContainer) { $top[0].FullName } else { $extracted }
+        if (Test-Path $target) { Remove-Item $target -Recurse -Force }
+        Copy-Item $source $target -Recurse
+        foreach ($file in $tool.Files) {
+            if (-not (Test-Path (Join-Path $target $file))) { throw "$file introuvable dans $($tool.Name)." }
+        }
+        foreach ($entry in $tool.LicenseUrl.GetEnumerator()) {
+            Save-Url $entry.Key (Join-Path $licenses $entry.Value)
+        }
+        Remove-Item $extracted -Recurse -Force
+        Write-Host "✔ $($tool.Name)"
+        continue
     }
 
     foreach ($file in $tool.Files) {
-        $found = Get-ChildItem $extracted -Recurse -Filter $file | Select-Object -First 1
+        $found = Get-ChildItem $extracted -Recurse -File -Filter $file | Select-Object -First 1
         if (-not $found) { throw "$file introuvable dans $($tool.Name)." }
         Copy-Item $found.FullName $bin -Force
+        if ($platform -ne 'win-x64') { & chmod +x (Join-Path $bin $file) }
         # DLLs the tool depends on sit next to it (jpegtran needs jpeg62.dll, qpdf its own DLL + VC++ runtime).
         foreach ($pattern in @($tool.Dlls | Where-Object { $_ })) {
             $dlls = Get-ChildItem $found.DirectoryName -Filter $pattern
@@ -201,6 +326,9 @@ foreach ($tool in $tools) {
     Write-Host "✔ $($tool.Name)"
 }
 
+if ($platform -ne 'win-x64') {
+    $failed += 'pngquant', 'gifsicle', 'oxvg', 'jpegtran', 'ffmpeg (pas encore de version pour ce système)'
+}
 if ($failed) {
     Write-Warning "Outils manquants : $($failed -join ', '). Smash It fonctionnera sans eux."
 }

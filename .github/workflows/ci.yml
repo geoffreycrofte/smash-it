@@ -46,9 +46,9 @@ jobs:
       - name: Test
         run: dotnet test --solution SmashIt.slnx -c Release --no-build
 
-  # macOS and Linux: the Core, the CLI and the tests on plain .NET, where libvips reads and writes the images. The
-  # bundled tools aren't built for these systems yet (phase 1 of docs/cross-platform-plan.md), so the tests that need
-  # one are skipped there; the Windows job runs this target too, with the tools.
+  # macOS and Linux: the Core, the CLI and the tests on plain .NET, where libvips reads and writes the images, with
+  # the bundled tools that exist for these systems so far (phase 1 of docs/cross-platform-plan.md). The tests needing
+  # one that doesn't are skipped there; the Windows job runs this target too, with every tool.
   portable:
     strategy:
       fail-fast: false
@@ -61,6 +61,16 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+
+      - name: Restore bundled tools
+        uses: actions/cache@v6
+        with:
+          path: tools/bin
+          key: tools-${{ runner.os }}-${{ hashFiles('tools/fetch-tools.ps1') }}
+
+      - name: Fetch bundled tools
+        shell: pwsh
+        run: ./tools/fetch-tools.ps1
 
       - name: Build
         run: |
