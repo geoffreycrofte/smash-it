@@ -15,6 +15,7 @@
       <include path="SmashIt.Cli.exe" />
       <include path="SmashIt.Cli.dll" />
       <include path="SmashIt.Core.dll" />
+      <include path="SmashIt.Presentation.dll" />
       <for-each>
         <authenticode-sign />
       </for-each>
