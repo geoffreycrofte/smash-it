@@ -118,8 +118,8 @@ jobs:
 
       - name: Build
         run: |
-          git clone --depth 1 --branch "$FFMPEG_TAG" https://git.ffmpeg.org/ffmpeg.git src
-          cd src
+          git clone --depth 1 --branch "$FFMPEG_TAG" https://git.ffmpeg.org/ffmpeg.git ffsrc
+          cd ffsrc
           ../tools/ffmpeg-configure.sh
           make -j"$(nproc)"
           strip ffmpeg.exe
@@ -127,7 +127,7 @@ jobs:
 
       - name: Check
         run: |
-          cd src
+          cd ffsrc
           # Everything Smash It and its tests ask of ffmpeg.
           ./ffmpeg.exe -hide_banner -encoders > encoders.txt
           for e in libx264 libx265 libsvtav1 libvpx-vp9 aac libmp3lame libopus libvorbis flac pcm_s16le pcm_f32le mjpeg gif; do
@@ -144,13 +144,13 @@ jobs:
         run: |
           version='${{ steps.version.outputs.value }}'
           mkdir -p dist/pkg
-          cp src/ffmpeg.exe dist/pkg/
+          cp ffsrc/ffmpeg.exe dist/pkg/
           while read -r dll; do [ -n "$dll" ] && cp "$dll" dist/pkg/; done < dlls.txt
-          cp src/COPYING.GPLv3 dist/pkg/ffmpeg-LICENSE.txt
+          cp ffsrc/COPYING.GPLv3 dist/pkg/ffmpeg-LICENSE.txt
           (cd dist/pkg && zip -q -9 "../ffmpeg-$version-slim-win64.zip" *)
           cp tools/ffmpeg-configure.sh libraries.txt dist/
           # Corresponding source: FFmpeg at the tag, and the MSYS2 source package of every library linked in.
-          git -C src archive --format=tar.gz --prefix="ffmpeg-$version/" -o "../dist/ffmpeg-source-$version.tar.gz" HEAD
+          git -C ffsrc archive --format=tar.gz --prefix="ffmpeg-$version/" -o "../dist/ffmpeg-source-$version.tar.gz" HEAD
           while read -r name ver; do
             base="${name#mingw-w64-ucrt-x86_64-}"
             curl -fsSL -o "dist/mingw-w64-$base-$ver.src.tar.zst" "https://repo.msys2.org/mingw/sources/mingw-w64-$base-$ver.src.tar.zst"
