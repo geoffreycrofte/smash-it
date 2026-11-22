@@ -117,7 +117,7 @@ jobs:
           # package (an epoch "1:" is written "1~" there). The C/C++ runtimes (gcc-libs, winpthreads) are linked too.
           runtimes=$(pacman -Qqo /ucrt64/lib/libstdc++.a /ucrt64/lib/libwinpthread.a "$(gcc -print-libgcc-file-name)" | sort -u)
           for p in $(printf 'mingw-w64-ucrt-x86_64-%s\n' x264 x265 svt-av1 libvpx lame opus libvorbis libogg dav1d mpg123 zlib) $runtimes; do
-            pacman -Qi "$p" | awk -F' *: ' '/^Version/ {v=$2} /^Base/ {b=$2} END {gsub(":", "~", v); print b, v}'
+            pacman -Si "$p" | awk -F' *: ' '/^Version/ {v=$2} /^Base/ {b=$2} END {gsub(":", "~", v); print b, v}'
           done | sort -u > libraries.txt
           cat libraries.txt
           # x265's pkg-config asks for -lgcc_s, the import library of libgcc_s_seh-1.dll: without it, everything links
