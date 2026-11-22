@@ -17,6 +17,7 @@ name: Build tools
 on:
   push:
     tags: ['tools-oxvg-*', 'tools-ffmpeg-*', 'tools-pngquant-*']
+    branches: ['ci/ffmpeg-slim']
 
 permissions:
   contents: write
@@ -85,66 +86,104 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   ffmpeg:
-    if: startsWith(github.ref_name, 'tools-ffmpeg-')
+    # Tags "tools-ffmpeg-<version>-slim" publish; pushes to ci/ffmpeg-slim only build (artifact), to try changes.
+    if: startsWith(github.ref_name, 'tools-ffmpeg-') || github.ref_name == 'ci/ffmpeg-slim'
     runs-on: windows-latest
     env:
-      # One pinned BtbN build: static, GPL, Windows x64. Change all four together.
-      BUILD_URL: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-21-12-37/ffmpeg-n9.0.2-61-gd59078794d-win64-gpl-9.0.zip
-      BUILD_SHA256: af402c660610929e7bb795013372aef22da756f10b3c0c785aa62fabd328e237
-      FFMPEG_COMMIT: d59078794d
-      BTBN_COMMIT: 7f2a6b1050d302144de8366afa37a75e46f326aa
+      FFMPEG_TAG: n9.0.2
+      MSYSTEM: UCRT64
+      CHERE_INVOKING: '1'
+    defaults:
+      run:
+        shell: C:\msys64\usr\bin\bash.exe -leo pipefail {0}
     steps:
+      - uses: actions/checkout@v7
+
       - name: Version
         id: version
         shell: pwsh
         run: |
-          $version = $env:GITHUB_REF_NAME -replace '^tools-ffmpeg-', ''
-          if ($version -notmatch '^\d+\.\d+(\.\d+)?$') { throw "Unexpected tag $env:GITHUB_REF_NAME" }
-          if ($env:BUILD_URL -notmatch "ffmpeg-n$([regex]::Escape($version))-") { throw "The tag says $version, the pinned build doesn't." }
+          $version = $env:FFMPEG_TAG.TrimStart('n')
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "tools-ffmpeg-$version-slim") {
+            throw "The tag should be tools-ffmpeg-$version-slim for FFMPEG_TAG $env:FFMPEG_TAG."
+          }
           "value=$version" >> $env:GITHUB_OUTPUT
 
-      - name: Download and check
-        shell: pwsh
+      - name: Libraries (MSYS2)
         run: |
-          Invoke-WebRequest $env:BUILD_URL -OutFile build.zip
-          $hash = (Get-FileHash build.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($hash -ne $env:BUILD_SHA256) { throw "SHA-256 mismatch: $hash" }
-          Expand-Archive build.zip -DestinationPath build
-          $exe = Get-ChildItem build -Recurse -Filter ffmpeg.exe | Select-Object -First 1
-          $encoders = & $exe.FullName -hide_banner -encoders
-          foreach ($name in 'libsvtav1', 'libx264', 'libx265', 'aac') {
-            if (-not ($encoders | Select-String " $name ")) { throw "Encoder $name missing." }
-          }
+          pacman -Sy --noconfirm --needed make diffutils git \
+            mingw-w64-ucrt-x86_64-{gcc,nasm,pkgconf,zlib,x264,x265,svt-av1,libvpx,lame,opus,libvorbis,libogg,dav1d}
+          pacman -Q | grep -E 'x264|x265|svt-av1|libvpx|lame|opus|libvorbis|libogg|dav1d|zlib' > libraries.txt
+          cat libraries.txt
+
+      - name: Build
+        run: |
+          git clone --depth 1 --branch "$FFMPEG_TAG" https://git.ffmpeg.org/ffmpeg.git src
+          cd src
+          ../tools/ffmpeg-configure.sh
+          make -j"$(nproc)"
+          strip ffmpeg.exe
+          ls -l ffmpeg.exe
+
+      - name: Check
+        run: |
+          cd src
+          # Everything Smash It and its tests ask of ffmpeg.
+          ./ffmpeg.exe -hide_banner -encoders > encoders.txt
+          for e in libx264 libx265 libsvtav1 libvpx-vp9 aac libmp3lame libopus libvorbis flac pcm_s16le pcm_f32le mjpeg gif; do
+            grep -q " $e " encoders.txt || { echo "Encoder $e missing"; exit 1; }
+          done
+          # Non-system DLLs the exe needs: shipped next to it (the libraries MSYS2 has no static build of).
+          ldd ffmpeg.exe | grep -i '/ucrt64/' | awk '{print $3}' | tee ../dlls.txt
+          ./ffmpeg.exe -hide_banner -f lavfi -i testsrc2=s=320x240:d=1 -f lavfi -i sine=d=1 \
+            -c:v libx264 -c:a aac -y check.mp4
+          ./ffmpeg.exe -hide_banner -i check.mp4 -f null -
+
+      - name: Package
+        id: package
+        run: |
+          version='${{ steps.version.outputs.value }}'
+          mkdir -p dist/pkg
+          cp src/ffmpeg.exe dist/pkg/
+          while read -r dll; do [ -n "$dll" ] && cp "$dll" dist/pkg/; done < dlls.txt
+          cp src/COPYING.GPLv3 dist/pkg/ffmpeg-LICENSE.txt
+          (cd dist/pkg && zip -q -9 "../ffmpeg-$version-slim-win64.zip" *)
+          cp tools/ffmpeg-configure.sh libraries.txt dist/
+          # Corresponding source: FFmpeg at the tag, and the MSYS2 source package of every library linked in.
+          git -C src archive --format=tar.gz --prefix="ffmpeg-$version/" -o "../dist/ffmpeg-source-$version.tar.gz" HEAD
+          while read -r name ver; do
+            base="${name#mingw-w64-ucrt-x86_64-}"
+            curl -fsSL -o "dist/mingw-w64-$base-$ver.src.tar.zst" "https://repo.msys2.org/mingw/sources/mingw-w64-$base-$ver.src.tar.zst"
+          done < libraries.txt
+          ls -l dist
+          sha256sum dist/*.zip dist/pkg/ffmpeg.exe
+
+      - uses: actions/upload-artifact@v7
+        if: github.ref_type != 'tag'
+        with:
+          name: ffmpeg-slim
+          path: dist/
 
       - name: Publish
-        shell: pwsh
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $version = '${{ steps.version.outputs.value }}'
-          New-Item -ItemType Directory dist | Out-Null
-          $exe = Get-ChildItem build -Recurse -Filter ffmpeg.exe | Select-Object -First 1
-          Copy-Item $exe.FullName "dist/ffmpeg-$version-win64-gpl.exe"
-          Copy-Item (Get-ChildItem build -Recurse -Filter LICENSE.txt | Select-Object -First 1).FullName dist/ffmpeg-LICENSE.txt
-          # Corresponding source: FFmpeg at the build's commit, and the build scripts that pin every library it links.
-          Invoke-WebRequest "https://github.com/FFmpeg/FFmpeg/archive/$env:FFMPEG_COMMIT.tar.gz" -OutFile "dist/ffmpeg-source-$env:FFMPEG_COMMIT.tar.gz"
-          Invoke-WebRequest "https://github.com/BtbN/FFmpeg-Builds/archive/$env:BTBN_COMMIT.tar.gz" -OutFile "dist/ffmpeg-build-scripts-$($env:BTBN_COMMIT.Substring(0, 10)).tar.gz"
-          $hash = (Get-FileHash "dist/ffmpeg-$version-win64-gpl.exe" -Algorithm SHA256).Hash.ToLowerInvariant()
-          @"
-          ffmpeg $version (GPL), Windows x64, static: the build ``$(Split-Path $env:BUILD_URL -Leaf)`` from
-          [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds), mirrored unchanged because dated builds are
-          deleted there after a while. ffmpeg.exe is taken as is from the archive (SHA-256 ``$env:BUILD_SHA256``).
+          version='${{ steps.version.outputs.value }}'
+          cat > notes.md <<NOTES
+          ffmpeg $version (GPL), Windows x64, built by this repository's "Build tools" workflow with only what Smash It
+          uses: x264, x265, SVT-AV1, libvpx (VP9), LAME, Opus, Vorbis, FLAC, AAC, dav1d for AV1 input, and the
+          containers and filters the app needs. Configure flags: \`ffmpeg-configure.sh\`; library versions:
+          \`libraries.txt\` (MSYS2 UCRT64).
 
-          SHA-256 of the exe: ``$hash``
+          SHA-256 of the zip: \`$(sha256sum dist/*.zip | cut -d' ' -f1)\`
 
-          Source: FFmpeg at commit ``$env:FFMPEG_COMMIT`` and the BtbN build scripts at ``$env:BTBN_COMMIT``, which
-          pin the source of every library (x264, x265, SVT-AV1…), are attached.
+          Source: FFmpeg at tag \`$FFMPEG_TAG\` and the MSYS2 source package of every library are attached.
 
           Used by tools/fetch-tools.ps1. Not a Smash It release.
-          "@ | Set-Content notes.md -Encoding utf8
-          gh release create $env:GITHUB_REF_NAME dist/* --repo $env:GITHUB_REPOSITORY --prerelease --latest=false `
-            --title "Build tool: ffmpeg $version (Windows x64)" --notes-file notes.md
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          NOTES
+          gh release create "$GITHUB_REF_NAME" dist/*.zip dist/*.tar.gz dist/*.src.tar.zst dist/ffmpeg-configure.sh dist/libraries.txt \
+            --repo "$GITHUB_REPOSITORY" --prerelease --latest=false --title "Build tool: ffmpeg $version slim (Windows x64)" --notes-file notes.md
 
   pngquant:
     if: startsWith(github.ref_name, 'tools-pngquant-')
