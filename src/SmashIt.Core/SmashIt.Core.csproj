@@ -28,7 +28,9 @@
              CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 
-  <Target Name="WarnMissingTools" BeforeTargets="Build" Condition="!Exists('$(SmashItToolsDir)oxipng.exe') And !Exists('$(SmashItToolsDir)oxipng')">
+  <!-- Windows only for now: fetch-tools.ps1 has no macOS or Linux builds yet (phase 1 of docs/cross-platform-plan.md). -->
+  <Target Name="WarnMissingTools" BeforeTargets="Build"
+          Condition="$([MSBuild]::IsOSPlatform('Windows')) And !Exists('$(SmashItToolsDir)oxipng.exe')">
     <Warning Text="Outils tiers absents (oxipng, pngquant, gifsicle, oxvg, jpegtran, cwebp, avifenc, qpdf, ffmpeg) : lancez tools\fetch-tools.ps1. Seul le moteur Windows (WIC) sera disponible." />
   </Target>
 

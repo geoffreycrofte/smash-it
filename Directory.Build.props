@@ -4,6 +4,8 @@
     <SmashItTargetFramework>net10.0-windows10.0.19041.0</SmashItTargetFramework>
     <!-- macOS and Linux: the Core and the CLI also build for plain .NET (see src/SmashIt.Core/Platforms). -->
     <SmashItPortableTargetFramework>net10.0</SmashItPortableTargetFramework>
+    <!-- Lets macOS and Linux restore the multi-target projects (their Windows target is only built on Windows). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
