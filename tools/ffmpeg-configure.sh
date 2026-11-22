@@ -2,6 +2,8 @@
 # Configures FFmpeg with only what Smash It uses, for a static Windows x64 build in MSYS2 UCRT64.
 # Run from the FFmpeg source folder (the "Build tools" workflow does: .github/workflows/tools.yml).
 #
+# MSYS2 builds LAME with mpg123 (its decoding side), so the static libmp3lame needs libmpg123 (and shlwapi) too.
+#
 # Reading: broad, since people drop all kinds of videos and sounds. Writing: only the encoders and containers the
 # engines produce, plus what the tests use to make their samples (PCM WAV, MJPEG cover art, GIF, lavfi sources).
 set -euo pipefail
@@ -41,6 +43,7 @@ filters=(
   --prefix=/usr/local --arch=x86_64 --target-os=mingw32 \
   --enable-gpl --enable-static --disable-shared \
   --pkg-config-flags=--static --extra-ldflags=-static \
+  --extra-libs="-lmpg123 -lshlwapi" \
   --disable-autodetect --disable-everything --disable-doc --disable-ffplay --disable-ffprobe --disable-network \
   --enable-zlib \
   --enable-libx264 --enable-libx265 --enable-libsvtav1 --enable-libvpx --enable-libmp3lame \
