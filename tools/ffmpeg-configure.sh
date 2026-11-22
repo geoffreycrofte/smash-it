@@ -13,7 +13,7 @@ list() { local IFS=,; echo "$*"; }
 decoders=(
   # Video
   h264 hevc libdav1d vp8 vp9 mpeg4 msmpeg4v2 msmpeg4v3 h263 mpeg1video mpeg2video mjpeg prores dnxhd dvvideo
-  rawvideo theora gif png
+  rawvideo theora gif png wrapped_avframe
   # Sound
   aac aac_latm mp3 mp3float mp2 flac alac opus vorbis ac3 eac3 dca amrnb amrwb adpcm_ima_wav adpcm_ms
   pcm_s16le pcm_s16be pcm_s24le pcm_s24be pcm_s32le pcm_s32be pcm_f32le pcm_f32be pcm_f64le pcm_f64be pcm_u8
@@ -42,7 +42,7 @@ filters=(
 ./configure \
   --prefix=/usr/local --arch=x86_64 --target-os=mingw32 \
   --enable-gpl --enable-static --disable-shared \
-  --pkg-config-flags=--static --extra-ldflags=-static \
+  --pkg-config-flags=--static --extra-ldflags="-static -static-libgcc -static-libstdc++" \
   --extra-libs="-lmpg123 -lshlwapi" \
   --disable-autodetect --disable-everything --disable-doc --disable-ffplay --disable-ffprobe --disable-network \
   --enable-zlib \

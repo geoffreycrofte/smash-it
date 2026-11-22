@@ -115,8 +115,10 @@ jobs:
             mingw-w64-ucrt-x86_64-{gcc,nasm,pkgconf,zlib,x264,x265,svt-av1,libvpx,lame,opus,libvorbis,libogg,dav1d,mpg123}
           pacman -Q | grep -E 'x264|x265|svt-av1|libvpx|lame|opus|libvorbis|libogg|dav1d|mpg123|zlib' > libraries.txt
           cat libraries.txt
-          # Which libraries MSYS2 ships as static archives.
-          ls -l /ucrt64/lib/lib{mp3lame,x264,x265,SvtAv1Enc,vpx,opus,vorbis,vorbisenc,ogg,dav1d,z}.a 2>&1 || true
+          # x265's pkg-config asks for -lgcc_s, the import library of libgcc_s_seh-1.dll: without it, everything links
+          # statically and ffmpeg.exe needs no DLL.
+          sed -i 's/ -lgcc_s//g' /ucrt64/lib/pkgconfig/x265.pc
+          grep '^Libs' /ucrt64/lib/pkgconfig/x265.pc
 
       - name: Build
         run: |
