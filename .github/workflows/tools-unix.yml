@@ -1,0 +1,84 @@
+name: Build tools (macOS, Linux)
+
+# pngquant, gifsicle, oxvg and jpegtran have no official build for macOS or Linux that Smash It can bundle: this
+# workflow compiles them (tools/build-unix-tools.sh) on macOS (Apple Silicon) and Linux (x64), and attaches them to
+# a "tools-unix-<n>" pre-release of this repository, where tools/fetch-tools.ps1 downloads them (pinned by SHA-256).
+#
+# A pull request that changes the build only builds it (artifacts, to check it). Publishing takes a tag:
+#   git tag tools-unix-1 && git push origin tools-unix-1
+#
+# These releases are pre-releases and never "latest": the app's download links and update check ignore them.
+on:
+  push:
+    tags: ['tools-unix-*']
+  pull_request:
+    paths:
+      - .github/workflows/tools-unix.yml
+      - tools/build-unix-tools.sh
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-arm64
+            runner: macos-latest
+          # The oldest glibc Smash It supports (Ubuntu 22.04): the binaries run on that and anything newer.
+          - platform: linux-x64
+            runner: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build dependencies (macOS)
+        if: matrix.platform == 'macos-arm64'
+        run: brew install libpng
+
+      - name: Build dependencies (Linux)
+        if: matrix.platform == 'linux-x64'
+        run: sudo apt-get update && sudo apt-get install -y libpng-dev nasm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: tools/build-unix-tools.sh ${{ matrix.platform }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tools-${{ matrix.platform }}
+          path: dist/
+
+  publish:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          {
+            echo 'pngquant, gifsicle, oxvg and jpegtran for macOS (Apple Silicon, 15 and later) and Linux (x64, glibc 2.35'
+            echo 'and later), compiled by this repository'"'"'s "Build tools (macOS, Linux)" workflow from their tagged'
+            echo 'sources (`tools/build-unix-tools.sh`). Each archive holds the program and its license.'
+            echo
+            echo 'SHA-256:'
+            echo '```'
+            sha256sum *.tar.gz
+            echo '```'
+            echo
+            echo 'Used by tools/fetch-tools.ps1. Not a Smash It release.'
+          } > ../notes.md
+          gh release create "$GITHUB_REF_NAME" *.tar.gz --repo "$GITHUB_REPOSITORY" --prerelease --latest=false \
+            --title "Build tools: macOS and Linux ($GITHUB_REF_NAME)" --notes-file ../notes.md
