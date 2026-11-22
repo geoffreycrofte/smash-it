@@ -22,6 +22,10 @@
   <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' != 'windows'">
     <Compile Remove="WicImageCompressorTests.cs;VideoCompressorTests.cs;ExplorerContextMenuTests.cs;TestVideo.cs" />
   </ItemGroup>
+  <!-- And the other way round: the macOS and Linux trash. -->
+  <ItemGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier($(TargetFramework)))' == 'windows'">
+    <Compile Remove="TrashTests.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
