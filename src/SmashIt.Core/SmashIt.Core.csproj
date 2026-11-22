@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFrameworks>$(SmashItTargetFramework);$(SmashItPortableTargetFramework)</TargetFrameworks>
     <RootNamespace>SmashIt.Core</RootNamespace>
+    <!-- LibraryImport (the macOS and Linux trash) generates unsafe marshalling code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SmashItToolsDir>$(MSBuildThisFileDirectory)..\..\tools\bin\</SmashItToolsDir>
   </PropertyGroup>
 
