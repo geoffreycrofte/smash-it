@@ -117,9 +117,8 @@ $windowsTools = @(
     }
 )
 
-# macOS (Apple Silicon) and Linux (x64): the projects' own builds. pngquant, gifsicle, oxvg, jpegtran and ffmpeg have
-# none for these systems: the "Build tools" workflow will provide them. Without them Smash It still works, with fewer
-# engines.
+# macOS (Apple Silicon) and Linux (x64): the projects' own builds first. ffmpeg has none yet for these systems:
+# without it Smash It still works, with fewer engines.
 $unixTools = @(
     @{
         Name     = 'oxipng 10.2.1'
@@ -191,6 +190,77 @@ $unixTools = @(
         Files      = @('bin/qpdf')
         LicenseUrl = @{ 'https://raw.githubusercontent.com/qpdf/qpdf/v12.4.2/LICENSE.txt' = 'qpdf.txt' }
         License    = @{}
+    }
+)
+
+# pngquant, gifsicle, oxvg and jpegtran have no official build for these systems: this repository's "Build tools
+# (macOS, Linux)" workflow (tools/build-unix-tools.sh) compiles them from their sources, with the libraries they need
+# beyond the system's linked in. Each archive holds the program and its license.
+$builtTools = 'https://github.com/geoffreycrofte/smash-it/releases/download/tools-unix-1'
+$unixTools += @(
+    @{
+        Name     = 'pngquant 2.17.0'
+        Platform = 'osx-arm64'
+        Url      = "$builtTools/pngquant-2.17.0-macos-arm64.tar.gz"
+        Sha256   = '658e163d9f032b736ed4e2fecd379f3cc9929731111466fb55e81e0343fda851'
+        Files    = @('pngquant')
+        License  = @{ 'LICENSE.txt' = 'pngquant.txt' }
+    },
+    @{
+        Name     = 'pngquant 2.17.0'
+        Platform = 'linux-x64'
+        Url      = "$builtTools/pngquant-2.17.0-linux-x64.tar.gz"
+        Sha256   = '81eaaa052f7cf6cc64d30e65cdd4e4157e99913d06563f9633cd2c91aecb845f'
+        Files    = @('pngquant')
+        License  = @{ 'LICENSE.txt' = 'pngquant.txt' }
+    },
+    @{
+        Name     = 'gifsicle 1.97'
+        Platform = 'osx-arm64'
+        Url      = "$builtTools/gifsicle-1.97-macos-arm64.tar.gz"
+        Sha256   = 'a6ff59304f52e90ee55b1643dc468b4f5c95b84b3df880ae6957a7e3e3bfdb98'
+        Files    = @('gifsicle')
+        License  = @{ 'LICENSE.txt' = 'gifsicle.txt' }
+    },
+    @{
+        Name     = 'gifsicle 1.97'
+        Platform = 'linux-x64'
+        Url      = "$builtTools/gifsicle-1.97-linux-x64.tar.gz"
+        Sha256   = '3785483dcf6538bbb5f5207a71cdbfa986af3b8fafc714b6bb705e767891ed0f'
+        Files    = @('gifsicle')
+        License  = @{ 'LICENSE.txt' = 'gifsicle.txt' }
+    },
+    @{
+        Name     = 'oxvg 0.0.9'
+        Platform = 'osx-arm64'
+        Url      = "$builtTools/oxvg-0.0.9-macos-arm64.tar.gz"
+        Sha256   = '7f471b69dfe118ecccc8213b493a25feb417837857065b11fdf0d6b940ed3247'
+        Files    = @('oxvg')
+        License  = @{ 'LICENSE.txt' = 'oxvg.txt' }
+    },
+    @{
+        Name     = 'oxvg 0.0.9'
+        Platform = 'linux-x64'
+        Url      = "$builtTools/oxvg-0.0.9-linux-x64.tar.gz"
+        Sha256   = '8c5d90b3d0071791bb5300a377d389888adce26bb427e8d357350242f6d16de0'
+        Files    = @('oxvg')
+        License  = @{ 'LICENSE.txt' = 'oxvg.txt' }
+    },
+    @{
+        Name     = 'libjpeg-turbo 3.2.1'
+        Platform = 'osx-arm64'
+        Url      = "$builtTools/jpegtran-3.2.1-macos-arm64.tar.gz"
+        Sha256   = 'c114b2e7e9d4c97a11cc17bb4e5d27391575d13acbde8e27f9d2127c4ad52902'
+        Files    = @('jpegtran')
+        License  = @{ 'LICENSE.txt' = 'libjpeg-turbo.md' }
+    },
+    @{
+        Name     = 'libjpeg-turbo 3.2.1'
+        Platform = 'linux-x64'
+        Url      = "$builtTools/jpegtran-3.2.1-linux-x64.tar.gz"
+        Sha256   = '84b2dd1b9ccf3b886062099a33cc66403aa2c5ce5b730d494a387e3492bca7ab'
+        Files    = @('jpegtran')
+        License  = @{ 'LICENSE.txt' = 'libjpeg-turbo.md' }
     }
 )
 
@@ -327,7 +397,7 @@ foreach ($tool in $tools) {
 }
 
 if ($platform -ne 'win-x64') {
-    $failed += 'pngquant', 'gifsicle', 'oxvg', 'jpegtran', 'ffmpeg (pas encore de version pour ce système)'
+    $failed += 'ffmpeg (pas encore de version pour ce système)'
 }
 if ($failed) {
     Write-Warning "Outils manquants : $($failed -join ', '). Smash It fonctionnera sans eux."
